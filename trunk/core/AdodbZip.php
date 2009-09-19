@@ -1,28 +1,13 @@
 <?php
 /**
- * 引用
- */
-class_exists ( 'core' ) or require ('core.php');
-
-/**
- * 存根
- */
-core::stub () and core::main ();
-
-/**
- * 说明
- * 此程序是在AdodbZip 1.0的基础上稍做了些修改
- */
-
-/**
- * core_adodb 1.0
+ * AdodbZip 1.0
  * 
  * 作者：
  * Z(QQ号602000 QQ群5193883)
  * 
  * 代码示例：
- * include_once 'core_adodb.php';
- * $db = core_adodb::init(NewADOConnection('mysqlt'));
+ * include_once 'AdodbZip.php';
+ * $db = AdodbZip::init(NewADOConnection('mysqlt'));
  * echo $db->GetOne('SELECT NOW()');
  * 
  * 流程说明：
@@ -35,44 +20,44 @@ core::stub () and core::main ();
  * 1. $extract_dir可自定义。如果将Adodb的Zip包完全解压到此目录，则可忽略$zip_url和$zip_file设置项，这和传统使用Adodb一样。
  * 2. $zip_file可自定义。如果$zip_file存在，则可忽略$zip_url，这样可整站统一使用$zip_file。
  * 3. $zip_url可自定义。可随时修改Adodb版本，此时$zip_file和$extract_dir最好使用默认值，各版本互不干扰。
- * 4. $server、$user、$pwd、$db可自定义。默认是mysql默认值，此项只有调用core_adodb::init方法后才起效果。
- * 5. $charset可自定义。默认不改变编码，此项只有调用core_adodb::init方法后才起效果。
- * 6. core_adodb::init方法里可增加Adodb初始化值。
+ * 4. $server、$user、$pwd、$db可自定义。默认是mysql默认值，此项只有调用AdodbZip::init方法后才起效果。
+ * 5. $charset可自定义。默认不改变编码，此项只有调用AdodbZip::init方法后才起效果。
+ * 6. AdodbZip::init方法里可增加Adodb初始化值。
  */
 
 /**
- * core_adodb启动项
+ * AdodbZip启动项
  */
 // 设定参数
-core_adodb::$zip_url = 'http://nchc.dl.sourceforge.net/sourceforge/adodb/adodb508a.zip'; //［设置项］Adodb的Zip文件下载地址，文件比较大建议先下载或者解压
-core_adodb::$zip_file = sys_get_temp_dir () . preg_replace ( '/^.*\/(adodb.*?\.zip)$/i', 'adodb/$1', core_adodb::$zip_url ); //［设置项］Adodb的Zip文件缓存位置
-core_adodb::$entry_dir = 'adodb5';
-core_adodb::$extract_dir = sys_get_temp_dir () . 'adodb/' . core_adodb::$entry_dir; //［设置项］Adodb程序文件缓存位置
-core_adodb::$server = 'localhost'; //［设置项］服务器	
-core_adodb::$user = 'root'; //［设置项］用户名
-core_adodb::$pwd = ''; //［设置项］密码
-core_adodb::$db = 'test'; //［设置项］数据库
-core_adodb::$charset = ''; //［设置项］编码
+AdodbZip::$zip_url = 'http://nchc.dl.sourceforge.net/sourceforge/adodb/adodb508a.zip'; //［设置项］Adodb的Zip文件下载地址，文件比较大建议先下载或者解压
+AdodbZip::$zip_file = sys_get_temp_dir () . preg_replace ( '/^.*\/(adodb.*?\.zip)$/i', 'adodb/$1', AdodbZip::$zip_url ); //［设置项］Adodb的Zip文件缓存位置
+AdodbZip::$entry_dir = 'adodb5';
+AdodbZip::$extract_dir = sys_get_temp_dir () . 'adodb/' . AdodbZip::$entry_dir; //［设置项］Adodb程序文件缓存位置
+AdodbZip::$server = 'localhost'; //［设置项］服务器	
+AdodbZip::$user = 'root'; //［设置项］用户名
+AdodbZip::$pwd = ''; //［设置项］密码
+AdodbZip::$db = 'test'; //［设置项］数据库
+AdodbZip::$charset = ''; //［设置项］编码
 
 
 // 注册协议
-if (! in_array ( 'core_adodb', stream_get_wrappers () )) {
-	stream_wrapper_register ( 'core_adodb', 'core_adodb' );
+if (! in_array ( 'AdodbZip', stream_get_wrappers () )) {
+	stream_wrapper_register ( 'AdodbZip', 'AdodbZip' );
 }
 // 定义常量
 if (! defined ( 'ADODB_DIR' )) {
-	define ( 'ADODB_DIR', 'core_adodb:/' );
+	define ( 'ADODB_DIR', 'AdodbZip:/' );
 }
 // 包含程序
 require_once (ADODB_DIR . '/adodb.inc.php');
-// $db = core_adodb::init(NewADOConnection('mysqlt')); // ［选择项］引用即定义$db
-// return core_adodb::init(NewADOConnection('mysqlt')); // ［选择项］引用即返回$db，注意只可引用一次。
+// $db = AdodbZip::init(NewADOConnection('mysqlt')); // ［选择项］引用即定义$db
+// return AdodbZip::init(NewADOConnection('mysqlt')); // ［选择项］引用即返回$db，注意只可引用一次。
 
 
 /**
- * core_adodb类定义
+ * AdodbZip类定义
  */
-class core_adodb {
+class AdodbZip {
 	
 	/**
 	 * Adodb变量

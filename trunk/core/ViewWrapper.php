@@ -1,18 +1,24 @@
 <?php
 /**
- * 引用
+ * ViewWrapper 1.0
+ * 
+ * 作者：
+ * Z(QQ号602000 QQ群5193883)
+ * 
+ * 代码示例：
+ * include_once 'SmartyZip.php';
+ * include_once 'ViewWrapper.php';
+ * echo ViewWrapper::init ( 'ViewWrapper.smarty.string://' . 'test.html', array( 'name' => 'ViewWrapper' ) );
+ * 
+ * 流程说明：
+ * 1. 从右到左级联使用模板。
+ * 2. 协议间用小数点分隔，最前面必须是ViewWrapper。
  */
-class_exists ( 'core' ) or require ('core.php');
-
-/**
- * 存根
- */
-core::stub () and core::main ();
 
 /**
  * 定义
  */
-class core_wrapper {
+class ViewWrapper {
 	
 	public static $vars = array ();
 	
@@ -104,11 +110,11 @@ class core_wrapper {
 			return false;
 		}
 		$_wrapper_arr = explode ( '.', $_wrapper_matches [1] );
-		if (count ( $_wrapper_arr ) < 2) {
+		if (count ( $_wrapper_arr ) < 1) {
 			return false;
 		}
 		// 句柄处理
-		if (count ( $_wrapper_arr ) == 2) {
+		if (count ( $_wrapper_arr ) == 1) {
 			$this->handle = fopen ( $_wrapper_matches [2], $mode );
 		} else {
 			$_wrapper_flag = array_pop ( $_wrapper_arr );
@@ -140,8 +146,8 @@ class core_wrapper {
 					break;
 				case 'smarty' :
 					$this->handle = fopen ( 'php://temp', 'w+' );
-					class_exists ( 'core_smarty' ) or require ('core_smarty.php');
-					$smarty = core_smarty::init ( new smarty ( ) );
+					require_once (dirname(__FILE__) . DIRECTORY_SEPARATOR . 'SmartyZip.php');
+					$smarty = SmartyZip::init ( new SmartyZip ( ) );
 					$smarty->template_dir = $_wrapper_protocol . '://' . $smarty->template_dir;
 					$smarty->_tpl_vars = self::$vars [$_wrapper_matches [0]];
 					self::$vars [$smarty->template_dir . DIRECTORY_SEPARATOR . $_wrapper_matches [2]] = self::$vars [$_wrapper_matches [0]];
@@ -178,9 +184,20 @@ class core_wrapper {
 					unset ( $_wrapper_var );
 					break;
 				default :
-					self::$vars [$_wrapper_path] = self::$vars [$_wrapper_matches [0]];
-					$this->handle = fopen ( $_wrapper_path, $mode );
-					break;
+					if(file_exists(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'view_default_'.$_wrapper_flag.'.php')){
+						self::$vars [$_wrapper_path] = self::$vars [$_wrapper_matches [0]];
+						$this->handle = fopen ( 'php://temp', 'w+' );
+						self::$vars [$smarty->template_dir . DIRECTORY_SEPARATOR . $_wrapper_matches [2]] = self::$vars [$_wrapper_matches [0]];
+						$_wrapper_var = require( dirname(__FILE__) . DIRECTORY_SEPARATOR . 'view_default_'.$_wrapper_flag.'.php' );
+						fwrite ( $this->handle, $_wrapper_var );
+						rewind ( $this->handle );
+						unset ( $_wrapper_var );
+						break;
+					}else{
+						self::$vars [$_wrapper_path] = self::$vars [$_wrapper_matches [0]];
+						$this->handle = fopen ( $_wrapper_path, $mode );
+						break;
+					}
 			}
 		}
 		// 验证返回
