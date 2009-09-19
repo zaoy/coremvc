@@ -1,29 +1,14 @@
 <?php
 /**
- * 引用
- */
-class_exists ( 'core' ) or require ('core.php');
-
-/**
- * 存根
- */
-core::stub () and core::main ();
-
-/**
- * 说明
- * 此程序是在SmartyZip 1.5的基础上稍做了些修改
- */
-
-/**
- * core_smarty 1.6
+ * SmartyZip 1.6
  * 
  * 作者：
  * Z(QQ号602000 QQ群5193883)
  * 
  * 代码示例：
- * include_once 'core_smarty.php';
- * $smarty = core_smarty::init(new Smarty);
- * $smarty->assign ( 'name', 'core_smarty' );
+ * include_once 'SmartyZip.php';
+ * $smarty = SmartyZip::init(new Smarty);
+ * $smarty->assign ( 'name', 'SmartyZip' );
  * $smarty->display ( 'test.html' );
  * 
  * 流程说明：
@@ -36,41 +21,41 @@ core::stub () and core::main ();
  * 1. $extract_dir可自定义。如果将Smarty的Zip包完全解压到此目录，则可忽略$zip_url和$zip_file设置项，这和传统使用Smarty一样。
  * 2. $zip_file可自定义。如果$zip_file存在，则可忽略$zip_url，这样可整站统一使用$zip_file。
  * 3. $zip_url可自定义。可随时修改Smarty版本，此时$zip_file和$extract_dir最好使用默认值，各版本互不干扰。
- * 4. $template_dir可自定义。默认是core_smarty程序文件目录，此项只有调用core_smarty::init方法后才起效果。
- * 5. $compile_dir可自定义。默认是临时文件里的一个目录，此项只有调用core_smarty::init方法后才起效果。
- * 6. core_smarty::init方法里可增加smarty初始化值，如cache_dir、config_dir等。
+ * 4. $template_dir可自定义。默认是SmartyZip程序文件目录，此项只有调用SmartyZip::init方法后才起效果。
+ * 5. $compile_dir可自定义。默认是临时文件里的一个目录，此项只有调用SmartyZip::init方法后才起效果。
+ * 6. SmartyZip::init方法里可增加smarty初始化值，如cache_dir、config_dir等。
  */
 
 /**
- * core_smarty启动项
+ * SmartyZip启动项
  */
 // 设定参数
-core_smarty::$zip_url = 'http://www.smarty.net/distributions/Smarty-2.6.26.zip'; //［设置项］Smarty的Zip文件下载地址
-core_smarty::$zip_file = sys_get_temp_dir () . preg_replace ( '/^.*\/(Smarty-.*.zip)$/i', 'smarty/$1', core_smarty::$zip_url ); //［设置项］Smarty的Zip文件缓存位置
-core_smarty::$entry_dir = preg_replace ( '/^.*\/(Smarty-.*).zip$/i', '$1/libs', core_smarty::$zip_file );
-core_smarty::$extract_dir = sys_get_temp_dir () . 'smarty/' . core_smarty::$entry_dir; //［设置项］Smarty程序文件缓存位置
-core_smarty::$template_dir = dirname ( realpath ( __FILE__ ) ); //［设置项］Smarty模板文件 所在位置	
-core_smarty::$compile_dir = sys_get_temp_dir () . 'smarty/template_c/' . md5 ( core_smarty::$template_dir ); //［设置项］Smarty编译文件缓存位置
+SmartyZip::$zip_url = 'http://www.smarty.net/distributions/Smarty-2.6.26.zip'; //［设置项］Smarty的Zip文件下载地址
+SmartyZip::$zip_file = sys_get_temp_dir () . preg_replace ( '/^.*\/(Smarty-.*.zip)$/i', 'smarty/$1', SmartyZip::$zip_url ); //［设置项］Smarty的Zip文件缓存位置
+SmartyZip::$entry_dir = preg_replace ( '/^.*\/(Smarty-.*).zip$/i', '$1/libs', SmartyZip::$zip_file );
+SmartyZip::$extract_dir = sys_get_temp_dir () . 'smarty/' . SmartyZip::$entry_dir; //［设置项］Smarty程序文件缓存位置
+SmartyZip::$template_dir = dirname ( realpath ( __FILE__ ) ); //［设置项］Smarty模板文件 所在位置	
+SmartyZip::$compile_dir = sys_get_temp_dir () . 'smarty/template_c/' . md5 ( SmartyZip::$template_dir ); //［设置项］Smarty编译文件缓存位置
 
 
 // 注册协议
-if (! in_array ( 'core.smarty', stream_get_wrappers () )) {
-	stream_wrapper_register ( 'core.smarty', 'core_smarty' );
+if (! in_array ( 'SmartyZip', stream_get_wrappers () )) {
+	stream_wrapper_register ( 'SmartyZip', 'SmartyZip' );
 }
 // 定义常量
 if (! defined ( 'SMARTY_DIR' )) {
-	define ( 'SMARTY_DIR', 'core.smarty://' );
+	define ( 'SMARTY_DIR', 'SmartyZip://' );
 }
 // 包含程序
 require_once (SMARTY_DIR . 'Smarty.class.php');
-// $smarty = core_smarty::init(new Smarty); // ［选择项］引用即定义$smarty
-// return core_smarty::init(new Smarty); // ［选择项］引用即返回$smarty，注意只可引用一次。
+// $smarty = SmartyZip::init(new Smarty); // ［选择项］引用即定义$smarty
+// return SmartyZip::init(new Smarty); // ［选择项］引用即返回$smarty，注意只可引用一次。
 
 
 /**
- * core_smarty类定义
+ * SmartyZip类定义
  */
-class core_smarty {
+class SmartyZip {
 	
 	/**
 	 * Smarty变量
