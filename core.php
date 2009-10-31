@@ -3,7 +3,7 @@
  * CoreMVC核心文件
  * 
  * @author Z <602000@gmail.com>
- * @version 0.7.0
+ * @version 0.7.1
  * @package CoreMVC
  */
 /**
@@ -344,7 +344,7 @@ class core {
 				case 'include':
 				case 'require':
 				case 'include_once':
-				case 'require_ocne':
+				case 'require_once':
 					$is_visit = false;
 					break 2;
 				case 'stub':
@@ -355,7 +355,7 @@ class core {
 		}
 		
 		// 【扩展功能】实现反向路由功能
-		if (self::stub_router_enable && $is_visit) {
+		if ($is_visit && self::stub_router_enable) {
 			if ( self::stub_router_url == '' ){
 				$url = './?go=[module]';
 			}else{
