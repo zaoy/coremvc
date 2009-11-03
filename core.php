@@ -3,7 +3,7 @@
  * CoreMVC核心文件
  * 
  * @author Z <602000@gmail.com>
- * @version 0.7.1
+ * @version 0.7.2
  * @package CoreMVC
  */
 /**
@@ -452,7 +452,7 @@ class core {
 			$_view_file2 = $_view_file;
 		} elseif ($_view_dir == ''){
 			$_view_dir2 = getcwd();
-			$_view_file2 = $_view_file;
+			$_view_file2 = getcwd() . DIRECTORY_SEPARATOR . $_view_file;
 		} elseif (strtok($_view_dir, '\/') == '.'){
 			$_view_dir2 = dirname(__FILE__);
 			$_view_file2 = dirname(__FILE__) . DIRECTORY_SEPARATOR . $_view_file;
