@@ -450,6 +450,9 @@ class core {
 		} elseif (strpos($_view_file, '/') == 0){
 			$_view_dir2 = getcwd();
 			$_view_file2 = $_view_file;
+		} elseif ($_view_dir == '' && strtok($_view_file, '\/') == '.'){
+			$_view_dir2 = dirname(__FILE__);
+			$_view_file2 = dirname(__FILE__) . DIRECTORY_SEPARATOR . $_view_file;
 		} elseif ($_view_dir == ''){
 			$_view_dir2 = getcwd();
 			$_view_file2 = getcwd() . DIRECTORY_SEPARATOR . $_view_file;

@@ -73,10 +73,10 @@ class coreTest extends PHPUnit_Framework_TestCase {
 	public function testView() {
 
 		ob_start();
-		core::view('tests/template.php',array('z'=>'b'));
+		core::view('./tests/template.php',array('z'=>'b'));
 		$this->assertSame('abc', ob_get_clean());
 
-		$this->assertSame('abc', core::view('tests/template2.php',array('z'=>'b'),'string',false));
+		$this->assertSame('abc', core::view('./tests/template2.php',array('z'=>'b'),'string',false));
 
 		$this->assertSame('abc', core::view('tests/template3.php',array('z'=>'b'),'smarty',false,'./'));
 	
