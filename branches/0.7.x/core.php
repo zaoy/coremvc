@@ -3,7 +3,7 @@
  * CoreMVC核心文件
  * 
  * @author Z <602000@gmail.com>
- * @version 0.7.2
+ * @version 0.7.3
  * @package CoreMVC
  */
 /**
