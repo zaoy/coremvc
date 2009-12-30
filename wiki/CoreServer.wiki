@@ -13,7 +13,7 @@ CoreServer适用于windows下开发PHP站点的完全绿色服务器端环境。
 版本：20091230
 
 下载:
-* [http://coremvc.googlecode.com/files/coreserver_amp_20091230.zip coreserver_amp_20091230.zip]，包含Apache、Mysql、PHP，内含ZendDebugger、ZendOptimize、XDebug、APC。
-* [http://coremvc.googlecode.com/files/coreserver_phpunit_20091230.zip coreserver_phpunit_20091230.zip]，包含PHPUnit，需要coreserver_amp_20091230.zip支持。
-* [http://coremvc.googlecode.com/files/coreserver_phpdoc_20091230.zip coreserver_phpdoc_20091230.zip]，包含phpDocumentor，需要有coreserver_amp_20091230支持。
-* [http://coremvc.googlecode.com/files/coreserver_svn_20091230.zip coreserver_svn_20091230.zip]，包含Subversion。
+ * [http://coremvc.googlecode.com/files/coreserver_amp_20091230.zip coreserver_amp_20091230.zip]，包含Apache、Mysql、PHP，内含ZendDebugger、ZendOptimize、XDebug、APC。
+ * [http://coremvc.googlecode.com/files/coreserver_phpunit_20091230.zip coreserver_phpunit_20091230.zip]，包含PHPUnit，需要coreserver_amp_20091230.zip支持。
+ * [http://coremvc.googlecode.com/files/coreserver_phpdoc_20091230.zip coreserver_phpdoc_20091230.zip]，包含phpDocumentor，需要有coreserver_amp_20091230支持。
+ * [http://coremvc.googlecode.com/files/coreserver_svn_20091230.zip coreserver_svn_20091230.zip]，包含Subversion。
