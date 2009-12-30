@@ -1,4 +1,4 @@
-CoreServer适用于windows下开发PHP站点的完全绿色服务器端环境。
+CoreServer，是一款适用于windows下开发PHP站点的完全绿色服务器端环境。
 
 ----
 
