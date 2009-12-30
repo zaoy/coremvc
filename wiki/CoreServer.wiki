@@ -1,0 +1,23 @@
+CoreServer适用于windows下开发PHP站点的完全绿色服务器端环境。
+
+----
+
+特点：
+ * 采用控制台模式随点随起。
+ * 方便查看访问日志和SQL日志。
+ * 简单拷贝即可部署多个项目环境。
+ * 有详细的教程可自己动手制作。
+
+使用：下载--->解压--->使用。(解压到非中文目录)
+
+包含：Apache、Mysql、PHP、PHPUnit(可选)、phpDocumentor(可选)、Subversion(可选)。
+
+作者：Z (602000@gmail.com)。
+
+版本：20091230
+
+下载:
+ * [http://coremvc.googlecode.com/files/coreserver_amp_20091230.zip coreserver_amp_20091230.zip]，包含Apache、Mysql、PHP，内含ZendDebugger、ZendOptimize、XDebug、APC。
+ * [http://coremvc.googlecode.com/files/coreserver_phpunit_20091230.zip coreserver_phpunit_20091230.zip]，包含PHPUnit，需要coreserver_amp_20091230.zip支持。
+ * [http://coremvc.googlecode.com/files/coreserver_phpdoc_20091230.zip coreserver_phpdoc_20091230.zip]，包含phpDocumentor，需要有coreserver_amp_20091230支持。
+ * [http://coremvc.googlecode.com/files/coreserver_svn_20091230.zip coreserver_svn_20091230.zip]，包含Subversion。
