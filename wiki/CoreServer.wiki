@@ -1,19 +1,67 @@
-CoreServer，是一款适用于windows下开发PHP站点的完全绿色服务器端环境。
+#labels Featured
+CoreServer是一款适用于windows下开发PHP站点的完全绿色服务器端集成环境。
 
 ----
 
-特点：①采用控制台模式随点随起，②方便查看访问日志和SQL日志，③简单拷贝即可部署多个项目环境，④有详细的教程可自己动手制作。
+*目标*：快速搭建Windows下开发PHP站点的绿色本地服务器端调试环境。
 
-使用：下载--->解压--->使用。(解压到非中文目录)
+*安装*：
 
-包含：Apache、Mysql、PHP、PHPUnit(可选)、phpDocumentor(可选)、Subversion(可选)。
+1. 解压到任意非中文目录下。
 
-作者：Z (602000@gmail.com)。
+2. 点击“start.bat”选择即可。
 
-版本：20091230
+*包含*：
 
-下载:
- * [http://coremvc.googlecode.com/files/coreserver_amp_20091230.zip coreserver_amp_20091230.zip]，包含Apache、Mysql、PHP，内含ZendDebugger、ZendOptimize、XDebug、APC。
- * [http://coremvc.googlecode.com/files/coreserver_phpunit_20091230.zip coreserver_phpunit_20091230.zip]，包含PHPUnit，需要coreserver_amp_20091230.zip支持。
- * [http://coremvc.googlecode.com/files/coreserver_phpdoc_20091230.zip coreserver_phpdoc_20091230.zip]，包含phpDocumentor，需要有coreserver_amp_20091230支持。
- * [http://coremvc.googlecode.com/files/coreserver_svn_20091230.zip coreserver_svn_20091230.zip]，包含Subversion。
+1. Apache 2.2.14
+
+2. Mysql 5.1.42
+
+3. PHP 5.2.12（内含ZendDebugger、ZendOptimizer） 和 PHP 5.3.1（内含XDebug、APC）
+
+4. Nginx 0.8.31
+
+5. Subversion Server 1.6.6
+
+6. PHPUnit 3.4.6
+
+7. phpDocumentor 1.4.3
+
+*使用*：
+
+1. 点击start.bat进入控制中心，选择启动项，可根据需要自行编辑该批处理文件。
+
+2. 编写web程序直接放在src目录上即可。
+
+3. 访问web程序使用http://localhost/域名访问。
+
+4. 单独启动各项服务可执行server\*.bat
+
+5. mysql数据迁移仅拷贝server\mysqld-5.1.42\data即可。
+
+*备注*：
+
+1. 调试php-5.2.12使用ZendDebugger，代码缓存使用ZendOptimizer。
+
+2. 调试php-5.3.1使用XDebug，代码缓存使用APC。
+
+3. 查看apache日志，可打开server\apache-2.2.14-*.log。
+
+4. 查看nginx日志，可打开server\nginx-0.8.31-*.log。
+
+5. 查看mysql访问日志，可打开server\mysqld-5.1.42.log。
+
+6. mysql数据文件在server\mysqld-5.1.42\data上。
+
+7. SVN配置文件在server\subversion-1.6.6\conf上。
+
+8. SVN数据文件在server\subversion-1.6.6\svn_repository上。
+
+----
+
+*更新说明*：
+
+2010.01.11
+1. 修正启动apache+php5.2.12+mysql服务时，php连不上mysql的错误。
+2. 对控制中心的各项功能做了较大的改进。
+3. 升级到mysql 5.1.42、phpunit 3.4.6。
