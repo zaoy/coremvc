@@ -62,6 +62,9 @@ CoreServer是一款适用于windows下开发PHP站点的完全绿色服务器端
 *更新说明*：
 
 2010.01.11
+
 1. 修正启动apache+php5.2.12+mysql服务时，php连不上mysql的错误。
+
 2. 对控制中心的各项功能做了较大的改进。
+
 3. 升级到mysql 5.1.42、phpunit 3.4.6。
