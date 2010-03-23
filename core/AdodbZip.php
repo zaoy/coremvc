@@ -1,6 +1,6 @@
 <?php
 /**
- * AdodbZip 1.0
+ * AdodbZip 1.1
  * 
  * 作者：
  * Z(QQ号602000 QQ群5193883)
@@ -29,7 +29,7 @@
  * AdodbZip启动项
  */
 // 设定参数
-AdodbZip::$zip_url = 'http://nchc.dl.sourceforge.net/sourceforge/adodb/adodb508a.zip'; //［设置项］Adodb的Zip文件下载地址，文件比较大建议先下载或者解压
+AdodbZip::$zip_url = 'http://cdnetworks-kr-1.dl.sourceforge.net/project/adodb/adodb-php5-only/adodb-509-for-php5/adodb509.zip'; //［设置项］Adodb的Zip文件下载地址，文件比较大建议先下载或者解压
 AdodbZip::$zip_file = sys_get_temp_dir () . preg_replace ( '/^.*\/(adodb.*?\.zip)$/i', 'adodb/$1', AdodbZip::$zip_url ); //［设置项］Adodb的Zip文件缓存位置
 AdodbZip::$entry_dir = 'adodb5';
 AdodbZip::$extract_dir = sys_get_temp_dir () . 'adodb/' . AdodbZip::$entry_dir; //［设置项］Adodb程序文件缓存位置
