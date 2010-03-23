@@ -1,12 +1,10 @@
 <?php
-
 return array(
-    'provider' => 'adodb',
-    'dsn' => 'mysqlt',
-    'server' => 'localhost',
-    'username' => 'ODBC',
-    'password' => '',
-    'dbname' => 'test',
+	'connect_provider' => 'adodb',
+	'connect_dsn' => 'mysqlt',
+	'connect_server' => 'localhost',
+	'connect_username' => 'ODBC',
+	'connect_password' => '',
+	'connect_dbname' => 'test',
 );
-
 ?>

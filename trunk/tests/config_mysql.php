@@ -1,11 +1,9 @@
 <?php
-
 return array(
-    'provider' => 'mysql',
-    'server' => 'localhost',
-    'username' => 'ODBC',
-    'password' => '',
-    'dbname' => 'test',
+	'connect_provider' => 'mysql',
+	'connect_server' => 'localhost',
+	'connect_username' => 'ODBC',
+	'connect_password' => '',
+	'connect_dbname' => 'test',
 );
-
 ?>
