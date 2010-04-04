@@ -426,6 +426,8 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			'framework_action' => '',
 			'extension_path' => '',
 			'template_path' => '',
+			'template_search' => '',
+			'template_replace' => '',
 			'template_type' => '',
 			'template_show' => '',
 			'connect_provider' => '',
@@ -485,16 +487,22 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		// 1. 【基础功能】设置视图参数，返回参数数组。
 		//初始化
 		core::view(array(
+			'template_search'=>'',
+			'template_replace'=>'',
 			'template_type'=>'',
 			'template_show'=>'',
 		));
 		//返回值
 		$this->assertSame(array(
+			'template_search'=>'',
+			'template_replace'=>'',
 			'template_type'=>'',
 			'template_show'=>'',
 		),core::view(array()));
 		//设置值
 		$this->assertSame(array(
+			'template_search'=>'',
+			'template_replace'=>'',
 			'template_type'=>'smarty',
 			'template_show'=>'',
 		),core::view(array(
@@ -502,11 +510,15 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		)));
 		//取前值
 		$this->assertSame(array(
+			'template_search'=>'',
+			'template_replace'=>'',
 			'template_type'=>'smarty',
 			'template_show'=>'',
 		),core::view(array()));
 		//再设置
 		$this->assertSame(array(
+			'template_search'=>'',
+			'template_replace'=>'',
 			'template_type'=>'smarty',
 			'template_show'=>false,
 		),core::view(array(
@@ -514,14 +526,20 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		)));
 		//再取前
 		$this->assertSame(array(
+			'template_search'=>'',
+			'template_replace'=>'',
 			'template_type'=>'smarty',
 			'template_show'=>false,
 		),core::view(array()));
 		//恢复值
 		$this->assertSame(array(
+			'template_search'=>'',
+			'template_replace'=>'',
 			'template_type'=>'',
 			'template_show'=>'',
 		),core::view(array(
+			'template_search'=>'',
+			'template_replace'=>'',
 			'template_type'=>'',
 			'template_show'=>'',
 		)));
@@ -537,12 +555,16 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		$this->assertSame('abc', core::view('@tests/view_2_1.php',array('z'=>'b'),'include',false));
 		//设置值
 		core::view(array(
+			'template_search'=>'.tpl',
+			'template_replace'=>'.php',
 			'template_type'=>'',
 			'template_show'=>false,
 		));
-		$this->assertSame('abc', core::view('@tests/view_2_1.php',array('z'=>'b')));
+		$this->assertSame('abc', core::view('@tests/view_2_1.tpl',array('z'=>'b')));
 		//恢复值
 		core::view(array(
+			'template_search'=>'',
+			'template_replace'=>'',
 			'template_type'=>'',
 			'template_show'=>'',
 		));
@@ -554,12 +576,16 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		$this->assertSame('abc', core::view('@tests/view_2_2.php',array('z'=>'b'),'string',false));
 		//设置值
 		core::view(array(
+			'template_search'=>'.tpl',
+			'template_replace'=>'.php',
 			'template_type'=>'string',
 			'template_show'=>false,
 		));
-		$this->assertSame('abc', core::view('@tests/view_2_2.php',array('z'=>'b')));
+		$this->assertSame('abc', core::view('@tests/view_2_2.tpl',array('z'=>'b')));
 		//恢复值
 		core::view(array(
+			'template_search'=>'',
+			'template_replace'=>'',
 			'template_type'=>'',
 			'template_show'=>'',
 		));
@@ -573,12 +599,16 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		$this->assertSame('abc', core::view('@tests/view_2_3.php',array('z'=>'b'),'smarty',false));
 		//设置值
 		core::view(array(
+			'template_search'=>'.tpl',
+			'template_replace'=>'.php',
 			'template_type'=>'smarty',
 			'template_show'=>false,
 		));
-		$this->assertSame('abc', core::view('@tests/view_2_3.php',array('z'=>'b')));
+		$this->assertSame('abc', core::view('@tests/view_2_3.tpl',array('z'=>'b')));
 		//恢复值
 		core::view(array(
+			'template_search'=>'',
+			'template_replace'=>'',
 			'template_type'=>'',
 			'template_show'=>'',
 		));

@@ -2,7 +2,7 @@
 /**
  * CoreMVC核心模块
  * 
- * @version 1.0.0
+ * @version 1.1.0 alpha
  * @author Z <602000@gmail.com>
  * @link http://code.google.com/p/coremvc/
  */
@@ -143,6 +143,30 @@ class core {
 	 * </code>
 	 */
 	const path_template_path = '';
+	
+	/**
+	 * 视图模板路径标识符
+	 *
+	 * + 作用：视图模板路径的标识符。
+	 * + 定义：该值范围为字符串或空串。
+	 * <code>
+	 *const view_template_search = ''; //默认为不使用模板路径标识符
+	 *const view_template_search = '.php'; //模板路径使用".php"为标识符
+	 * </code>
+	 */
+	const view_template_search = '';
+	
+	/**
+	 * 视图模板路径替换值
+	 *
+	 * + 作用：视图模板路径的标识符替换成该值。
+	 * + 定义：该值范围为字符串或空串。
+	 * <code>
+	 *const view_template_replace = ''; //默认不进行模板路径替换值为空
+	 *const view_template_replace = '.tpl'; //如果使用模板路径标识符，则模板路径标识符替换成".tpl"
+	 * </code>
+	 */
+	const view_template_replace = '';
 	
 	/**
 	 * 视图模板类型
@@ -354,7 +378,7 @@ class core {
 	 * + 作用：SQL语句里会将表名前缀标识符替换成该值。（对mysql/pdo/adodb有效）
 	 * + 定义：该值范围为字符串或空串。
 	 * <code>
-	 *const db_prefix_replace = ''; //默认不进行表名前缀替换
+	 *const db_prefix_replace = ''; //默认不进行表名前缀替换值为空
 	 *const db_prefix_replace = 'sample_'; //如果使用表名前缀标识符，则前缀标识符替换成"sample_"
 	 * </code>
 	 */
@@ -802,10 +826,10 @@ class core {
 			}
 			static $static_config1 = array ('autoload_enable' => '', 'autoload_path' => '', 'autoload_extensions' => '', 'framework_enable' => '', 
 					'framework_require' => '', 'framework_module' => '', 'framework_action' => '', 'extension_path' => '', 'template_path' => '', 
-					'template_type' => '', 'template_show' => '', 'connect_provider' => '', 'connect_dsn' => '', 'connect_type' => '', 
-					'connect_server' => '', 'connect_username' => '', 'connect_password' => '', 'connect_new_link' => '', 'connect_client_flags' => '', 
-					'connect_dbname' => '', 'connect_charset' => '', 'connect_port' => '', 'connect_socket' => '', 'connect_driver_options' => '', 
-					'prefix_search' => '', 'prefix_replace' => '' );
+					'template_search' => '', 'template_replace' => '', 'template_type' => '', 'template_show' => '', 'connect_provider' => '', 
+					'connect_dsn' => '', 'connect_type' => '', 'connect_server' => '', 'connect_username' => '', 'connect_password' => '', 
+					'connect_new_link' => '', 'connect_client_flags' => '', 'connect_dbname' => '', 'connect_charset' => '', 'connect_port' => '', 
+					'connect_socket' => '', 'connect_driver_options' => '', 'prefix_search' => '', 'prefix_replace' => '' );
 			if ($config === 1) {
 				$config_array = $static_config1;
 				break;
@@ -816,9 +840,10 @@ class core {
 					'autoload_extensions' => self::stub_autoload_extensions, 'framework_enable' => self::main_framework_enable, 
 					'framework_require' => self::main_framework_require, 'framework_module' => self::main_framework_module, 
 					'framework_action' => self::main_framework_action, 'extension_path' => self::path_extension_path, 
-					'template_path' => self::path_template_path, 'template_type' => self::view_template_type, 'template_show' => self::view_template_show, 
-					'connect_provider' => self::db_connect_provider, 'connect_dsn' => self::db_connect_dsn, 'connect_type' => self::db_connect_type, 
-					'connect_server' => self::db_connect_server, 'connect_username' => self::db_connect_username, 
+					'template_path' => self::path_template_path, 'template_search' => self::view_template_search, 
+					'template_replace' => self::view_template_replace, 'template_type' => self::view_template_type, 
+					'template_show' => self::view_template_show, 'connect_provider' => self::db_connect_provider, 'connect_dsn' => self::db_connect_dsn, 
+					'connect_type' => self::db_connect_type, 'connect_server' => self::db_connect_server, 'connect_username' => self::db_connect_username, 
 					'connect_password' => self::db_connect_password, 'connect_new_link' => self::db_connect_new_link, 
 					'connect_client_flags' => self::db_connect_client_flags, 'connect_dbname' => self::db_connect_dbname, 
 					'connect_charset' => self::db_connect_charset, 'connect_port' => self::db_connect_port, 'connect_socket' => self::db_connect_socket, 
@@ -923,7 +948,8 @@ class core {
 		static $_static_config = null;
 		if ($_static_config === null) {
 			$_static_config = self::init ( - 3 );
-			$_static_config = array ('template_type' => $_static_config ['template_type'], 'template_show' => $_static_config ['template_show'] );
+			$_static_config = array ('template_search' => $_static_config ['template_search'], 'template_replace' => $_static_config ['template_replace'], 
+					'template_type' => $_static_config ['template_type'], 'template_show' => $_static_config ['template_show'] );
 		}
 		if (is_array ( $_view_file )) {
 			foreach ( $_static_config as $key => $value ) {
@@ -935,7 +961,11 @@ class core {
 		isset ( $_view_show ) and $_static_config ['template_show'] = $_view_show;
 		
 		// 【基础功能】原生模板和字符串模板
-		$_view_file2 = self::path ( $_view_file, 'template' );
+		if ($_static_config ['template_search'] !== '' && $_static_config ['template_search'] !== $_static_config ['template_replace']) {
+			$_view_file2 = self::path ( str_replace ( $_static_config ['template_search'], $_static_config ['template_replace'], $_view_file ), 'template' );
+		} else {
+			$_view_file2 = self::path ( $_view_file, 'template' );
+		}
 		$_view_vars2 = is_array ( $_view_vars ) ? $_view_vars : array ();
 		$_view_type2 = $_static_config ['template_type'] === '' ? 'include' : $_static_config ['template_type'];
 		$_view_show2 = $_static_config ['template_show'] === '' ? true : $_static_config ['template_show'];
