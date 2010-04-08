@@ -2,7 +2,7 @@
 /**
  * CoreMVC核心模块
  * 
- * @version 1.1.0 alpha
+ * @version 1.1.0 alpha 2
  * @author Z <602000@gmail.com>
  * @link http://code.google.com/p/coremvc/
  */
@@ -115,6 +115,18 @@ class core {
 	 * </code>
 	 */
 	const main_framework_action = '';
+	
+	/**
+	 * 使用框架失败时隐藏
+	 *
+	 * + 作用：设置使用框架失败时隐藏。
+	 * + 定义：该值范围为字符串或空串。
+	 * <code>
+	 *const main_framework_hidden = ''; //默认为框架失败时隐藏
+	 *const main_framework_hidden = false; //不隐藏只返回布尔值
+	 * </code>
+	 */
+	const main_framework_hidden = '';
 	
 	/**
 	 * 扩展模块路径
@@ -462,14 +474,14 @@ class core {
 	 * @param string $framework_action
 	 * @return bool
 	 */
-	static public function main($framework_enable = null, $framework_require = null, $framework_module = null, $framework_action = null) {
+	static public function main($framework_enable = null, $framework_require = null, $framework_module = null, $framework_action = null, $framework_hidden = null) {
 		
 		// 【基础功能】设置入口参数
 		static $static_config = null;
 		if ($static_config === null) {
 			$static_config = self::init ( - 3 );
 			$static_config = array ('framework_enable' => $static_config ['framework_enable'], 'framework_require' => $static_config ['framework_require'], 
-					'framework_module' => $static_config ['framework_module'], 'framework_action' => $static_config ['framework_action'] );
+					'framework_module' => $static_config ['framework_module'], 'framework_action' => $static_config ['framework_action'], 'framework_hidden' => $static_config ['framework_hidden'] );
 		}
 		if (is_array ( $framework_enable )) {
 			foreach ( $static_config as $key => $value ) {
@@ -481,6 +493,7 @@ class core {
 		isset ( $framework_require ) and $static_config ['framework_require'] = $framework_require;
 		isset ( $framework_module ) and $static_config ['framework_module'] = $framework_module;
 		isset ( $framework_action ) and $static_config ['framework_action'] = $framework_action;
+		isset ( $framework_hidden ) and $static_config ['framework_hidden'] = $framework_hidden;
 		
 		// 【基础功能】使用框架功能
 		while ( $static_config ['framework_enable'] ) {
@@ -700,10 +713,12 @@ class core {
 		;
 		
 		// 【基础功能】模拟文件隐藏效果
-		if (PHP_SAPI == 'cli') {
-			echo ('Could not open input file: ' . basename ( $_SERVER ['SCRIPT_FILENAME'] ) . PHP_EOL);
-		} else {
-			header ( "HTTP/1.0 404 Not Found" );
+		if ($static_config ['framework_hidden'] !== false) {
+			if (PHP_SAPI == 'cli') {
+				echo ('Could not open input file: ' . basename ( $_SERVER ['SCRIPT_FILENAME'] ) . PHP_EOL);
+			} else {
+				header ( "HTTP/1.0 404 Not Found" );
+			}
 		}
 		
 		return false;
@@ -825,7 +840,7 @@ class core {
 				break;
 			}
 			static $static_config1 = array ('autoload_enable' => '', 'autoload_path' => '', 'autoload_extensions' => '', 'framework_enable' => '', 
-					'framework_require' => '', 'framework_module' => '', 'framework_action' => '', 'extension_path' => '', 'template_path' => '', 
+					'framework_require' => '', 'framework_module' => '', 'framework_action' => '', 'framework_hidden' => '', 'extension_path' => '', 'template_path' => '', 
 					'template_search' => '', 'template_replace' => '', 'template_type' => '', 'template_show' => '', 'connect_provider' => '', 
 					'connect_dsn' => '', 'connect_type' => '', 'connect_server' => '', 'connect_username' => '', 'connect_password' => '', 
 					'connect_new_link' => '', 'connect_client_flags' => '', 'connect_dbname' => '', 'connect_charset' => '', 'connect_port' => '', 
@@ -839,7 +854,7 @@ class core {
 			static $static_config2 = array ('autoload_enable' => self::stub_autoload_enable, 'autoload_path' => self::stub_autoload_path, 
 					'autoload_extensions' => self::stub_autoload_extensions, 'framework_enable' => self::main_framework_enable, 
 					'framework_require' => self::main_framework_require, 'framework_module' => self::main_framework_module, 
-					'framework_action' => self::main_framework_action, 'extension_path' => self::path_extension_path, 
+					'framework_action' => self::main_framework_action,'framework_hidden' => self::main_framework_hidden, 'extension_path' => self::path_extension_path, 
 					'template_path' => self::path_template_path, 'template_search' => self::view_template_search, 
 					'template_replace' => self::view_template_replace, 'template_type' => self::view_template_type, 
 					'template_show' => self::view_template_show, 'connect_provider' => self::db_connect_provider, 'connect_dsn' => self::db_connect_dsn, 
