@@ -132,7 +132,6 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			'framework_require'=>'',
 			'framework_module'=>'',
 			'framework_action'=>'',
-			'framework_hidden'=>'',
 		),core::main(array()));
 		//设置值
 		$this->assertSame(array(
@@ -140,7 +139,6 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			'framework_require'=>'',
 			'framework_module'=>'',
 			'framework_action'=>'[do]!main',
-			'framework_hidden'=>'',
 		),core::main(array(
 			'framework_enable'=>true,
 			'framework_action'=>'[do]!main',
@@ -151,7 +149,6 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			'framework_require'=>'',
 			'framework_module'=>'',
 			'framework_action'=>'[do]!main',
-			'framework_hidden'=>'',
 		),core::main(array()));
 		//再设置
 		$this->assertSame(array(
@@ -159,11 +156,9 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			'framework_require'=>'@module',
 			'framework_module'=>'[go]',
 			'framework_action'=>'[do]!main',
-			'framework_hidden'=>false,
 		),core::main(array(
 			'framework_require'=>'@module',
 			'framework_module'=>'[go]',
-			'framework_hidden'=>false,
 		)));
 		//再取前
 		$this->assertSame(array(
@@ -171,7 +166,6 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			'framework_require'=>'@module',
 			'framework_module'=>'[go]',
 			'framework_action'=>'[do]!main',
-			'framework_hidden'=>false,
 		),core::main(array()));
 		//恢复值
 		$this->assertSame(array(
@@ -179,13 +173,11 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			'framework_require'=>'',
 			'framework_module'=>'',
 			'framework_action'=>'',
-			'framework_hidden'=>'',
 		),core::main(array(
 			'framework_enable'=>'',
 			'framework_require'=>'',
 			'framework_module'=>'',
 			'framework_action'=>'',
-			'framework_hidden'=>'',
 		)));
 		
 		// 2. 【基础功能】使用框架功能，默认关闭。
@@ -232,6 +224,26 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		if(function_exists('get_called_class')){
 			$this->assertTrue(core::main(true,'@tests/main_2_4.php','namespace_2_4\main_2_4','test_2_4'));
 		}
+		//新增测试
+		$this->assertSame(dirname(__FILE__).'/main_2_2.php',core::main('require','@tests/main_2_2.php'));
+		$this->assertFalse(core::main('require','@tests/main_2_2_a.php'));
+		$this->assertSame('main_2_2',core::main('module','@tests/main_2_2.php','main_2_2'));
+		$this->assertFalse(core::main('module','@tests/main_2_2_a.php'));
+		$this->assertFalse(core::main('module','@tests/main_2_2.php','main_2_2_a'));
+		$this->assertSame('test_2_2',core::main('action','@tests/main_2_2.php','main_2_2','test_2_2'));
+		$this->assertFalse(core::main('action','@tests/main_2_2_a.php'));
+		$this->assertFalse(core::main('action','@tests/main_2_2.php','main_2_2_a'));
+		$this->assertFalse(core::main('action','@tests/main_2_2.php','main_2_2','test_2_2_a'));
+		$this->assertEquals(array('main_2_2','test_2_2'),core::main('module,action','@tests/main_2_2.php','main_2_2','test_2_2'));
+		$this->assertFalse(core::main('module,action','@tests/main_2_2_a.php'));
+		$this->assertFalse(core::main('module,action','@tests/main_2_2.php','main_2_2_a'));
+		$this->assertFalse(core::main('module,action','@tests/main_2_2.php','main_2_2','test_2_2_a'));
+		ob_start();
+		$this->assertNull(core::main('return','@tests/main_2_2.php','main_2_2','test_2_2'));
+		$this->assertSame('main_2_2_a', ob_get_clean());
+		ob_start();
+		$this->assertTrue(core::main('manual','@tests/main_2_2.php','main_2_2','test_2_2'));
+		$this->assertSame('main_2_2_a', ob_get_clean());
 		//恢复原来值
 		core::main(array(
 			'framework_enable'=>'',
@@ -251,20 +263,12 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		ob_start();
 		$this->assertFalse(core::main());
 		$this->assertSame('Could not open input file: '.basename($_SERVER ['SCRIPT_FILENAME']).PHP_EOL, ob_get_clean());
-		//只返回
-		core::main(array(
-			'framework_hidden'=>false,
-		));
-		ob_start();
-		$this->assertFalse(core::main());
-		$this->assertSame('', ob_get_clean());
 		//恢复原来值
 		core::main(array(
 			'framework_enable'=>'',
 			'framework_require'=>'',
 			'framework_module'=>'',
 			'framework_action'=>'',
-			'framework_hidden'=>'',
 		));
 		
 	}
@@ -448,7 +452,6 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			'framework_require' => '',
 			'framework_module' => '',
 			'framework_action' => '',
-			'framework_hidden' => '',
 			'extension_path' => '',
 			'template_path' => '',
 			'template_search' => '',

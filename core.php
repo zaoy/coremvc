@@ -2,7 +2,7 @@
 /**
  * CoreMVC核心模块
  * 
- * @version 1.1.0 alpha 2
+ * @version 1.1.0 alpha 3
  * @author Z <602000@gmail.com>
  * @link http://code.google.com/p/coremvc/
  */
@@ -70,7 +70,13 @@ class core {
 	 * + 定义：该值范围为逻辑值或空串。
 	 * <code>
 	 *const main_framework_enable = ''; //默认关闭
-	 *const main_framework_enable = true; //打开使用框架功能
+	 *const main_framework_enable = true; //打开使用框架功能，返回true/false
+	 *const main_framework_enable = 'require'; //返回require路径或false
+	 *const main_framework_enable = 'module'; //返回module类名或false
+	 *const main_framework_enable = 'action'; //返回action方法径或false
+	 *const main_framework_enable = 'module,action'; //返回数组形式的module类名和action方法名或false
+	 *const main_framework_enable = 'manual'; //打开使用框架功能，但不自动隐藏，返回true/false
+	 *const main_framework_enable = 'return'; //打开使用框架功能，但不自动隐藏，返回方法的返回值
 	 * </code>
 	 */
 	const main_framework_enable = '';
@@ -115,18 +121,6 @@ class core {
 	 * </code>
 	 */
 	const main_framework_action = '';
-	
-	/**
-	 * 使用框架失败时隐藏
-	 *
-	 * + 作用：设置使用框架失败时隐藏。
-	 * + 定义：该值范围为字符串或空串。
-	 * <code>
-	 *const main_framework_hidden = ''; //默认为框架失败时隐藏
-	 *const main_framework_hidden = false; //不隐藏只返回布尔值
-	 * </code>
-	 */
-	const main_framework_hidden = '';
 	
 	/**
 	 * 扩展模块路径
@@ -468,20 +462,20 @@ class core {
 	 *sample::main (array('framework_enable'=>true,'framework_action'=>'[action]Action')); //设置入口参数
 	 *sample::stub () and sample::main (true,null,null,'[action]Action'); //只有直接访问sample模块时使用自定义框架
 	 * </code>
-	 * @param bool $framework_enable
+	 * @param mix $framework_enable
 	 * @param string $framework_require
 	 * @param string $framework_mdoule
 	 * @param string $framework_action
 	 * @return bool
 	 */
-	static public function main($framework_enable = null, $framework_require = null, $framework_module = null, $framework_action = null, $framework_hidden = null) {
+	static public function main($framework_enable = null, $framework_require = null, $framework_module = null, $framework_action = null) {
 		
 		// 【基础功能】设置入口参数
 		static $static_config = null;
 		if ($static_config === null) {
 			$static_config = self::init ( - 3 );
 			$static_config = array ('framework_enable' => $static_config ['framework_enable'], 'framework_require' => $static_config ['framework_require'], 
-					'framework_module' => $static_config ['framework_module'], 'framework_action' => $static_config ['framework_action'], 'framework_hidden' => $static_config ['framework_hidden'] );
+					'framework_module' => $static_config ['framework_module'], 'framework_action' => $static_config ['framework_action'] );
 		}
 		if (is_array ( $framework_enable )) {
 			foreach ( $static_config as $key => $value ) {
@@ -493,7 +487,6 @@ class core {
 		isset ( $framework_require ) and $static_config ['framework_require'] = $framework_require;
 		isset ( $framework_module ) and $static_config ['framework_module'] = $framework_module;
 		isset ( $framework_action ) and $static_config ['framework_action'] = $framework_action;
-		isset ( $framework_hidden ) and $static_config ['framework_hidden'] = $framework_hidden;
 		
 		// 【基础功能】使用框架功能
 		while ( $static_config ['framework_enable'] ) {
@@ -525,6 +518,7 @@ class core {
 				}
 				array_unshift ( $path_array, null );
 			}
+			$return_false = in_array ( $static_config ['framework_enable'], array ('require', 'module', 'action', 'module,action', 'manual', 'return' ), true );
 			// 3. 引用
 			if ($require != '') {
 				$result = '';
@@ -548,6 +542,9 @@ class core {
 						if (isset ( $file_array [$sub] )) {
 							$str = $file_array [$sub];
 						} else {
+							if ($return_false) {
+								return false;
+							}
 							break 2;
 						}
 					} elseif (strncmp ( $tok, 'p:', 2 ) == 0) {
@@ -555,6 +552,9 @@ class core {
 						if (isset ( $path_array [$sub] )) {
 							$str = $path_array [$str];
 						} else {
+							if ($return_false) {
+								return false;
+							}
 							break 2;
 						}
 					} else {
@@ -562,6 +562,9 @@ class core {
 						if (isset ( $_GET [$sub] )) {
 							$str = $_GET [$sub];
 						} else {
+							if ($return_false) {
+								return false;
+							}
 							break 2;
 						}
 					}
@@ -570,8 +573,16 @@ class core {
 					$result .= $str;
 				}
 				$result = self::path ( $result );
-				if (! is_file ( $result ))
+				if (! is_file ( $result )) {
+					if ($return_false) {
+						return false;
+					}
 					break;
+				} else {
+					if ($static_config ['framework_enable'] === 'require') {
+						return $result;
+					}
+				}
 				require_once $result;
 			}
 			// 4. 模块
@@ -596,6 +607,9 @@ class core {
 					if (isset ( $file_array [$sub] )) {
 						$str = $file_array [$sub];
 					} else {
+						if ($return_false) {
+							return false;
+						}
 						break 2;
 					}
 				} elseif (strncmp ( $tok, 'p:', 2 ) == 0) {
@@ -603,6 +617,9 @@ class core {
 					if (isset ( $path_array [$sub] )) {
 						$str = $path_array [$str];
 					} else {
+						if ($return_false) {
+							return false;
+						}
 						break 2;
 					}
 				} else {
@@ -610,6 +627,9 @@ class core {
 					if (isset ( $_GET [$sub] )) {
 						$str = $_GET [$sub];
 					} else {
+						if ($return_false) {
+							return false;
+						}
 						break 2;
 					}
 				}
@@ -634,7 +654,15 @@ class core {
 				if (in_array ( $module_name, $module_not )) {
 					continue;
 				}
-				if (preg_match ( '/(^|\\\\)[0-9]/', $module_name ) || ! class_exists ( $module_name )) {
+				if (preg_match ( '/(^|\\\\)[0-9]/', $module_name )) {
+					continue;
+				}
+				try {
+					$class_exists = class_exists ( $module_name );
+				} catch ( Exception $e ) {
+					continue;
+				}
+				if (! $class_exists) {
 					continue;
 				}
 				$class = new ReflectionClass ( $module_name );
@@ -643,9 +671,17 @@ class core {
 					break;
 				}
 			}
-			if ($module_now == '')
+			if ($module_now === '') {
+				if ($return_false) {
+					return false;
+				}
 				break;
-				// 5. 动作
+			} else {
+				if ($static_config ['framework_enable'] === 'module') {
+					return $module_now;
+				}
+			}
+			// 5. 动作
 			$result = '';
 			$pos1 = 0;
 			while ( true ) {
@@ -667,6 +703,9 @@ class core {
 					if (isset ( $file_array [$sub] )) {
 						$str = $file_array [$sub];
 					} else {
+						if ($return_false) {
+							return false;
+						}
 						break 2;
 					}
 				} elseif (strncmp ( $tok, 'p:', 2 ) == 0) {
@@ -674,6 +713,9 @@ class core {
 					if (isset ( $path_array [$sub] )) {
 						$str = $path_array [$str];
 					} else {
+						if ($return_false) {
+							return false;
+						}
 						break 2;
 					}
 				} else {
@@ -681,11 +723,18 @@ class core {
 					if (isset ( $_GET [$sub] )) {
 						$str = $_GET [$sub];
 					} else {
+						if ($return_false) {
+							return false;
+						}
 						break 2;
 					}
 				}
-				if (preg_match ( '/^[a-zA-Z0-9_\x7f-\xff]+$/', $str ) === false)
+				if (preg_match ( '/^[a-zA-Z0-9_\x7f-\xff]+$/', $str ) === false) {
+					if ($return_false) {
+						return false;
+					}
 					break 2;
+				}
 				$result .= $str;
 			}
 			$action_not = explode ( '!', $result );
@@ -704,16 +753,29 @@ class core {
 					break;
 				}
 			}
-			if ($action_now == '')
+			if ($action_now === '') {
+				if ($return_false) {
+					return false;
+				}
 				break;
-				// 6. 执行
-			call_user_func ( array ($module_now, $action_now ) );
+			} else {
+				if ($static_config ['framework_enable'] === 'action') {
+					return $action_now;
+				} elseif ($static_config ['framework_enable'] === 'module,action') {
+					return array ($module_now, $action_now );
+				}
+			}
+			// 6. 执行
+			if ($static_config ['framework_enable'] === 'return') {
+				return call_user_func ( array ($module_now, $action_now ) );
+			} else {
+				call_user_func ( array ($module_now, $action_now ) );
+			}
 			return true;
 		}
-		;
 		
 		// 【基础功能】模拟文件隐藏效果
-		if ($static_config ['framework_hidden'] !== false) {
+		if ($static_config ['framework_enable'] !== 'manual') {
 			if (PHP_SAPI == 'cli') {
 				echo ('Could not open input file: ' . basename ( $_SERVER ['SCRIPT_FILENAME'] ) . PHP_EOL);
 			} else {
@@ -840,7 +902,7 @@ class core {
 				break;
 			}
 			static $static_config1 = array ('autoload_enable' => '', 'autoload_path' => '', 'autoload_extensions' => '', 'framework_enable' => '', 
-					'framework_require' => '', 'framework_module' => '', 'framework_action' => '', 'framework_hidden' => '', 'extension_path' => '', 'template_path' => '', 
+					'framework_require' => '', 'framework_module' => '', 'framework_action' => '', 'extension_path' => '', 'template_path' => '', 
 					'template_search' => '', 'template_replace' => '', 'template_type' => '', 'template_show' => '', 'connect_provider' => '', 
 					'connect_dsn' => '', 'connect_type' => '', 'connect_server' => '', 'connect_username' => '', 'connect_password' => '', 
 					'connect_new_link' => '', 'connect_client_flags' => '', 'connect_dbname' => '', 'connect_charset' => '', 'connect_port' => '', 
@@ -854,7 +916,7 @@ class core {
 			static $static_config2 = array ('autoload_enable' => self::stub_autoload_enable, 'autoload_path' => self::stub_autoload_path, 
 					'autoload_extensions' => self::stub_autoload_extensions, 'framework_enable' => self::main_framework_enable, 
 					'framework_require' => self::main_framework_require, 'framework_module' => self::main_framework_module, 
-					'framework_action' => self::main_framework_action,'framework_hidden' => self::main_framework_hidden, 'extension_path' => self::path_extension_path, 
+					'framework_action' => self::main_framework_action, 'extension_path' => self::path_extension_path, 
 					'template_path' => self::path_template_path, 'template_search' => self::view_template_search, 
 					'template_replace' => self::view_template_replace, 'template_type' => self::view_template_type, 
 					'template_show' => self::view_template_show, 'connect_provider' => self::db_connect_provider, 'connect_dsn' => self::db_connect_dsn, 
