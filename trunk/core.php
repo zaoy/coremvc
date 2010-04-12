@@ -2,7 +2,7 @@
 /**
  * CoreMVC核心模块
  * 
- * @version 1.1.0 alpha 3
+ * @version 1.1.0 alpha 4
  * @author Z <602000@gmail.com>
  * @link http://code.google.com/p/coremvc/
  */
@@ -2297,7 +2297,7 @@ class core {
 			list ( $sql, $param ) = self::prepare ( 'selects', array ($field, $table, $where, $other ) );
 		}
 		// 分页
-		if (isset ( $other ['page'] )) {
+		if (is_array( $other ) && isset ( $other ['page'] )) {
 			$page = &$other ['page'];
 			if (is_array ( $page )) {
 				if (isset ( $page ['page'] )) {
