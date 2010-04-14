@@ -504,6 +504,8 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		$this->assertSame($config,core::init(-2));
 		$this->assertSame($config,core::init(-3));
 		$this->assertSame($config2,core::init(-4));
+		$this->assertSame(true,core::init('framework_enable'));
+
 		
 	}
 	

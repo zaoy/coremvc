@@ -2,7 +2,7 @@
 /**
  * CoreMVC核心模块
  * 
- * @version 1.1.0 alpha 4
+ * @version 1.1.0 alpha 5
  * @author Z <602000@gmail.com>
  * @link http://code.google.com/p/coremvc/
  */
@@ -889,6 +889,7 @@ class core {
 	 *core::init(-4); //仅返回各类参数为之前数组值
 	 *core::init(array('template_path'=>'@tpl')); //按数组设置参数
 	 *core::init('@config.php'); //读取文件设置参数
+	 *core::init('prefix_search'); //取当前表前缀参数
 	 * </code>
 	 * @param mix $config
 	 * @return array
@@ -978,6 +979,9 @@ class core {
 				break;
 			}
 			if (is_string ( $config )) {
+				if (array_key_exists ( $config , $static_config4)) {
+					return $static_config4 [$config];
+				}
 				$static_config4 = $static_config3;
 				$config_file = $config;
 				if (strncmp ( $config_file, '@', 1 ) == 0) {
