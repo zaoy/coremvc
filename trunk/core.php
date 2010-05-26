@@ -2,7 +2,7 @@
 /**
  * CoreMVC核心模块
  * 
- * @version 1.1.0 alpha 6
+ * @version 1.1.0 alpha 7
  * @author Z <602000@gmail.com>
  * @link http://code.google.com/p/coremvc/
  */
@@ -401,6 +401,32 @@ class core {
 	 * </code>
 	 */
 	const db_prefix_replace = '';
+	
+	/**
+	 * 数据库调试开关
+	 *
+	 * + 作用：数据库调试功能是否打开。
+	 * + 定义：该值范围为逻辑值或空串。
+	 * <code>
+	 *const db_debug_enable = ''; //默认关闭
+	 *const db_debug_enable = true; //打开数据库调试功能
+	 * </code>
+	 */
+	const db_debug_enable = '';
+	
+	/**
+	 * 数据库调试文件
+	 *
+	 * + 作用：数据库调试的记录文件。
+	 * + 定义：该值范围为字符串或空串。
+	 * <code>
+	 *const db_debug_file = ''; //默认直接显示调试信息
+	 *const db_debug_file = '@debug.log'; //将调式信息设置为相对核心文件路径的debug.log
+	 *const db_debug_file = 'debug.log'; //将调式信息设置为相对路径的debug.log
+	 *const db_debug_file = '/debug.log'; //将调式信息设置为绝对路径的debug.log
+	 * </code>
+	 */
+	const db_debug_file = '';
 	
 	/**
 	 * 存根函数（可继承）
@@ -931,7 +957,7 @@ class core {
 					'template_search' => '', 'template_replace' => '', 'template_type' => '', 'template_show' => '', 'connect_provider' => '', 
 					'connect_dsn' => '', 'connect_type' => '', 'connect_server' => '', 'connect_username' => '', 'connect_password' => '', 
 					'connect_new_link' => '', 'connect_client_flags' => '', 'connect_dbname' => '', 'connect_charset' => '', 'connect_port' => '', 
-					'connect_socket' => '', 'connect_driver_options' => '', 'prefix_search' => '', 'prefix_replace' => '' );
+					'connect_socket' => '', 'connect_driver_options' => '', 'prefix_search' => '', 'prefix_replace' => '', 'debug_enable' => '', 'debug_file' => '' );
 			if ($config === 1) {
 				$config_array = $static_config1;
 				break;
@@ -949,7 +975,8 @@ class core {
 					'connect_password' => self::db_connect_password, 'connect_new_link' => self::db_connect_new_link, 
 					'connect_client_flags' => self::db_connect_client_flags, 'connect_dbname' => self::db_connect_dbname, 
 					'connect_charset' => self::db_connect_charset, 'connect_port' => self::db_connect_port, 'connect_socket' => self::db_connect_socket, 
-					'connect_driver_options' => '', 'prefix_search' => self::db_prefix_search, 'prefix_replace' => self::db_prefix_replace );
+					'connect_driver_options' => '', 'prefix_search' => self::db_prefix_search, 'prefix_replace' => self::db_prefix_replace, 
+					'debug_enable' => self::db_debug_enable, 'debug_file' => self::db_debug_file );
 			if ($config === 2) {
 				$config_array = $static_config2;
 				break;
@@ -1167,7 +1194,7 @@ class core {
 					'connect_dbname' => $static_config ['connect_dbname'], 'connect_charset' => $static_config ['connect_charset'], 
 					'connect_port' => $static_config ['connect_port'], 'connect_socket' => $static_config ['connect_socket'], 
 					'connect_driver_options' => $static_config ['connect_driver_options'], 'prefix_search' => $static_config ['prefix_search'], 
-					'prefix_replace' => $static_config ['prefix_replace'] );
+					'prefix_replace' => $static_config ['prefix_replace'], 'debug_enable' => $static_config ['debug_enable'], 'debug_file' => $static_config ['debug_file'] );
 		}
 		if ($db_ref [$db_pos] === null) {
 			$db_ref [$db_pos] = $static_config;
@@ -1362,6 +1389,50 @@ class core {
 					$result = mysql_query ( 'EXECUTE ' . $stmt . $using, $dbh );
 				} else {
 					$result = mysql_query ( $sql, $dbh );
+				}
+				if ($args ['debug_enable'] === true) {
+					if (is_array ( $param )) {
+						$str2 = PHP_EOL . 'PARAMS: ' . count($param);
+						$i = 0;
+						foreach ( $param as $value ) {
+							$str2 .= PHP_EOL . '#'. ($i++) . ': ';
+							if ($value === null) {
+								$str2 .= '(null) NULL';
+							} elseif ($value === true) {
+								$str2 .= '(bool) 1';
+							} elseif ($value === false) {
+								$str2 .= '(bool) 0';
+							} elseif (is_int ( $value )) {
+								$str2 .= '(int) ' . ( string ) $value;
+							} elseif (is_float ( $value )) {
+								$str2 .= '(float) ' . ( string ) $value;
+							} else {
+								$str2 .= '(string) ' . ( string ) $value;
+							}
+						}
+					} else {
+						$str2 = '';
+					}
+					if (PHP_SAPI == 'cli' || $args ['debug_file'] != '') {
+						$str = PHP_EOL . 'SQL: ' . $sql;
+						$str .= $str2;
+						if ($result === false) {
+							$str .= PHP_EOL . mysql_errno ( $dbh ) . ": " . mysql_error ( $dbh );
+						}
+						$str .= PHP_EOL;
+					} else {
+						$str = PHP_EOL . '<hr />' . 'SQL: ' . htmlentities ( $sql );
+						$str .= str_replace ( PHP_EOL, '<br />', htmlentities ($str2) );
+						if ($result === false) {
+							$str .= '<br />'. mysql_errno ( $dbh ) . ": " . htmlentities ( mysql_error ( $dbh ) );
+						}
+						$str .= '<hr />' . PHP_EOL;
+					}
+					if ($args ['debug_file'] == '') {
+						echo $str;
+					} else {
+						file_put_contents ( self::path($args ['debug_file']), $str, FILE_APPEND );
+					}
 				}
 				if ($ref_flag) {
 					$ref = array ();
@@ -3010,7 +3081,7 @@ class core {
 				} else {
 					$sql = 'SELECT * FROM ' . $tablename . ' LIMIT 1';
 				}
-				$result = mysql_query ( $sql, $dbh );
+				$result = self::execute ( $sql );
 				if ($result === false) {
 					return false;
 				}
@@ -3324,7 +3395,7 @@ class core {
 				} else {
 					$sql = 'DELETE FROM ' . $tablename . ' LIMIT 1';
 				}
-				$result = ( bool ) mysql_query ( $sql, $dbh );
+				$result = ( bool ) self::execute ( $sql );
 				if ($result && mysql_affected_rows ( $dbh ) == 0) {
 					$result = false;
 				}
