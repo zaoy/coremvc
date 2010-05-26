@@ -2,7 +2,7 @@
 
 CoreMVC是PHP的一款小巧精致的MVC框架。
 
-2010年3月24日
+2010年5月26日
 
 〖版权说明〗
 
@@ -11,7 +11,7 @@ CoreMVC遵从new BSD许可证，所以您可以在法律允许的范围以内任
 /**
  * CoreMVC核心模块
  * 
- * @version 1.1.0
+ * @version 1.1.0 alpha 5
  * @author Z <602000@gmail.com>
  * @link http://code.google.com/p/coremvc/
  */
@@ -39,7 +39,7 @@ CoreMVC遵从new BSD许可证，所以您可以在法律允许的范围以内任
 
 9. 数据库连接自动化，可使用多个连接。
 
-10. 整个核心文件只有：1个类、30项设置、21个方法。
+10. 整个核心文件只有：1个类、31项设置、21个方法。
 
 
 ●　版本更新说明
@@ -51,6 +51,8 @@ CoreMVC 1.1.0 相对于 CoreMVC 1.0.0版本的改进
 2. 扩展了使用框架开关的参数设置。
 
 3. 增加了core::init取单个参数的功能。
+
+4. 增加了自动载入顺序的参数设置。
 
 
 CoreMVC 1.0.0 相对于 CoreMVC 0.7.3版本的改进
@@ -487,6 +489,8 @@ class core {
 	const stub_autoload_path = ''; // 自动载入路径
 
 	const stub_autoload_extensions = ''; // 自动载入后缀
+
+	const stub_autoload_prepend = ''; // 自动载入顺序
 
 	const main_framework_enable = ''; // 使用框架开关
 

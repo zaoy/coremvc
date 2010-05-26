@@ -55,12 +55,14 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			'autoload_enable'=>'',
 			'autoload_path'=>'',
 			'autoload_extensions'=>'',
+			'autoload_prepend'=>'',
 		),core::stub(array()));
 		//设置值
 		$this->assertSame(array(
 			'autoload_enable'=>true,
 			'autoload_path'=>'',
 			'autoload_extensions'=>'.php',
+			'autoload_prepend'=>'',
 		),core::stub(array(
 			'autoload_enable'=>true,
 			'autoload_extensions'=>'.php',
@@ -70,12 +72,14 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			'autoload_enable'=>true,
 			'autoload_path'=>'',
 			'autoload_extensions'=>'.php',
+			'autoload_prepend'=>'',
 		),core::stub(array()));
 		//再设置
 		$this->assertSame(array(
 			'autoload_enable'=>true,
 			'autoload_path'=>'@class',
 			'autoload_extensions'=>'.inc.php',
+			'autoload_prepend'=>'',
 		),core::stub(array(
 			'autoload_path'=>'@class',
 			'autoload_extensions'=>'.inc.php',
@@ -85,16 +89,19 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			'autoload_enable'=>true,
 			'autoload_path'=>'@class',
 			'autoload_extensions'=>'.inc.php',
+			'autoload_prepend'=>'',
 		),core::stub(array()));
 		//恢复值
 		$this->assertSame(array(
 			'autoload_enable'=>'',
 			'autoload_path'=>'',
 			'autoload_extensions'=>'',
+			'autoload_prepend'=>'',
 		),core::stub(array(
 			'autoload_enable'=>'',
 			'autoload_path'=>'',
 			'autoload_extensions'=>'',
+			'autoload_prepend'=>'',
 		)));
 		
 		// 2. 【基础功能】自动载入功能，默认关闭。
@@ -448,6 +455,7 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			'autoload_enable' => '',
 			'autoload_path' => '',
 			'autoload_extensions' => '',
+			'autoload_prepend' => '',
 			'framework_enable' => '',
 			'framework_require' => '',
 			'framework_module' => '',
