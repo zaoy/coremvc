@@ -11,7 +11,7 @@ CoreMVC遵从new BSD许可证，所以您可以在法律允许的范围以内任
 /**
  * CoreMVC核心模块
  * 
- * @version 1.1.0 alpha 5
+ * @version 1.1.0 alpha 7
  * @author Z <602000@gmail.com>
  * @link http://code.google.com/p/coremvc/
  */
@@ -53,6 +53,8 @@ CoreMVC 1.1.0 相对于 CoreMVC 1.0.0版本的改进
 3. 增加了core::init取单个参数的功能。
 
 4. 增加了自动载入顺序的参数设置。
+
+5. 增加了数据库调试功能（仅mysql）。
 
 
 CoreMVC 1.0.0 相对于 CoreMVC 0.7.3版本的改进

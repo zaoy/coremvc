@@ -481,6 +481,8 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			'connect_driver_options' => '',
 			'prefix_search' => '',
 			'prefix_replace' => '',
+			'debug_enable' => '',
+			'debug_file' => '',
 		);
 		//返回值
 		$this->assertSame($config,core::init());
@@ -675,6 +677,8 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			'connect_driver_options' => '',
 			'prefix_search' => '',
 			'prefix_replace' => '',
+			'debug_enable' => '',
+			'debug_file' => '',
 		);
 		//返回值
 		$this->assertSame($config,core::connect(array()));
