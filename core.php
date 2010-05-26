@@ -2,7 +2,7 @@
 /**
  * CoreMVC核心模块
  * 
- * @version 1.1.0 alpha 5
+ * @version 1.1.0 alpha 6
  * @author Z <602000@gmail.com>
  * @link http://code.google.com/p/coremvc/
  */
@@ -62,6 +62,18 @@ class core {
 	 * </code>
 	 */
 	const stub_autoload_extensions = '';
+	
+	/**
+	 * 自动载入顺序
+	 *
+	 * + 作用：自动载入的顺序，包括路径顺序
+	 * + 定义：该值范围为逻辑值或空串。
+	 * <code>
+	 *const stub_autoload_prepend = ''; //默认顺序在最后面
+	 *const stub_autoload_prepend = true; //顺序在最前面
+	 * </code>
+	 */
+	const stub_autoload_prepend = '';
 	
 	/**
 	 * 使用框架开关
@@ -403,16 +415,19 @@ class core {
 	 * @param bool $autoload_enable
 	 * @param string $autoload_path
 	 * @param string $autoload_extensions
+	 * @param bool $autoload_prepend
 	 * @return bool
 	 */
-	static public function stub($autoload_enable = null, $autoload_path = null, $autoload_extensions = null) {
+	static public function stub($autoload_enable = null, $autoload_path = null, $autoload_extensions = null, $autoload_prepend = null) {
 		
 		// 【基础功能】设置存根参数
 		static $static_config = null;
 		if ($static_config === null) {
 			$static_config = self::init ( - 3 );
-			$static_config = array ('autoload_enable' => $static_config ['autoload_enable'], 'autoload_path' => $static_config ['autoload_path'], 
-					'autoload_extensions' => $static_config ['autoload_extensions'] );
+			$static_config = array ('autoload_enable' => $static_config ['autoload_enable'], 
+					'autoload_path' => $static_config ['autoload_path'], 
+					'autoload_extensions' => $static_config ['autoload_extensions'], 
+					'autoload_prepend' => $static_config ['autoload_prepend'] );
 		}
 		static $static_autoload_realpath = null;
 		if (is_array ( $autoload_enable )) {
@@ -425,6 +440,7 @@ class core {
 		isset ( $autoload_enable ) and $static_config ['autoload_enable'] = $autoload_enable;
 		isset ( $autoload_path ) and $static_config ['autoload_path'] = $autoload_path;
 		isset ( $autoload_extensions ) and $static_config ['autoload_extensions'] = $autoload_extensions;
+		isset ( $autoload_prepend ) and $static_config ['autoload_prepend'] = $autoload_prepend;
 		
 		// 【基础功能】判断访问或者引用
 		foreach ( debug_backtrace ( false ) as $row ) {
@@ -441,12 +457,20 @@ class core {
 		if ($autoload_enable || $static_config ['autoload_enable'] && $static_autoload_realpath === null) {
 			$static_autoload_realpath = self::path ( $static_config ['autoload_path'] );
 			if ($static_autoload_realpath != '') {
-				set_include_path ( get_include_path () . PATH_SEPARATOR . $static_autoload_realpath );
+				if ( $static_config ['autoload_prepend'] === true ) {
+					set_include_path ( $static_autoload_realpath . PATH_SEPARATOR . get_include_path () );
+				} else {
+					set_include_path ( get_include_path () . PATH_SEPARATOR . $static_autoload_realpath );
+				}
 			}
 			if ($static_config ['autoload_extensions'] != '') {
 				spl_autoload_extensions ( $static_config ['autoload_extensions'] );
 			}
-			spl_autoload_register ();
+			if ( $static_config ['autoload_prepend'] === true ) {
+				spl_autoload_register ( null, true, true );
+			} else {
+				spl_autoload_register ();
+			}
 		}
 		
 		return true;
@@ -902,7 +926,7 @@ class core {
 				$config_array = array ();
 				break;
 			}
-			static $static_config1 = array ('autoload_enable' => '', 'autoload_path' => '', 'autoload_extensions' => '', 'framework_enable' => '', 
+			static $static_config1 = array ('autoload_enable' => '', 'autoload_path' => '', 'autoload_extensions' => '', 'autoload_prepend' => '', 'framework_enable' => '', 
 					'framework_require' => '', 'framework_module' => '', 'framework_action' => '', 'extension_path' => '', 'template_path' => '', 
 					'template_search' => '', 'template_replace' => '', 'template_type' => '', 'template_show' => '', 'connect_provider' => '', 
 					'connect_dsn' => '', 'connect_type' => '', 'connect_server' => '', 'connect_username' => '', 'connect_password' => '', 
@@ -915,7 +939,7 @@ class core {
 				return $static_config1;
 			}
 			static $static_config2 = array ('autoload_enable' => self::stub_autoload_enable, 'autoload_path' => self::stub_autoload_path, 
-					'autoload_extensions' => self::stub_autoload_extensions, 'framework_enable' => self::main_framework_enable, 
+					'autoload_extensions' => self::stub_autoload_extensions, 'autoload_prepend' => self::stub_autoload_prepend, 'framework_enable' => self::main_framework_enable, 
 					'framework_require' => self::main_framework_require, 'framework_module' => self::main_framework_module, 
 					'framework_action' => self::main_framework_action, 'extension_path' => self::path_extension_path, 
 					'template_path' => self::path_template_path, 'template_search' => self::view_template_search, 
