@@ -2,7 +2,7 @@
 /**
  * CoreMVC核心模块
  * 
- * @version 1.1.0 alpha 7
+ * @version 1.1.0 alpha 8
  * @author Z <602000@gmail.com>
  * @link http://code.google.com/p/coremvc/
  */
@@ -491,9 +491,11 @@ class core {
 			}
 			if ($static_config ['autoload_extensions'] != '') {
 				spl_autoload_extensions ( $static_config ['autoload_extensions'] );
+			} else {
+				spl_autoload_extensions ( '.inc,.php' );
 			}
 			if ( $static_config ['autoload_prepend'] === true ) {
-				spl_autoload_register ( null, true, true );
+				spl_autoload_register ( 'spl_autoload', true, true );
 			} else {
 				spl_autoload_register ();
 			}
@@ -1155,6 +1157,10 @@ class core {
 	 *);
 	 *core::connect($args);
 	 *
+	 * //设置数据库调试方式。
+	 *core::connect(array('debug_enable'=>true)); //页面回显方式
+	 *core::connect(array('debug_enable'=>true,'debug_file'=>'db.log')); //写入文件方式
+	 *
 	 * //返回连接序号。
 	 *echo core::connect();
 	 *echo core::connect(null, $ref);
@@ -1391,47 +1397,10 @@ class core {
 					$result = mysql_query ( $sql, $dbh );
 				}
 				if ($args ['debug_enable'] === true) {
-					if (is_array ( $param )) {
-						$str2 = PHP_EOL . 'PARAMS: ' . count($param);
-						$i = 0;
-						foreach ( $param as $value ) {
-							$str2 .= PHP_EOL . '#'. ($i++) . ': ';
-							if ($value === null) {
-								$str2 .= '(null) NULL';
-							} elseif ($value === true) {
-								$str2 .= '(bool) 1';
-							} elseif ($value === false) {
-								$str2 .= '(bool) 0';
-							} elseif (is_int ( $value )) {
-								$str2 .= '(int) ' . ( string ) $value;
-							} elseif (is_float ( $value )) {
-								$str2 .= '(float) ' . ( string ) $value;
-							} else {
-								$str2 .= '(string) ' . ( string ) $value;
-							}
-						}
+					if ($result === false) {
+						self::prepare( $sql, $param, null, true, $args ['debug_file'] , mysql_errno ( $dbh ), mysql_error ( $dbh ) );
 					} else {
-						$str2 = '';
-					}
-					if (PHP_SAPI == 'cli' || $args ['debug_file'] != '') {
-						$str = PHP_EOL . 'SQL: ' . $sql;
-						$str .= $str2;
-						if ($result === false) {
-							$str .= PHP_EOL . mysql_errno ( $dbh ) . ": " . mysql_error ( $dbh );
-						}
-						$str .= PHP_EOL;
-					} else {
-						$str = PHP_EOL . '<hr />' . 'SQL: ' . htmlentities ( $sql );
-						$str .= str_replace ( PHP_EOL, '<br />', htmlentities ($str2) );
-						if ($result === false) {
-							$str .= '<br />'. mysql_errno ( $dbh ) . ": " . htmlentities ( mysql_error ( $dbh ) );
-						}
-						$str .= '<hr />' . PHP_EOL;
-					}
-					if ($args ['debug_file'] == '') {
-						echo $str;
-					} else {
-						file_put_contents ( self::path($args ['debug_file']), $str, FILE_APPEND );
+						self::prepare( $sql, $param, null, true, $args ['debug_file'] );
 					}
 				}
 				if ($ref_flag) {
@@ -1453,9 +1422,9 @@ class core {
 			default :
 				$provider = $args ['connect_provider'];
 				if ($ref_flag) {
-					$result = call_user_func_array ( array ('db_' . $provider, 'execute' ), array ($dbh, $args, $sql, $param, &$ref ) );
+					$result = call_user_func_array ( array ('db_' . $provider, 'execute' ), array ($dbh, $args, __CLASS__, $sql, $param, &$ref ) );
 				} else {
-					$result = call_user_func_array ( array ('db_' . $provider, 'execute' ), array ($dbh, $args, $sql, $param ) );
+					$result = call_user_func_array ( array ('db_' . $provider, 'execute' ), array ($dbh, $args, __CLASS__, $sql, $param ) );
 				}
 				break;
 		
@@ -1467,7 +1436,7 @@ class core {
 	/**
 	 * 准备SQL语句
 	 *
-	 * + 作用：1.准备SQL语句，返回SQL和参数的数组；2.扩展方式
+	 * + 作用：1.准备SQL语句，返回SQL和参数的数组；2.调试SQL语句；3.扩展方式
 	 * + 示例：
 	 * <code>
 	 * // 获得SQL语句和参数
@@ -1478,19 +1447,29 @@ class core {
 	 *
 	 * // 获得子句
 	 *$sql = core::prepare('field',array('col1','col2'),true);
+	 *
+	 * // 调试SQL语句
+	 *core::prepare('SELECT ?,?',array(1,'a'),null,true); //页面显示SQL语句
+	 *core::prepare('SELECT ?,?',array(1,'a'),null,true,'db.log'); //将SQL语句写入文件
+	 *core::prepare('SELECT ?,?',array(1,'a'),null,true,null,mysql_errno($dbh),mysql_error($dbh)); //同时显示错误信息
 	 * </code>
 	 * @param string $sql
 	 * @param array $param
-	 * @param bool $bool
+	 * @param bool $format
+	 * @param bool $debug
+	 * @param string $output
+	 * @param string $errno
+	 * @param string $error
 	 * @return mix
 	 */
-	static public function prepare($sql, $param = null, $bool = null) {
+	static public function prepare($sql, $param = null, $format = null, $debug = null, $output = null, $errno = null, $error = null) {
 		
 		// 【基础功能】准备SQL语句
+		$mysql_escape_search = array ("\\", "\x00", "\n", "\r", "'", "\"", "\x1a" );
+		$mysql_escape_replace = array ("\\\\", "\\0", "\\n", "\\r", "\\'", "\\\"", "\\Z" );
 		if (strncmp ( $sql, 'mysql_escape_', 13 ) === 0) {
-			if ($bool) {
-				$mysql_escape_search = array ("\\", "\x00", "\n", "\r", "'", "\"", "\x1a" );
-				$mysql_escape_replace = array ("\\\\", "\\0", "\\n", "\\r", "\\'", "\\\"", "\\Z" );
+			$debug_provider = 'mysql';
+			if ($format) {
 				$return_sql = array ();
 				foreach ( $param as $key => $value ) {
 					if ($value === array () || $key === 'page' && $sql === 'mysql_escape_other') {
@@ -1593,7 +1572,7 @@ class core {
 						}
 					}
 				}
-				return $return_sql;
+				$return = $return_sql;
 			} else {
 				$return_sql = array ();
 				$return_param = array ();
@@ -1686,215 +1665,182 @@ class core {
 						}
 					}
 				}
-				return array ($return_sql, $return_param );
+				$return = array ($return_sql, $return_param );
 			}
-		}
-		if (strncmp ( $sql, 'mysql_', 6 ) !== 0) {
-			$dbh = self::connect ( true, $args );
-			switch ($args ['connect_provider']) {
-				case '' :
-				case 'mysql' :
-					$sql = 'mysql_' . $sql;
-					break;
-				default :
-					
-					// 【扩展功能】准备SQL语句
-					$provider = $args ['connect_provider'];
-					if ($args ['prefix_search'] !== '' && $args ['prefix_search'] !== $args ['prefix_replace']) {
-						$sql = str_replace ( $args ['prefix_search'], $args ['prefix_replace'], $sql );
-					}
-					return call_user_func ( array ('db_' . $provider, 'prepare' ), $dbh, $args, __CLASS__, $sql, $param, $bool );
-			
+		} else {
+			if (strncmp ( $sql, 'mysql_', 6 ) === 0) {
+				$mysql = $sql;
+				$sql = substr($sql,6);
+				$debug_provider = 'mysql';
+			} else {
+				$dbh = self::connect ( true, $args );
+				switch ($args ['connect_provider']) {
+					case '' :
+						$mysql = 'mysql_' . $sql;
+						$debug_provider = 'mysql';
+						break;
+					case 'mysql' :
+						$mysql = 'mysql_' . $sql;
+						$debug_provider = 'mysql';
+						break;
+					default :
+						$mysql = false;
+						$debug_provider = $args ['connect_provider'];
+						break;
+				}
 			}
-		}
-		switch ($sql) {
-			case 'mysql_selects' :
-				isset ( $param [0] ) or $param [0] = null;
-				isset ( $param [1] ) or $param [1] = null;
-				isset ( $param [2] ) or $param [2] = null;
-				isset ( $param [3] ) or $param [3] = null;
-				if ($bool) {
-					$field_sql = self::prepare ( 'mysql_field', $param [0], true );
-					$table_sql = self::prepare ( 'mysql_table', $param [1], true );
-					$where_sql = self::prepare ( 'mysql_where', $param [2], true );
-					$other_sql = self::prepare ( 'mysql_other', $param [3], true );
-					if ($field_sql === '') {
-						$field_sql = '*';
-					}
-					if ($table_sql === '') {
-						$return_sql = "SELECT $field_sql $other_sql";
-					} elseif ($where_sql === '') {
-						$return_sql = "SELECT $field_sql FROM $table_sql $other_sql";
-					} else {
-						$return_sql = "SELECT $field_sql FROM $table_sql WHERE $where_sql $other_sql";
-					}
-					return rtrim ( $return_sql );
-				} else {
-					list ( $field_sql, $field_param ) = self::prepare ( 'field', $param [0] );
-					list ( $table_sql, $table_param ) = self::prepare ( 'table', $param [1] );
-					list ( $where_sql, $where_param ) = self::prepare ( 'where', $param [2] );
-					list ( $other_sql, $other_param ) = self::prepare ( 'other', $param [3] );
-					if ($field_sql === '') {
-						$field_sql = '*';
-					}
-					if ($table_sql === '') {
-						$return_sql = "SELECT $field_sql $other_sql";
-						$return_param = array_merge ( $field_param, $other_param );
-					} elseif ($where_sql === '') {
-						$return_sql = "SELECT $field_sql FROM $table_sql $other_sql";
-						$return_param = array_merge ( $field_param, $table_param, $other_param );
-					} else {
-						$return_sql = "SELECT $field_sql FROM $table_sql WHERE $where_sql $other_sql";
-						$return_param = array_merge ( $field_param, $table_param, $where_param, $other_param );
-					}
-					return array (rtrim ( $return_sql ), $return_param );
-				}
-			case 'mysql_inserts' :
-			case 'mysql_replaces' :
-				isset ( $param [0] ) or $param [0] = null;
-				isset ( $param [1] ) or $param [1] = null;
-				isset ( $param [2] ) or $param [2] = null;
-				isset ( $param [3] ) or $param [3] = null;
-				$mysql_sql = strtoupper ( substr ( substr ( $sql, 6 ), 0, - 1 ) );
-				if ($bool) {
-					$table_sql = self::prepare ( 'mysql_table', $param [0], true );
-					$other_sql = self::prepare ( 'mysql_other', $param [3], true );
-					if (isset ( $param [2] )) {
-						$column_sql = self::prepare ( 'mysql_column', $param [1], true );
-						$value_sql = self::prepare ( 'mysql_value', $param [2], true );
-						$return_sql = "$mysql_sql $table_sql $column_sql VALUES $value_sql $other_sql";
-					} elseif (is_array ( $param [1] ) && count ( $param [1] ) > 0 && ! isset ( $param [1] [count ( $param [1] ) - 1] )) {
-						$set_sql = self::prepare ( 'mysql_set', $param [1], true );
-						$return_sql = "$mysql_sql $table_sql SET $set_sql $other_sql";
-					} else {
-						$column_sql = self::prepare ( 'mysql_column', $param [1], true );
-						$return_sql = "$mysql_sql $table_sql $column_sql $other_sql";
-					}
-					return rtrim ( $return_sql );
-				} else {
-					list ( $table_sql, $table_param ) = self::prepare ( 'mysql_table', $param [0] );
-					list ( $other_sql, $other_param ) = self::prepare ( 'mysql_other', $param [3] );
-					if (isset ( $param [2] )) {
-						list ( $column_sql, $column_param ) = self::prepare ( 'mysql_column', $param [1] );
-						list ( $value_sql, $value_param ) = self::prepare ( 'mysql_value', $param [2] );
-						$return_sql = "$mysql_sql $table_sql $column_sql VALUES $value_sql $other_sql";
-						$return_param = array_merge ( $table_param, $column_param, $value_param, $other_param );
-					} elseif (is_array ( $param [1] ) && count ( $param [1] ) > 0 && ! isset ( $param [1] [count ( $param [1] ) - 1] )) {
-						list ( $set_sql, $set_param ) = self::prepare ( 'mysql_set', $param [1] );
-						$return_sql = "$mysql_sql $table_sql SET $set_sql $other_sql";
-						$return_param = array_merge ( $table_param, $set_param, $other_param );
-					} else {
-						list ( $column_sql, $column_param ) = self::prepare ( 'mysql_column', $param [1] );
-						$return_sql = "$mysql_sql $table_sql $column_sql $other_sql";
-						$return_param = array_merge ( $table_param, $column_param, $other_param );
-					}
-					return array (rtrim ( $return_sql ), $return_param );
-				}
-			case 'mysql_updates' :
-				isset ( $param [0] ) or $param [0] = null;
-				isset ( $param [1] ) or $param [1] = null;
-				isset ( $param [2] ) or $param [2] = null;
-				isset ( $param [3] ) or $param [3] = null;
-				if ($bool) {
-					$table_sql = self::prepare ( 'mysql_table', $param [0], true );
-					$set_sql = self::prepare ( 'mysql_set', $param [1], true );
-					$where_sql = self::prepare ( 'mysql_where', $param [2], true );
-					$other_sql = self::prepare ( 'mysql_other', $param [3], true );
-					if ($where_sql === '') {
-						$return_sql = "UPDATE $table_sql SET $set_sql $other_sql";
-					} else {
-						$return_sql = "UPDATE $table_sql SET $set_sql WHERE $where_sql $other_sql";
-					}
-					return rtrim ( $return_sql );
-				} else {
-					list ( $table_sql, $table_param ) = self::prepare ( 'mysql_table', $param [0] );
-					list ( $set_sql, $set_param ) = self::prepare ( 'mysql_set', $param [1] );
-					list ( $where_sql, $where_param ) = self::prepare ( 'mysql_where', $param [2] );
-					list ( $other_sql, $other_param ) = self::prepare ( 'mysql_other', $param [3] );
-					if ($where_sql === '') {
-						$return_sql = "UPDATE $table_sql SET $set_sql $other_sql";
-						$return_param = array_merge ( $table_param, $set_param, $other_param );
-					} else {
-						$return_sql = "UPDATE $table_sql SET $set_sql WHERE $where_sql $other_sql";
-						$return_param = array_merge ( $table_param, $set_param, $where_param, $other_param );
-					}
-					return array (rtrim ( $return_sql ), $return_param );
-				}
-			case 'mysql_deletes' :
-				isset ( $param [0] ) or $param [0] = null;
-				isset ( $param [1] ) or $param [1] = null;
-				isset ( $param [2] ) or $param [2] = null;
-				isset ( $param [3] ) or $param [3] = null;
-				if ($bool) {
-					$field_sql = self::prepare ( 'mysql_field', $param [0], true );
-					$table_sql = self::prepare ( 'mysql_table', $param [1], true );
-					$where_sql = self::prepare ( 'mysql_where', $param [2], true );
-					$other_sql = self::prepare ( 'mysql_other', $param [3], true );
-					if ($where_sql === '') {
-						$return_sql = "DELETE $field_sql FROM $table_sql $other_sql";
-					} else {
-						$return_sql = "DELETE $field_sql FROM $table_sql WHERE $where_sql $other_sql";
-					}
-					return rtrim ( $return_sql );
-				} else {
-					list ( $field_sql, $field_param ) = self::prepare ( 'mysql_field', $param [0] );
-					list ( $table_sql, $table_param ) = self::prepare ( 'mysql_table', $param [1] );
-					list ( $where_sql, $where_param ) = self::prepare ( 'mysql_where', $param [2] );
-					list ( $other_sql, $other_param ) = self::prepare ( 'mysql_other', $param [3] );
-					if ($where_sql === '') {
-						$return_sql = "DELETE $field_sql FROM $table_sql $other_sql";
-						$return_param = array_merge ( $field_param, $table_param, $other_param );
-					} else {
-						$return_sql = "DELETE $field_sql FROM $table_sql WHERE $where_sql $other_sql";
-						$return_param = array_merge ( $field_param, $table_param, $where_param, $other_param );
-					}
-					return array (rtrim ( $return_sql ), $return_param );
-				}
-			case 'mysql_column' :
-				if (is_array ( $param )) {
-					$return_sql = '';
-					$expect = '';
-					foreach ( $param as $key => $value ) {
-						if ($value === null) {
-							$value = 'NULL';
-						} elseif ($value === true) {
-							$value = '1';
-						} elseif ($value === false) {
-							$value = '0';
-						} else {
-							$value = ( string ) $value;
+			switch ($mysql) {
+				case 'mysql_selects' :
+					isset ( $param [0] ) or $param [0] = null;
+					isset ( $param [1] ) or $param [1] = null;
+					isset ( $param [2] ) or $param [2] = null;
+					isset ( $param [3] ) or $param [3] = null;
+					if ($format) {
+						$field_sql = self::prepare ( 'mysql_field', $param [0], true );
+						$table_sql = self::prepare ( 'mysql_table', $param [1], true );
+						$where_sql = self::prepare ( 'mysql_where', $param [2], true );
+						$other_sql = self::prepare ( 'mysql_other', $param [3], true );
+						if ($field_sql === '') {
+							$field_sql = '*';
 						}
-						$return_sql .= $expect . $value;
-						$expect = ',';
-					}
-				} else {
-					$return_sql = ( string ) $param;
-				}
-				if ($return_sql !== '') {
-					$return_sql = '(' . $return_sql . ')';
-				}
-				return $bool ? $return_sql : array ($return_sql, array () );
-			case 'mysql_field' :
-			case 'mysql_table' :
-				if (is_array ( $param )) {
-					$return_sql = '';
-					$expect = '';
-					foreach ( $param as $key => $value ) {
-						if (is_array ( $value )) {
-							foreach ( $value as $value2 ) {
-								if ($value2 === null) {
-									$value2 = 'NULL';
-								} elseif ($value2 === true) {
-									$value2 = '1';
-								} elseif ($value2 === false) {
-									$value2 = '0';
-								} else {
-									$value2 = ( string ) $value2;
-								}
-								$return_sql .= $expect . $value2;
-								$expect = ' ';
-							}
+						if ($table_sql === '') {
+							$return_sql = "SELECT $field_sql $other_sql";
+						} elseif ($where_sql === '') {
+							$return_sql = "SELECT $field_sql FROM $table_sql $other_sql";
 						} else {
+							$return_sql = "SELECT $field_sql FROM $table_sql WHERE $where_sql $other_sql";
+						}
+						$return = rtrim ( $return_sql );
+					} else {
+						list ( $field_sql, $field_param ) = self::prepare ( 'field', $param [0] );
+						list ( $table_sql, $table_param ) = self::prepare ( 'table', $param [1] );
+						list ( $where_sql, $where_param ) = self::prepare ( 'where', $param [2] );
+						list ( $other_sql, $other_param ) = self::prepare ( 'other', $param [3] );
+						if ($field_sql === '') {
+							$field_sql = '*';
+						}
+						if ($table_sql === '') {
+							$return_sql = "SELECT $field_sql $other_sql";
+							$return_param = array_merge ( $field_param, $other_param );
+						} elseif ($where_sql === '') {
+							$return_sql = "SELECT $field_sql FROM $table_sql $other_sql";
+							$return_param = array_merge ( $field_param, $table_param, $other_param );
+						} else {
+							$return_sql = "SELECT $field_sql FROM $table_sql WHERE $where_sql $other_sql";
+							$return_param = array_merge ( $field_param, $table_param, $where_param, $other_param );
+						}
+						$return = array (rtrim ( $return_sql ), $return_param );
+					}
+					break;
+				case 'mysql_inserts' :
+				case 'mysql_replaces' :
+					isset ( $param [0] ) or $param [0] = null;
+					isset ( $param [1] ) or $param [1] = null;
+					isset ( $param [2] ) or $param [2] = null;
+					isset ( $param [3] ) or $param [3] = null;
+					$mysql_sql = strtoupper ( substr ( substr ( $mysql, 6 ), 0, - 1 ) );
+					if ($format) {
+						$table_sql = self::prepare ( 'mysql_table', $param [0], true );
+						$other_sql = self::prepare ( 'mysql_other', $param [3], true );
+						if (isset ( $param [2] )) {
+							$column_sql = self::prepare ( 'mysql_column', $param [1], true );
+							$value_sql = self::prepare ( 'mysql_value', $param [2], true );
+							$return_sql = "$mysql_sql $table_sql $column_sql VALUES $value_sql $other_sql";
+						} elseif (is_array ( $param [1] ) && count ( $param [1] ) > 0 && ! isset ( $param [1] [count ( $param [1] ) - 1] )) {
+							$set_sql = self::prepare ( 'mysql_set', $param [1], true );
+							$return_sql = "$mysql_sql $table_sql SET $set_sql $other_sql";
+						} else {
+							$column_sql = self::prepare ( 'mysql_column', $param [1], true );
+							$return_sql = "$mysql_sql $table_sql $column_sql $other_sql";
+						}
+						$return = rtrim ( $return_sql );
+					} else {
+						list ( $table_sql, $table_param ) = self::prepare ( 'mysql_table', $param [0] );
+						list ( $other_sql, $other_param ) = self::prepare ( 'mysql_other', $param [3] );
+						if (isset ( $param [2] )) {
+							list ( $column_sql, $column_param ) = self::prepare ( 'mysql_column', $param [1] );
+							list ( $value_sql, $value_param ) = self::prepare ( 'mysql_value', $param [2] );
+							$return_sql = "$mysql_sql $table_sql $column_sql VALUES $value_sql $other_sql";
+							$return_param = array_merge ( $table_param, $column_param, $value_param, $other_param );
+						} elseif (is_array ( $param [1] ) && count ( $param [1] ) > 0 && ! isset ( $param [1] [count ( $param [1] ) - 1] )) {
+							list ( $set_sql, $set_param ) = self::prepare ( 'mysql_set', $param [1] );
+							$return_sql = "$mysql_sql $table_sql SET $set_sql $other_sql";
+							$return_param = array_merge ( $table_param, $set_param, $other_param );
+						} else {
+							list ( $column_sql, $column_param ) = self::prepare ( 'mysql_column', $param [1] );
+							$return_sql = "$mysql_sql $table_sql $column_sql $other_sql";
+							$return_param = array_merge ( $table_param, $column_param, $other_param );
+						}
+						$return = array (rtrim ( $return_sql ), $return_param );
+					}
+					break;
+				case 'mysql_updates' :
+					isset ( $param [0] ) or $param [0] = null;
+					isset ( $param [1] ) or $param [1] = null;
+					isset ( $param [2] ) or $param [2] = null;
+					isset ( $param [3] ) or $param [3] = null;
+					if ($format) {
+						$table_sql = self::prepare ( 'mysql_table', $param [0], true );
+						$set_sql = self::prepare ( 'mysql_set', $param [1], true );
+						$where_sql = self::prepare ( 'mysql_where', $param [2], true );
+						$other_sql = self::prepare ( 'mysql_other', $param [3], true );
+						if ($where_sql === '') {
+							$return_sql = "UPDATE $table_sql SET $set_sql $other_sql";
+						} else {
+							$return_sql = "UPDATE $table_sql SET $set_sql WHERE $where_sql $other_sql";
+						}
+						$return = rtrim ( $return_sql );
+					} else {
+						list ( $table_sql, $table_param ) = self::prepare ( 'mysql_table', $param [0] );
+						list ( $set_sql, $set_param ) = self::prepare ( 'mysql_set', $param [1] );
+						list ( $where_sql, $where_param ) = self::prepare ( 'mysql_where', $param [2] );
+						list ( $other_sql, $other_param ) = self::prepare ( 'mysql_other', $param [3] );
+						if ($where_sql === '') {
+							$return_sql = "UPDATE $table_sql SET $set_sql $other_sql";
+							$return_param = array_merge ( $table_param, $set_param, $other_param );
+						} else {
+							$return_sql = "UPDATE $table_sql SET $set_sql WHERE $where_sql $other_sql";
+							$return_param = array_merge ( $table_param, $set_param, $where_param, $other_param );
+						}
+						$return = array (rtrim ( $return_sql ), $return_param );
+					}
+					break;
+				case 'mysql_deletes' :
+					isset ( $param [0] ) or $param [0] = null;
+					isset ( $param [1] ) or $param [1] = null;
+					isset ( $param [2] ) or $param [2] = null;
+					isset ( $param [3] ) or $param [3] = null;
+					if ($format) {
+						$field_sql = self::prepare ( 'mysql_field', $param [0], true );
+						$table_sql = self::prepare ( 'mysql_table', $param [1], true );
+						$where_sql = self::prepare ( 'mysql_where', $param [2], true );
+						$other_sql = self::prepare ( 'mysql_other', $param [3], true );
+						if ($where_sql === '') {
+							$return_sql = "DELETE $field_sql FROM $table_sql $other_sql";
+						} else {
+							$return_sql = "DELETE $field_sql FROM $table_sql WHERE $where_sql $other_sql";
+						}
+						$return = rtrim ( $return_sql );
+					} else {
+						list ( $field_sql, $field_param ) = self::prepare ( 'mysql_field', $param [0] );
+						list ( $table_sql, $table_param ) = self::prepare ( 'mysql_table', $param [1] );
+						list ( $where_sql, $where_param ) = self::prepare ( 'mysql_where', $param [2] );
+						list ( $other_sql, $other_param ) = self::prepare ( 'mysql_other', $param [3] );
+						if ($where_sql === '') {
+							$return_sql = "DELETE $field_sql FROM $table_sql $other_sql";
+							$return_param = array_merge ( $field_param, $table_param, $other_param );
+						} else {
+							$return_sql = "DELETE $field_sql FROM $table_sql WHERE $where_sql $other_sql";
+							$return_param = array_merge ( $field_param, $table_param, $where_param, $other_param );
+						}
+						$return = array (rtrim ( $return_sql ), $return_param );
+					}
+					break;
+				case 'mysql_column' :
+					if (is_array ( $param )) {
+						$return_sql = '';
+						$expect = '';
+						foreach ( $param as $key => $value ) {
 							if ($value === null) {
 								$value = 'NULL';
 							} elseif ($value === true) {
@@ -1904,95 +1850,230 @@ class core {
 							} else {
 								$value = ( string ) $value;
 							}
-							if (is_int ( $key )) {
-								$return_sql .= $expect . $value;
-							} else {
-								$return_sql .= $expect . $value . ' AS ' . $key;
-							}
+							$return_sql .= $expect . $value;
 							$expect = ',';
 						}
-					}
-				} else {
-					$return_sql = ( string ) $param;
-				}
-				return $bool ? $return_sql : array ($return_sql, array () );
-			case 'mysql_set' :
-			case 'mysql_other' :
-				$escape_sql = substr_replace ( $sql, 'escape_', 6, 0 );
-				if (is_array ( $param )) {
-					if ($bool) {
-						$return_sql = implode ( ',', self::prepare ( $escape_sql, $param, true ) );
 					} else {
-						list ( $return_sql, $return_param ) = self::prepare ( $escape_sql, $param );
-						$return_sql = implode ( ',', $return_sql );
+						$return_sql = ( string ) $param;
 					}
-				} else {
-					$return_sql = ( string ) $param;
-					$return_param = array ();
-				}
-				return $bool ? $return_sql : array ($return_sql, $return_param );
-			case 'mysql_where' :
-			case 'mysql_where2' :
-				$escape_sql = substr_replace ( $sql, 'escape_', 6, 0 );
-				$escape_sep = $sql === 'mysql_where2' ? ' OR ' : ' AND ';
-				if (is_array ( $param )) {
-					if ($bool) {
-						$return_sql = implode ( $escape_sep, self::prepare ( $escape_sql, $param, true ) );
-					} else {
-						list ( $return_sql, $return_param ) = self::prepare ( $escape_sql, $param );
-						$return_sql = implode ( $escape_sep, $return_sql );
+					if ($return_sql !== '') {
+						$return_sql = '(' . $return_sql . ')';
 					}
-				} else {
-					$return_sql = ( string ) $param;
-					$return_param = array ();
-				}
-				if ($sql === 'mysql_where2' && $return_sql !== '') {
-					$return_sql = '(' . $return_sql . ')';
-				}
-				return $bool ? $return_sql : array ($return_sql, $return_param );
-			case 'mysql_value' :
-				if (is_array ( $param )) {
-					if (isset ( $param [0] ) && is_array ( $param [0] )) {
+					$return = $format ? $return_sql : array ($return_sql, array () );
+					break;
+				case 'mysql_field' :
+				case 'mysql_table' :
+					if (is_array ( $param )) {
 						$return_sql = '';
-						$return_param = array ();
 						$expect = '';
 						foreach ( $param as $key => $value ) {
-							if ($bool) {
-								$value_sql = implode ( ',', self::prepare ( 'mysql_escape_value', $value, true ) );
-							} else {
-								list ( $value_sql, $value_param ) = self::prepare ( 'mysql_escape_value', $value );
-								$value_sql = implode ( ',', $value_sql );
-								foreach ( $value_param as $value_value ) {
-									$return_param [] = $value_value;
+							if (is_array ( $value )) {
+								foreach ( $value as $value2 ) {
+									if ($value2 === null) {
+										$value2 = 'NULL';
+									} elseif ($value2 === true) {
+										$value2 = '1';
+									} elseif ($value2 === false) {
+										$value2 = '0';
+									} else {
+										$value2 = ( string ) $value2;
+									}
+									$return_sql .= $expect . $value2;
+									$expect = ' ';
 								}
-							}
-							if ($value_sql !== '') {
-								$return_sql .= $expect . '(' . $value_sql . ')';
+							} else {
+								if ($value === null) {
+									$value = 'NULL';
+								} elseif ($value === true) {
+									$value = '1';
+								} elseif ($value === false) {
+									$value = '0';
+								} else {
+									$value = ( string ) $value;
+								}
+								if (is_int ( $key )) {
+									$return_sql .= $expect . $value;
+								} else {
+									$return_sql .= $expect . $value . ' AS ' . $key;
+								}
 								$expect = ',';
 							}
 						}
 					} else {
-						if ($bool) {
-							$return_sql = implode ( ',', self::prepare ( 'mysql_escape_value', $param, true ) );
+						$return_sql = ( string ) $param;
+					}
+					$return = $format ? $return_sql : array ($return_sql, array () );
+					break;
+				case 'mysql_set' :
+				case 'mysql_other' :
+					$escape_sql = substr_replace ( $mysql, 'escape_', 6, 0 );
+					if (is_array ( $param )) {
+						if ($format) {
+							$return_sql = implode ( ',', self::prepare ( $escape_sql, $param, true ) );
 						} else {
-							list ( $return_sql, $return_param ) = self::prepare ( 'mysql_escape_value', $param );
+							list ( $return_sql, $return_param ) = self::prepare ( $escape_sql, $param );
 							$return_sql = implode ( ',', $return_sql );
 						}
+					} else {
+						$return_sql = ( string ) $param;
+						$return_param = array ();
+					}
+					$return = $format ? $return_sql : array ($return_sql, $return_param );
+					break;
+				case 'mysql_where' :
+				case 'mysql_where2' :
+					$escape_sql = substr_replace ( $mysql, 'escape_', 6, 0 );
+					$escape_sep = $mysql === 'mysql_where2' ? ' OR ' : ' AND ';
+					if (is_array ( $param )) {
+						if ($format) {
+							$return_sql = implode ( $escape_sep, self::prepare ( $escape_sql, $param, true ) );
+						} else {
+							list ( $return_sql, $return_param ) = self::prepare ( $escape_sql, $param );
+							$return_sql = implode ( $escape_sep, $return_sql );
+						}
+					} else {
+						$return_sql = ( string ) $param;
+						$return_param = array ();
+					}
+					if ($mysql === 'mysql_where2' && $return_sql !== '') {
+						$return_sql = '(' . $return_sql . ')';
+					}
+					$return = $format ? $return_sql : array ($return_sql, $return_param );
+					break;
+				case 'mysql_value' :
+					if (is_array ( $param )) {
+						if (isset ( $param [0] ) && is_array ( $param [0] )) {
+							$return_sql = '';
+							$return_param = array ();
+							$expect = '';
+							foreach ( $param as $key => $value ) {
+								if ($format) {
+									$value_sql = implode ( ',', self::prepare ( 'mysql_escape_value', $value, true ) );
+								} else {
+									list ( $value_sql, $value_param ) = self::prepare ( 'mysql_escape_value', $value );
+									$value_sql = implode ( ',', $value_sql );
+									foreach ( $value_param as $value_value ) {
+										$return_param [] = $value_value;
+									}
+								}
+								if ($value_sql !== '') {
+									$return_sql .= $expect . '(' . $value_sql . ')';
+									$expect = ',';
+								}
+							}
+						} else {
+							if ($format) {
+								$return_sql = implode ( ',', self::prepare ( 'mysql_escape_value', $param, true ) );
+							} else {
+								list ( $return_sql, $return_param ) = self::prepare ( 'mysql_escape_value', $param );
+								$return_sql = implode ( ',', $return_sql );
+							}
+							if ($return_sql !== '') {
+								$return_sql = '(' . $return_sql . ')';
+							}
+						}
+					} else {
+						$return_sql = ( string ) $param;
+						$return_param = array ();
 						if ($return_sql !== '') {
 							$return_sql = '(' . $return_sql . ')';
 						}
 					}
-				} else {
-					$return_sql = ( string ) $param;
-					$return_param = array ();
-					if ($return_sql !== '') {
-						$return_sql = '(' . $return_sql . ')';
+					$return = $format ? $return_sql : array ($return_sql, $return_param );
+					break;
+				case false :
+					
+					// 【扩展功能】准备SQL语句
+					$provider = $args ['connect_provider'];
+					if ($args ['prefix_search'] !== '' && $args ['prefix_search'] !== $args ['prefix_replace']) {
+						$sql = str_replace ( $args ['prefix_search'], $args ['prefix_replace'], $sql );
+					}
+					$return = call_user_func ( array ('db_' . $provider, 'prepare' ), $dbh, $args, __CLASS__, $sql, $param, $format );
+					
+					break;
+				default :
+					if ($format) {
+						$return_sql = str_replace ( array ('%', '?' ), array ('%%', '%s' ), $sql );
+						if (is_array($param)){
+							$return_param = $param;
+							foreach ( $return_param as &$value ) {
+								if ($value === null) {
+									$value = 'NULL';
+								} elseif ($value === true) {
+									$value = '1';
+								} elseif ($value === false) {
+									$value = '0';
+								} elseif (is_int ( $value ) || is_float ( $value )) {
+								} else {
+									$value = '\'' . str_replace ( $mysql_escape_search, $mysql_escape_replace, $value ) . '\'';
+								}
+							}
+							$return_sql = vsprintf ( $return_sql, $return_param );
+						}
+						$return = $return_sql;
+					} else {
+						$return = array ($sql, $param );
+					}
+					break;
+			}
+		}
+		
+		// 【基础功能】调试SQL语句
+		if ( $debug ) {
+			if ($format) {
+				$debug_sql = $return;
+				$debug_param = null;
+			} else {
+				list($debug_sql,$debug_param) = $return;
+			}
+			$echo2 = null;
+			if (is_array ( $debug_param )) {
+				$i = 0;
+				$echo2 = '';
+				foreach ( $debug_param as $value ) {
+					$echo2 .= PHP_EOL . '#'. ($i++) . ': ';
+					if ($value === null) {
+						$echo2 .= 'NULL';
+					} elseif ($value === true) {
+						$echo2 .= 'bool(true)';
+					} elseif ($value === false) {
+						$echo2 .= 'bool(false)';
+					} elseif (is_int ( $value )) {
+						$echo2 .= 'int(' . $value . ')';
+					} elseif (is_float ( $value )) {
+						$echo2 .= 'float(' . $value . ')';
+					} else {
+						$echo2 .= 'string(' . strlen($value) . ') ' . $value;
 					}
 				}
-				return $bool ? $return_sql : array ($return_sql, $return_param );
-			default :
-				break;
+			}
+			if (PHP_SAPI == 'cli' || !empty($output)) {
+				$echo = PHP_EOL . '(' . $debug_provider . '): ' . $debug_sql;
+				if ( !empty($echo2) ) {
+					$echo .= $echo2;
+				}
+				$echo .= PHP_EOL;
+				if ( !empty($errno) ) {
+					$echo .= $errno . ": " . $error . PHP_EOL;
+				}
+			} else {
+				$echo = PHP_EOL . '<hr />' . PHP_EOL . '(' . $debug_provider . '): ' . htmlentities ( $debug_sql ) .PHP_EOL;
+				if ( !empty($echo2) ) {
+					$echo .= str_replace ( PHP_EOL, '<br />'.PHP_EOL, htmlentities ($echo2) );
+				}
+				$echo = '<hr />' . PHP_EOL;
+				if ( !empty($errno) ) {
+					$echo .= $errno . ": " . htmlentities ( $error ) . '<br />' . PHP_EOL;
+				}
+			}
+			if (empty($output)) {
+				echo $echo;
+			} else {
+				file_put_contents ( self::path($output), $echo, FILE_APPEND );
+			}
 		}
+		
+		return $return;
 	
 	}
 	
@@ -2050,7 +2131,7 @@ class core {
 			// 【扩展功能】生成自增序列
 			default :
 				$provider = $args ['connect_provider'];
-				$return = call_user_func ( array ('db_' . $provider, 'sequence' ), $dbh, $args, $tablename, $start_index );
+				$return = call_user_func ( array ('db_' . $provider, 'sequence' ), $dbh, $args, __CLASS__, $tablename, $start_index );
 				break;
 		
 		}
@@ -2469,7 +2550,7 @@ class core {
 					$page ['total'] = ( int ) ceil ( $page ['count'] / $page ['size'] );
 				}
 				// 数据
-				if (mysql_num_rows ( $result ) === 0) {
+				if (!is_resource($result) || mysql_num_rows ( $result ) === 0) {
 					$data_arr = array ();
 					break;
 				}
@@ -3077,11 +3158,13 @@ class core {
 			case '' :
 			case 'mysql' :
 				if ($primary_name !== null) {
-					$sql = sprintf ( 'SELECT * FROM ' . $tablename . ' WHERE ' . $primary_name . '=\'%s\' LIMIT 1', mysql_real_escape_string ( $primary_value, $dbh ) );
+					$sql = 'SELECT * FROM ' . $tablename . ' WHERE ' . $primary_name . '=? LIMIT 1';
+					$paramvars = array($primary_value);
 				} else {
 					$sql = 'SELECT * FROM ' . $tablename . ' LIMIT 1';
+					$paramvars = null;
 				}
-				$result = self::execute ( $sql );
+				$result = self::execute ( $sql, $paramvars );
 				if ($result === false) {
 					return false;
 				}
@@ -3391,12 +3474,14 @@ class core {
 			case '' :
 			case 'mysql' :
 				if ($primary_name !== null) {
-					$sql = sprintf ( 'DELETE FROM ' . $tablename . ' WHERE ' . $primary_name . '=\'%s\' LIMIT 1', mysql_real_escape_string ( $primary_value, $dbh ) );
+					$sql = 'DELETE FROM ' . $tablename . ' WHERE ' . $primary_name . '=? LIMIT 1';
+					$paramvars = array($primary_value);
 				} else {
 					$sql = 'DELETE FROM ' . $tablename . ' LIMIT 1';
+					$paramvars = null;
 				}
-				$result = ( bool ) self::execute ( $sql );
-				if ($result && mysql_affected_rows ( $dbh ) == 0) {
+				$result = ( bool ) self::execute ( $sql, $paramvars, $ref );
+				if ($result && $ref['affected_rows'] == 0) {
 					$result = false;
 				}
 				break;

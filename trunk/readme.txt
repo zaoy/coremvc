@@ -11,7 +11,7 @@ CoreMVC遵从new BSD许可证，所以您可以在法律允许的范围以内任
 /**
  * CoreMVC核心模块
  * 
- * @version 1.1.0 alpha 7
+ * @version 1.1.0 alpha 8
  * @author Z <602000@gmail.com>
  * @link http://code.google.com/p/coremvc/
  */
@@ -39,7 +39,7 @@ CoreMVC遵从new BSD许可证，所以您可以在法律允许的范围以内任
 
 9. 数据库连接自动化，可使用多个连接。
 
-10. 整个核心文件只有：1个类、31项设置、21个方法。
+10. 整个核心文件只有：1个类、33项设置、21个方法。
 
 
 ●　版本更新说明
@@ -54,7 +54,7 @@ CoreMVC 1.1.0 相对于 CoreMVC 1.0.0版本的改进
 
 4. 增加了自动载入顺序的参数设置。
 
-5. 增加了数据库调试功能（仅mysql）。
+5. 增加了数据库调试功能。
 
 
 CoreMVC 1.0.0 相对于 CoreMVC 0.7.3版本的改进

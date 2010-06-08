@@ -49,15 +49,15 @@ class coreTest extends PHPUnit_Framework_TestCase {
 	 */
 	public function testStub() {
 		
-		// 1. ¡¾»ù´¡¹¦ÄÜ¡¿ÉèÖÃ´æ¸ù²ÎÊý¡£
-		//·µ»ØÖµ
+		// 1. ã€åŸºç¡€åŠŸèƒ½ã€‘è®¾ç½®å­˜æ ¹å‚æ•°ã€‚
+		//è¿”å›žå€¼
 		$this->assertSame(array(
 			'autoload_enable'=>'',
 			'autoload_path'=>'',
 			'autoload_extensions'=>'',
 			'autoload_prepend'=>'',
 		),core::stub(array()));
-		//ÉèÖÃÖµ
+		//è®¾ç½®å€¼
 		$this->assertSame(array(
 			'autoload_enable'=>true,
 			'autoload_path'=>'',
@@ -67,14 +67,14 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			'autoload_enable'=>true,
 			'autoload_extensions'=>'.php',
 		)));
-		//È¡Ç°Öµ
+		//å–å‰å€¼
 		$this->assertSame(array(
 			'autoload_enable'=>true,
 			'autoload_path'=>'',
 			'autoload_extensions'=>'.php',
 			'autoload_prepend'=>'',
 		),core::stub(array()));
-		//ÔÙÉèÖÃ
+		//å†è®¾ç½®
 		$this->assertSame(array(
 			'autoload_enable'=>true,
 			'autoload_path'=>'@class',
@@ -84,14 +84,14 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			'autoload_path'=>'@class',
 			'autoload_extensions'=>'.inc.php',
 		)));
-		//ÔÙÈ¡Ç°
+		//å†å–å‰
 		$this->assertSame(array(
 			'autoload_enable'=>true,
 			'autoload_path'=>'@class',
 			'autoload_extensions'=>'.inc.php',
 			'autoload_prepend'=>'',
 		),core::stub(array()));
-		//»Ö¸´Öµ
+		//æ¢å¤å€¼
 		$this->assertSame(array(
 			'autoload_enable'=>'',
 			'autoload_path'=>'',
@@ -104,24 +104,31 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			'autoload_prepend'=>'',
 		)));
 		
-		// 2. ¡¾»ù´¡¹¦ÄÜ¡¿×Ô¶¯ÔØÈë¹¦ÄÜ£¬Ä¬ÈÏ¹Ø±Õ¡£
-		//×Ô¶¯ÔØÈë
+		// 2. ã€åŸºç¡€åŠŸèƒ½ã€‘è‡ªåŠ¨è½½å…¥åŠŸèƒ½ï¼Œé»˜è®¤å…³é—­ã€‚
+		//è‡ªåŠ¨è½½å…¥
 		$this->assertFalse(class_exists('stub_2_1',false));
 		core::stub(true);
 		$this->assertTrue(class_exists('stub_2_1'));
 		core::stub('','','');
-		//ÉèÖÃÂ·¾¶
+		//è®¾ç½®è·¯å¾„
 		$this->assertFalse(class_exists('stub_2_2',false));
 		core::stub(true,'@tests/stub_2');
 		$this->assertTrue(class_exists('stub_2_2'));
 		core::stub('','','');
-		//ÉèÖÃºó×º
+		//è®¾ç½®åŽç¼€
 		$this->assertFalse(class_exists('stub_2_3',false));
 		core::stub(true,'','.inc.php');
 		$this->assertTrue(class_exists('stub_2_3'));
 		core::stub('','','');
+		//è®¾ç½®é¡ºåº
+		$this->assertFalse(class_exists('stub_2_2x',false));
+		core::stub(true,'@tests/stub_2a');
+		core::stub(true,'@tests/stub_2b',null,true);
+		$this->assertTrue(class_exists('stub_2_2x'));
+		$this->assertSame('stub_2b',stub_2_2x::test());
+		core::stub('','','','');
 		
-		// 3. ¡¾»ù´¡¹¦ÄÜ¡¿ÅÐ¶Ï·ÃÎÊ»òÕßÒýÓÃ£¬·µ»Øtrue/false(·ÃÎÊ/ÒýÓÃ)¡£
+		// 3. ã€åŸºç¡€åŠŸèƒ½ã€‘åˆ¤æ–­è®¿é—®æˆ–è€…å¼•ç”¨ï¼Œè¿”å›žtrue/false(è®¿é—®/å¼•ç”¨)ã€‚
 		$this->assertTrue(core::stub());
 		$this->assertFalse(require('stub_3_1.php'));
 		
@@ -132,15 +139,15 @@ class coreTest extends PHPUnit_Framework_TestCase {
 	 */
 	public function testMain() {
 		
-		// 1. ¡¾»ù´¡¹¦ÄÜ¡¿ÉèÖÃÈë¿Ú²ÎÊý£¬·µ»Ø²ÎÊýÊý×é¡£
-		//·µ»ØÖµ
+		// 1. ã€åŸºç¡€åŠŸèƒ½ã€‘è®¾ç½®å…¥å£å‚æ•°ï¼Œè¿”å›žå‚æ•°æ•°ç»„ã€‚
+		//è¿”å›žå€¼
 		$this->assertSame(array(
 			'framework_enable'=>'',
 			'framework_require'=>'',
 			'framework_module'=>'',
 			'framework_action'=>'',
 		),core::main(array()));
-		//ÉèÖÃÖµ
+		//è®¾ç½®å€¼
 		$this->assertSame(array(
 			'framework_enable'=>true,
 			'framework_require'=>'',
@@ -150,14 +157,14 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			'framework_enable'=>true,
 			'framework_action'=>'[do]!main',
 		)));
-		//È¡Ç°Öµ
+		//å–å‰å€¼
 		$this->assertSame(array(
 			'framework_enable'=>true,
 			'framework_require'=>'',
 			'framework_module'=>'',
 			'framework_action'=>'[do]!main',
 		),core::main(array()));
-		//ÔÙÉèÖÃ
+		//å†è®¾ç½®
 		$this->assertSame(array(
 			'framework_enable'=>true,
 			'framework_require'=>'@module',
@@ -167,14 +174,14 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			'framework_require'=>'@module',
 			'framework_module'=>'[go]',
 		)));
-		//ÔÙÈ¡Ç°
+		//å†å–å‰
 		$this->assertSame(array(
 			'framework_enable'=>true,
 			'framework_require'=>'@module',
 			'framework_module'=>'[go]',
 			'framework_action'=>'[do]!main',
 		),core::main(array()));
-		//»Ö¸´Öµ
+		//æ¢å¤å€¼
 		$this->assertSame(array(
 			'framework_enable'=>'',
 			'framework_require'=>'',
@@ -187,15 +194,15 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			'framework_action'=>'',
 		)));
 		
-		// 2. ¡¾»ù´¡¹¦ÄÜ¡¿Ê¹ÓÃ¿ò¼Ü¹¦ÄÜ£¬Ä¬ÈÏ¹Ø±Õ¡£
-		//Ä¬ÈÏÖµ
+		// 2. ã€åŸºç¡€åŠŸèƒ½ã€‘ä½¿ç”¨æ¡†æž¶åŠŸèƒ½ï¼Œé»˜è®¤å…³é—­ã€‚
+		//é»˜è®¤å€¼
 		$_GET['do']='testAction';
 		ob_start();
 		$result = require core::path('@tests/main_2_1.php');
 		$this->assertSame('main_2_1_a', ob_get_clean());
 		$this->assertTrue($result);
 		unset($_GET['do']);
-		//°æ±¾²îÒì
+		//ç‰ˆæœ¬å·®å¼‚
 		$_GET['do']='testAction';
 		ob_start();
 		$result = main_2_1::main(true);
@@ -207,7 +214,7 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			$this->assertFalse($result);
 		}
 		unset($_GET['do']);
-		//ÒýÓÃ²âÊÔ
+		//å¼•ç”¨æµ‹è¯•
 		$_GET['go']='main_2_2';
 		$_GET['do']='test_2_2';
 		ob_start();
@@ -216,7 +223,7 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		$this->assertTrue($result);
 		unset($_GET['go']);
 		unset($_GET['do']);
-		//´íÎó²âÊÔ
+		//é”™è¯¯æµ‹è¯•
 		$this->assertTrue(core::main(true,'@tests/main_2_3.php','main_2_3','test_2_3'));
 		ob_start();
 		$this->assertFalse(core::main(true,'@tests/main_2_3.php','main_2_3','test_2_3_a'));
@@ -227,11 +234,11 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		$this->assertFalse(core::main(true,'@tests/main_2_3.php','main_2_3','1'));
 		$this->assertFalse(core::main(true,'@tests/main_2_3.php','main_2_3\\0','test_2_3'));
 		ob_end_clean();
-		//ÃüÃû¿Õ¼ä
+		//å‘½åç©ºé—´
 		if(function_exists('get_called_class')){
 			$this->assertTrue(core::main(true,'@tests/main_2_4.php','namespace_2_4\main_2_4','test_2_4'));
 		}
-		//ÐÂÔö²âÊÔ
+		//æ–°å¢žæµ‹è¯•
 		$this->assertSame(dirname(__FILE__).'/main_2_2.php',core::main('require','@tests/main_2_2.php'));
 		$this->assertFalse(core::main('require','@tests/main_2_2_a.php'));
 		$this->assertSame('main_2_2',core::main('module','@tests/main_2_2.php','main_2_2'));
@@ -251,7 +258,7 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		ob_start();
 		$this->assertTrue(core::main('manual','@tests/main_2_2.php','main_2_2','test_2_2'));
 		$this->assertSame('main_2_2_a', ob_get_clean());
-		//»Ö¸´Ô­À´Öµ
+		//æ¢å¤åŽŸæ¥å€¼
 		core::main(array(
 			'framework_enable'=>'',
 			'framework_require'=>'',
@@ -260,17 +267,17 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			'framework_hidden'=>'',
 		));
 		
-		// 3. ¡¾»ù´¡¹¦ÄÜ¡¿Ä£ÄâÎÄ¼þÒþ²ØÐ§¹û£¬·µ»Øtrue/false(¿ò¼Ü/Òþ²Ø)¡£
-		//ÑéÖ¤·µ»Ø
+		// 3. ã€åŸºç¡€åŠŸèƒ½ã€‘æ¨¡æ‹Ÿæ–‡ä»¶éšè—æ•ˆæžœï¼Œè¿”å›žtrue/false(æ¡†æž¶/éšè—)ã€‚
+		//éªŒè¯è¿”å›ž
 		//$this->assertTrue(core::main(true));
 		ob_start();
 		$this->assertFalse(core::main(''));
 		ob_end_clean();
-		//ÑéÖ¤Êä³ö
+		//éªŒè¯è¾“å‡º
 		ob_start();
 		$this->assertFalse(core::main());
 		$this->assertSame('Could not open input file: '.basename($_SERVER ['SCRIPT_FILENAME']).PHP_EOL, ob_get_clean());
-		//»Ö¸´Ô­À´Öµ
+		//æ¢å¤åŽŸæ¥å€¼
 		core::main(array(
 			'framework_enable'=>'',
 			'framework_require'=>'',
@@ -285,42 +292,42 @@ class coreTest extends PHPUnit_Framework_TestCase {
 	 */
 	public function testPath() {
 		
-		// 1. ¡¾»ù´¡¹¦ÄÜ¡¿ÉèÖÃÂ·¾¶²ÎÊý£¬·µ»Ø²ÎÊýÊý×é¡£
-		//³õÊ¼»¯
+		// 1. ã€åŸºç¡€åŠŸèƒ½ã€‘è®¾ç½®è·¯å¾„å‚æ•°ï¼Œè¿”å›žå‚æ•°æ•°ç»„ã€‚
+		//åˆå§‹åŒ–
 		core::path(array(
 			'extension_path'=>'',
 			'template_path'=>'',
 		));
-		//·µ»ØÖµ
+		//è¿”å›žå€¼
 		$this->assertSame(array(
 			'extension_path'=>'',
 			'template_path'=>'',
 		),core::path(array()));
-		//ÉèÖÃÖµ
+		//è®¾ç½®å€¼
 		$this->assertSame(array(
 			'extension_path'=>'@ext',
 			'template_path'=>'',
 		),core::path(array(
 			'extension_path'=>'@ext',
 		)));
-		//È¡Ç°Öµ
+		//å–å‰å€¼
 		$this->assertSame(array(
 			'extension_path'=>'@ext',
 			'template_path'=>'',
 		),core::path(array()));
-		//ÔÙÉèÖÃ
+		//å†è®¾ç½®
 		$this->assertSame(array(
 			'extension_path'=>'@ext',
 			'template_path'=>'@tpl',
 		),core::path(array(
 			'template_path'=>'@tpl',
 		)));
-		//ÔÙÈ¡Ç°
+		//å†å–å‰
 		$this->assertSame(array(
 			'extension_path'=>'@ext',
 			'template_path'=>'@tpl',
 		),core::path(array()));
-		//»Ö¸´Öµ
+		//æ¢å¤å€¼
 		$this->assertSame(array(
 			'extension_path'=>'',
 			'template_path'=>'',
@@ -329,116 +336,116 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			'template_path'=>'',
 		)));
 		
-		// 2. ¡¾»ù´¡¹¦ÄÜ¡¿·µ»Ø×ª»»Â·¾¶£¬'@'¿ªÍ·Ïà¶ÔºËÐÄÎÄ¼þÂ·¾¶¡£
-		//²»±ä
+		// 2. ã€åŸºç¡€åŠŸèƒ½ã€‘è¿”å›žè½¬æ¢è·¯å¾„ï¼Œ'@'å¼€å¤´ç›¸å¯¹æ ¸å¿ƒæ–‡ä»¶è·¯å¾„ã€‚
+		//ä¸å˜
 		$this->assertSame('test.php',core::path('test.php'));
 		$this->assertSame('../test.php',core::path('../test.php'));
-		//²»±ä
+		//ä¸å˜
 		$this->assertSame('/test.php',core::path('/test.php'));
 		$this->assertSame('\\test.php',core::path('\\test.php'));
 		$this->assertSame('./test.php',core::path('./test.php'));
 		$this->assertSame('.\\test.php',core::path('.\\test.php'));
-		//×ª»»
+		//è½¬æ¢
 		$this->assertSame(realpath(dirname(__FILE__)).'/test.php',core::path('@tests/test.php'));
 		
-		// 3. ¡¾»ù´¡¹¦ÄÜ¡¿·µ»ØÀ©Õ¹Â·¾¶£¬Ä¬ÈÏÏà¶ÔºËÐÄÎÄ¼þÀàÃûÂ·¾¶¡£
-		//(1)³õÊ¼»¯¿ÕÖµ
+		// 3. ã€åŸºç¡€åŠŸèƒ½ã€‘è¿”å›žæ‰©å±•è·¯å¾„ï¼Œé»˜è®¤ç›¸å¯¹æ ¸å¿ƒæ–‡ä»¶ç±»åè·¯å¾„ã€‚
+		//(1)åˆå§‹åŒ–ç©ºå€¼
 		core::path(array(
 			'extension_path'=>'',
 		));
-		//Ç°×º
+		//å‰ç¼€
 		$this->assertSame(realpath(dirname(__FILE__).'/../core').DIRECTORY_SEPARATOR.'test.php',core::path('test.php','extension'));
 		$this->assertSame(realpath(dirname(__FILE__).'/../core').DIRECTORY_SEPARATOR.'../test.php',core::path('../test.php','extension'));
-		//²»±ä
+		//ä¸å˜
 		$this->assertSame('/test.php',core::path('/test.php','extension'));
 		$this->assertSame('\\test.php',core::path('\\test.php','extension'));
 		$this->assertSame('./test.php',core::path('./test.php','extension'));
 		$this->assertSame('.\\test.php',core::path('.\\test.php','extension'));
-		//×ª»»
+		//è½¬æ¢
 		$this->assertSame(realpath(dirname(__FILE__)).'/test.php',core::path('@tests/test.php','extension'));
 		
-		//(2)³õÊ¼»¯×ª»»Öµ
+		//(2)åˆå§‹åŒ–è½¬æ¢å€¼
 		core::path(array(
 			'extension_path'=>'@tests',
 		));
-		//Ç°×º
+		//å‰ç¼€
 		$this->assertSame(realpath(dirname(__FILE__)).DIRECTORY_SEPARATOR.'test.php',core::path('test.php','extension'));
 		$this->assertSame(realpath(dirname(__FILE__)).DIRECTORY_SEPARATOR.'../test.php',core::path('../test.php','extension'));
-		//²»±ä
+		//ä¸å˜
 		$this->assertSame('/test.php',core::path('/test.php','extension'));
 		$this->assertSame('\\test.php',core::path('\\test.php','extension'));
 		$this->assertSame('./test.php',core::path('./test.php','extension'));
 		$this->assertSame('.\\test.php',core::path('.\\test.php','extension'));
-		//×ª»»
+		//è½¬æ¢
 		$this->assertSame(realpath(dirname(__FILE__)).'/test.php',core::path('@tests/test.php','extension'));
 		
-		//(3)³õÊ¼»¯ÆäËûÖµ
+		//(3)åˆå§‹åŒ–å…¶ä»–å€¼
 		core::path(array(
 			'extension_path'=>dirname(__FILE__),
 		));
-		//Ç°×º
+		//å‰ç¼€
 		$this->assertSame(realpath(dirname(__FILE__)).DIRECTORY_SEPARATOR.'test.php',core::path('test.php','extension'));
 		$this->assertSame(realpath(dirname(__FILE__)).DIRECTORY_SEPARATOR.'../test.php',core::path('../test.php','extension'));
-		//²»±ä
+		//ä¸å˜
 		$this->assertSame('/test.php',core::path('/test.php','extension'));
 		$this->assertSame('\\test.php',core::path('\\test.php','extension'));
 		$this->assertSame('./test.php',core::path('./test.php','extension'));
 		$this->assertSame('.\\test.php',core::path('.\\test.php','extension'));
-		//×ª»»
+		//è½¬æ¢
 		$this->assertSame(realpath(dirname(__FILE__)).'/test.php',core::path('@tests/test.php','extension'));
 		
-		//»Ö¸´Ô­À´Öµ
+		//æ¢å¤åŽŸæ¥å€¼
 		core::path(array(
 			'extension_path'=>'',
 		));
 
-		// 4. ¡¾»ù´¡¹¦ÄÜ¡¿·µ»ØÊÓÍ¼Â·¾¶£¬Ä¬ÈÏÏà¶ÔÓÚµ±Ç°µÄ³ÌÐòÂ·¾¶¡£
-		//(1)³õÊ¼»¯¿ÕÖµ
+		// 4. ã€åŸºç¡€åŠŸèƒ½ã€‘è¿”å›žè§†å›¾è·¯å¾„ï¼Œé»˜è®¤ç›¸å¯¹äºŽå½“å‰çš„ç¨‹åºè·¯å¾„ã€‚
+		//(1)åˆå§‹åŒ–ç©ºå€¼
 		core::path(array(
 			'template_path'=>'',
 		));
-		//Ç°×º
+		//å‰ç¼€
 		$this->assertSame(realpath(dirname(__FILE__).'/..').DIRECTORY_SEPARATOR.'test.php',core::path('test.php','template'));
 		$this->assertSame(realpath(dirname(__FILE__).'/..').DIRECTORY_SEPARATOR.'../test.php',core::path('../test.php','template'));
-		//²»±ä
+		//ä¸å˜
 		$this->assertSame('/test.php',core::path('/test.php','template'));
 		$this->assertSame('\\test.php',core::path('\\test.php','template'));
 		$this->assertSame('./test.php',core::path('./test.php','template'));
 		$this->assertSame('.\\test.php',core::path('.\\test.php','template'));
-		//×ª»»
+		//è½¬æ¢
 		$this->assertSame(realpath(dirname(__FILE__)).'/test.php',core::path('@tests/test.php','template'));
 		
-		//(2)³õÊ¼»¯×ª»»Öµ
+		//(2)åˆå§‹åŒ–è½¬æ¢å€¼
 		core::path(array(
 			'template_path'=>'@tests',
 		));
-		//Ç°×º
+		//å‰ç¼€
 		$this->assertSame(realpath(dirname(__FILE__)).DIRECTORY_SEPARATOR.'test.php',core::path('test.php','template'));
 		$this->assertSame(realpath(dirname(__FILE__)).DIRECTORY_SEPARATOR.'../test.php',core::path('../test.php','template'));
-		//²»±ä
+		//ä¸å˜
 		$this->assertSame('/test.php',core::path('/test.php','template'));
 		$this->assertSame('\\test.php',core::path('\\test.php','template'));
 		$this->assertSame('./test.php',core::path('./test.php','template'));
 		$this->assertSame('.\\test.php',core::path('.\\test.php','template'));
-		//×ª»»
+		//è½¬æ¢
 		$this->assertSame(realpath(dirname(__FILE__)).'/test.php',core::path('@tests/test.php','template'));
 		
-		//(3)³õÊ¼»¯ÆäËûÖµ
+		//(3)åˆå§‹åŒ–å…¶ä»–å€¼
 		core::path(array(
 			'template_path'=>dirname(__FILE__),
 		));
-		//Ç°×º
+		//å‰ç¼€
 		$this->assertSame(realpath(dirname(__FILE__)).DIRECTORY_SEPARATOR.'test.php',core::path('test.php','template'));
 		$this->assertSame(realpath(dirname(__FILE__)).DIRECTORY_SEPARATOR.'../test.php',core::path('../test.php','template'));
-		//²»±ä
+		//ä¸å˜
 		$this->assertSame('/test.php',core::path('/test.php','template'));
 		$this->assertSame('\\test.php',core::path('\\test.php','template'));
 		$this->assertSame('./test.php',core::path('./test.php','template'));
 		$this->assertSame('.\\test.php',core::path('.\\test.php','template'));
-		//×ª»»
+		//è½¬æ¢
 		$this->assertSame(realpath(dirname(__FILE__)).'/test.php',core::path('@tests/test.php','template'));
 		
-		//»Ö¸´Ô­À´Öµ
+		//æ¢å¤åŽŸæ¥å€¼
 		core::path(array(
 			'template_path'=>'',
 		));
@@ -450,7 +457,7 @@ class coreTest extends PHPUnit_Framework_TestCase {
 	 */
 	public function testInit() {
 		
-		// 1. ¡¾»ù´¡¹¦ÄÜ¡¿ÉèÖÃ¸÷Àà²ÎÊý£¬·µ»Ø²ÎÊýÊý×é¡£
+		// 1. ã€åŸºç¡€åŠŸèƒ½ã€‘è®¾ç½®å„ç±»å‚æ•°ï¼Œè¿”å›žå‚æ•°æ•°ç»„ã€‚
 		$config = array(
 			'autoload_enable' => '',
 			'autoload_path' => '',
@@ -484,13 +491,13 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			'debug_enable' => '',
 			'debug_file' => '',
 		);
-		//·µ»ØÖµ
+		//è¿”å›žå€¼
 		$this->assertSame($config,core::init());
 		$this->assertSame($config,core::init(-1));
 		$this->assertSame($config,core::init(-2));
 		$this->assertSame($config,core::init(-3));
 		$this->assertSame($config,core::init(-4));
-		//ÉèÖÃÖµ
+		//è®¾ç½®å€¼
 		$config1 = $config;
 		$config1['autoload_enable']=true;
 		$this->assertSame($config1,core::init(array('autoload_enable'=>true)));
@@ -505,7 +512,7 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		$this->assertSame($config1,core::init(-4));
 		$this->assertSame($config,core::init(array()));
 		$this->assertSame($config,core::init(-4));
-		//ÎÄ¼þ
+		//æ–‡ä»¶
 		$config2 = $config;
 		$config2['framework_enable']=true;
 		$this->assertSame($config2,core::init('@tests/init_1_1.php'));
@@ -524,22 +531,22 @@ class coreTest extends PHPUnit_Framework_TestCase {
 	 */
 	public function testView() {
 		
-		// 1. ¡¾»ù´¡¹¦ÄÜ¡¿ÉèÖÃÊÓÍ¼²ÎÊý£¬·µ»Ø²ÎÊýÊý×é¡£
-		//³õÊ¼»¯
+		// 1. ã€åŸºç¡€åŠŸèƒ½ã€‘è®¾ç½®è§†å›¾å‚æ•°ï¼Œè¿”å›žå‚æ•°æ•°ç»„ã€‚
+		//åˆå§‹åŒ–
 		core::view(array(
 			'template_search'=>'',
 			'template_replace'=>'',
 			'template_type'=>'',
 			'template_show'=>'',
 		));
-		//·µ»ØÖµ
+		//è¿”å›žå€¼
 		$this->assertSame(array(
 			'template_search'=>'',
 			'template_replace'=>'',
 			'template_type'=>'',
 			'template_show'=>'',
 		),core::view(array()));
-		//ÉèÖÃÖµ
+		//è®¾ç½®å€¼
 		$this->assertSame(array(
 			'template_search'=>'',
 			'template_replace'=>'',
@@ -548,14 +555,14 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		),core::view(array(
 			'template_type'=>'smarty',
 		)));
-		//È¡Ç°Öµ
+		//å–å‰å€¼
 		$this->assertSame(array(
 			'template_search'=>'',
 			'template_replace'=>'',
 			'template_type'=>'smarty',
 			'template_show'=>'',
 		),core::view(array()));
-		//ÔÙÉèÖÃ
+		//å†è®¾ç½®
 		$this->assertSame(array(
 			'template_search'=>'',
 			'template_replace'=>'',
@@ -564,14 +571,14 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		),core::view(array(
 			'template_show'=>false,
 		)));
-		//ÔÙÈ¡Ç°
+		//å†å–å‰
 		$this->assertSame(array(
 			'template_search'=>'',
 			'template_replace'=>'',
 			'template_type'=>'smarty',
 			'template_show'=>false,
 		),core::view(array()));
-		//»Ö¸´Öµ
+		//æ¢å¤å€¼
 		$this->assertSame(array(
 			'template_search'=>'',
 			'template_replace'=>'',
@@ -584,16 +591,16 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			'template_show'=>'',
 		)));
 		
-		// 2. ¡¾»ù´¡¹¦ÄÜ¡¿Ô­ÉúÄ£°åºÍ×Ö·û´®Ä£°å¡£
-		//Ô­ÉúÄ£°å
+		// 2. ã€åŸºç¡€åŠŸèƒ½ã€‘åŽŸç”Ÿæ¨¡æ¿å’Œå­—ç¬¦ä¸²æ¨¡æ¿ã€‚
+		//åŽŸç”Ÿæ¨¡æ¿
 		ob_start();
 		core::view('@tests/view_2_1.php',array('z'=>'b'));
 		$this->assertSame('abc', ob_get_clean());
-		//½ö·µ»Ø
+		//ä»…è¿”å›ž
 		$this->assertSame('abc', core::view('@tests/view_2_1.php',array('z'=>'b'),null,false));
 		$this->assertSame('abc', core::view('@tests/view_2_1.php',array('z'=>'b'),'',false));
 		$this->assertSame('abc', core::view('@tests/view_2_1.php',array('z'=>'b'),'include',false));
-		//ÉèÖÃÖµ
+		//è®¾ç½®å€¼
 		core::view(array(
 			'template_search'=>'.tpl',
 			'template_replace'=>'.php',
@@ -601,20 +608,20 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			'template_show'=>false,
 		));
 		$this->assertSame('abc', core::view('@tests/view_2_1.tpl',array('z'=>'b')));
-		//»Ö¸´Öµ
+		//æ¢å¤å€¼
 		core::view(array(
 			'template_search'=>'',
 			'template_replace'=>'',
 			'template_type'=>'',
 			'template_show'=>'',
 		));
-		//×Ö·û´®Ä£°å
+		//å­—ç¬¦ä¸²æ¨¡æ¿
 		ob_start();
 		core::view('@tests/view_2_2.php',array('z'=>'b'),'string');
 		$this->assertSame('abc', ob_get_clean());
-		//½ö·µ»Ø
+		//ä»…è¿”å›ž
 		$this->assertSame('abc', core::view('@tests/view_2_2.php',array('z'=>'b'),'string',false));
-		//ÉèÖÃÖµ
+		//è®¾ç½®å€¼
 		core::view(array(
 			'template_search'=>'.tpl',
 			'template_replace'=>'.php',
@@ -622,7 +629,7 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			'template_show'=>false,
 		));
 		$this->assertSame('abc', core::view('@tests/view_2_2.tpl',array('z'=>'b')));
-		//»Ö¸´Öµ
+		//æ¢å¤å€¼
 		core::view(array(
 			'template_search'=>'',
 			'template_replace'=>'',
@@ -630,14 +637,14 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			'template_show'=>'',
 		));
 		
-		// 3. ¡¾À©Õ¹¹¦ÄÜ¡¿ÆäËûÀàÐÍÄ£°å¡£
-		//SmartyÄ£°å
+		// 3. ã€æ‰©å±•åŠŸèƒ½ã€‘å…¶ä»–ç±»åž‹æ¨¡æ¿ã€‚
+		//Smartyæ¨¡æ¿
 		ob_start();
 		core::view('@tests/view_2_3.php',array('z'=>'b'),'string');
 		$this->assertSame('abc', ob_get_clean());
-		//½ö·µ»Ø
+		//ä»…è¿”å›ž
 		$this->assertSame('abc', core::view('@tests/view_2_3.php',array('z'=>'b'),'smarty',false));
-		//ÉèÖÃÖµ
+		//è®¾ç½®å€¼
 		core::view(array(
 			'template_search'=>'.tpl',
 			'template_replace'=>'.php',
@@ -645,7 +652,7 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			'template_show'=>false,
 		));
 		$this->assertSame('abc', core::view('@tests/view_2_3.tpl',array('z'=>'b')));
-		//»Ö¸´Öµ
+		//æ¢å¤å€¼
 		core::view(array(
 			'template_search'=>'',
 			'template_replace'=>'',
@@ -660,7 +667,7 @@ class coreTest extends PHPUnit_Framework_TestCase {
 	 */
 	public function testConnect() {
 		
-		// 1. ¡¾»ù´¡¹¦ÄÜ¡¿ÉèÖÃÊý¾Ý¿â²ÎÊý£¬·µ»Ø²ÎÊýÊý×é¡£
+		// 1. ã€åŸºç¡€åŠŸèƒ½ã€‘è®¾ç½®æ•°æ®åº“å‚æ•°ï¼Œè¿”å›žå‚æ•°æ•°ç»„ã€‚
 		$config = array(
 			'connect_provider' => '',
 			'connect_dsn' => '',
@@ -680,25 +687,25 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			'debug_enable' => '',
 			'debug_file' => '',
 		);
-		//·µ»ØÖµ
+		//è¿”å›žå€¼
 		$this->assertSame($config,core::connect(array()));
-		//ÉèÖÃÖµ
+		//è®¾ç½®å€¼
 		$config1 = $config;
 		$config1['connect_username'] = 'ODBC';
 		$this->assertSame($config1,core::connect(array('connect_username'=>'ODBC')));
-		//È¡Ç°Öµ
+		//å–å‰å€¼
 		$this->assertSame($config1,core::connect(array()));
-		//ÔÙÉèÖÃ
+		//å†è®¾ç½®
 		$config2 = $config;
 		$config2['connect_username'] = 'ODBC';
 		$config2['connect_new_link'] = true;
 		$this->assertSame($config2,core::connect(array('connect_new_link'=>true)));
-		//ÔÙÈ¡Ç°
+		//å†å–å‰
 		$this->assertSame($config2,core::connect(array()));
-		//»Ö¸´Öµ
+		//æ¢å¤å€¼
 		$this->assertSame($config,core::connect($config));
 		
-		// 2. ¡¾»ù´¡¹¦ÄÜ¡¿Ñ¡ÔñÖ¸¶¨Á¬½Ó¡¢Á¬½ÓÊý¾Ý¿â¡¢¶Ï¿ªÊý¾Ý¿â¡£
+		// 2. ã€åŸºç¡€åŠŸèƒ½ã€‘é€‰æ‹©æŒ‡å®šè¿žæŽ¥ã€è¿žæŽ¥æ•°æ®åº“ã€æ–­å¼€æ•°æ®åº“ã€‚
 		$this->assertNull(core::connect(0));
 		$this->assertType('resource',core::connect(true));
 		$this->assertType('resource',core::connect(true));
@@ -716,7 +723,7 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		$this->assertTrue(core::connect(false,$ref));
 		$this->assertSame($config,$ref);
 		
-		// 3. ¡¾À©Õ¹¹¦ÄÜ¡¿Á¬½ÓÊý¾Ý¿â¡¢¶Ï¿ªÊý¾Ý¿â¡£
+		// 3. ã€æ‰©å±•åŠŸèƒ½ã€‘è¿žæŽ¥æ•°æ®åº“ã€æ–­å¼€æ•°æ®åº“ã€‚
 		//PDO
 		core::connect(require 'config_pdo.php');
 		$this->assertSame('PDO',get_class(core::connect(true)));
@@ -733,7 +740,9 @@ class coreTest extends PHPUnit_Framework_TestCase {
 	 */
 	public function testExecute() {
 		
-		// 1. ¡¾»ù´¡¹¦ÄÜ¡¿Ö´ÐÐSQLÓï¾ä£¬·µ»Ø½á¹û¼¯¡£
+		// 1. ã€åŸºç¡€åŠŸèƒ½ã€‘æ‰§è¡ŒSQLè¯­å¥ï¼Œè¿”å›žç»“æžœé›†ã€‚
+		$tmp = 'tmp.log';
+		$provider = 'mysql';
 		core::connect(require 'config_mysql.php');
 		$this->assertTrue(core::execute("SET NAMES GBK"));
 		$this->assertType("resource", $result = core::execute("SELECT ?",array('2')));
@@ -743,11 +752,29 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		$this->assertType("resource", core::execute("SELECT ? UNION select ?",array(1,2),$ref));
 		$this->assertSame(1, $ref['num_fields']);
 		$this->assertSame(2, $ref['num_rows']);
+		core::connect(array('debug_enable'=>true));
+		ob_start();
+		core::execute('SELECT 1');
+		$this->assertSame(PHP_EOL.'('.$provider.'): SELECT 1'.PHP_EOL,ob_get_clean());
+		ob_start();
+		core::execute('SELECT ?,?',array(1,'a'));
+		$this->assertSame(PHP_EOL.'('.$provider.'): SELECT ?,?'.PHP_EOL.'#0: int(1)'.PHP_EOL.'#1: string(1) a'.PHP_EOL,ob_get_clean());
+		core::connect(array('debug_file'=>$tmp));
+		@unlink($tmp);
+		core::execute('SELECT 1');
+		$this->assertSame(PHP_EOL.'('.$provider.'): SELECT 1'.PHP_EOL,file_get_contents($tmp));
+		@unlink($tmp);
+		core::connect(array('debug_file'=>''));
+		ob_start();
+		core::execute('SELECT aaa');
+		$this->assertSame(PHP_EOL.'('.$provider.'): SELECT aaa'.PHP_EOL.'1054: Unknown column \'aaa\' in \'field list\''.PHP_EOL,ob_get_clean());
 		core::connect(false);
 		
-		// 2. ¡¾À©Õ¹¹¦ÄÜ¡¿Ö´ÐÐSQLÓï¾ä£¬·µ»Ø½á¹û¼¯¡£
+		// 2. ã€æ‰©å±•åŠŸèƒ½ã€‘æ‰§è¡ŒSQLè¯­å¥ï¼Œè¿”å›žç»“æžœé›†ã€‚
 		//PDO
 		core::connect(require 'config_pdo.php');
+		$tmp = 'tmp.log';
+		$provider = 'pdo';
 		$this->assertSame("PDOStatement", get_class(core::execute("SET NAMES GBK")));
 		$this->assertSame("PDOStatement", get_class(core::execute("SELECT 1")));
 		$this->assertSame("PDOStatement", get_class(core::execute("SELECT ?",array('2'))));
@@ -756,8 +783,26 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		$this->assertSame("PDOStatement", get_class(core::execute("SELECT ? UNION SELECT ?",array(1,2),$ref)));
 		$this->assertSame(1, $ref['num_fields']);
 		$this->assertSame(2, $ref['num_rows']);
+		core::connect(array('debug_enable'=>true));
+		ob_start();
+		core::execute('SELECT 1');
+		$this->assertSame(PHP_EOL.'('.$provider.'): SELECT 1'.PHP_EOL,ob_get_clean());
+		ob_start();
+		core::execute('SELECT ?,?',array(1,'a'));
+		$this->assertSame(PHP_EOL.'('.$provider.'): SELECT ?,?'.PHP_EOL.'#0: int(1)'.PHP_EOL.'#1: string(1) a'.PHP_EOL,ob_get_clean());
+		core::connect(array('debug_file'=>$tmp));
+		@unlink($tmp);
+		core::execute('SELECT 1');
+		$this->assertSame(PHP_EOL.'('.$provider.'): SELECT 1'.PHP_EOL,file_get_contents($tmp));
+		@unlink($tmp);
+		core::connect(array('debug_file'=>''));
+		ob_start();
+		core::execute('SELECT aaa');
+		$this->assertSame(PHP_EOL.'('.$provider.'): SELECT aaa'.PHP_EOL.'1054: Unknown column \'aaa\' in \'field list\''.PHP_EOL,ob_get_clean());
 		core::connect(false);
 		//ADODB
+		$tmp = 'tmp.log';
+		$provider = 'adodb';
 		core::connect(require 'config_adodb.php');
 		$this->assertSame("ADORecordSet_empty", get_class(core::execute("SET NAMES GBK")));
 		$this->assertSame('ADORecordSet_mysqlt', get_class(core::execute("SELECT 1")));
@@ -767,6 +812,22 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		$this->assertSame('ADORecordSet_mysqlt', get_class(core::execute("SELECT ? UNION SELECT ?",array(1,2),$ref)));
 		$this->assertSame(1, $ref['num_fields']);
 		$this->assertSame(2, $ref['num_rows']);
+		core::connect(array('debug_enable'=>true));
+		ob_start();
+		core::execute('SELECT 1');
+		$this->assertSame(PHP_EOL.'('.$provider.'): SELECT 1'.PHP_EOL,ob_get_clean());
+		ob_start();
+		core::execute('SELECT ?,?',array(1,'a'));
+		$this->assertSame(PHP_EOL.'('.$provider.'): SELECT ?,?'.PHP_EOL.'#0: int(1)'.PHP_EOL.'#1: string(1) a'.PHP_EOL,ob_get_clean());
+		core::connect(array('debug_file'=>$tmp));
+		@unlink($tmp);
+		core::execute('SELECT 1');
+		$this->assertSame(PHP_EOL.'('.$provider.'): SELECT 1'.PHP_EOL,file_get_contents($tmp));
+		@unlink($tmp);
+		core::connect(array('debug_file'=>''));
+		ob_start();
+		core::execute('SELECT aaa');
+		$this->assertSame(PHP_EOL.'('.$provider.'): SELECT aaa'.PHP_EOL.'1054: Unknown column \'aaa\' in \'field list\''.PHP_EOL,ob_get_clean());
 		core::connect(false);
 		
 	}
@@ -776,7 +837,7 @@ class coreTest extends PHPUnit_Framework_TestCase {
 	 */
 	public function testPrepare() {
 		
-		// 1. ¡¾»ù´¡¹¦ÄÜ¡¿×¼±¸SQLÓï¾ä¡£
+		// 1. ã€åŸºç¡€åŠŸèƒ½ã€‘å‡†å¤‡SQLè¯­å¥ã€‚
 		$input = array('a1','b1'=>'b','b2'=>100,'b3'=>null,'c1'=>array('c',100,null),'d1 ?'=>'d','d2 ?'=>100,'d3 ?'=>null,'e1 ?,?,?'=>array('e',100,null),'f1'=>array());
 		$this->assertSame(array(
 			array('a1','?','?','?','CONCAT_WS(\',\',?,?,?)','d1 ?','d2 ?','d3 ?','e1 ?,?,?'),
@@ -926,7 +987,7 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			core::prepare('selects',array(array('a','b'=>'c',100,null,true,false),array('tbl'),array('a'=>'b','c LIKE ?'=>'d','e',true),array('LIMIT'=>array(10,20))),true));
 		core::connect(false);
 
-		// 2. ¡¾À©Õ¹¹¦ÄÜ¡¿×¼±¸SQLÓï¾ä¡£
+		// 2. ã€æ‰©å±•åŠŸèƒ½ã€‘å‡†å¤‡SQLè¯­å¥ã€‚
 		//PDO
 		$arr = require 'config_pdo.php';
 		$arr['prefix_search'] = 'pre_';
@@ -1008,6 +1069,77 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			core::prepare('selects',array(array('a','b'=>'c',100,null,true,false),array('tbl'),array('a'=>'b','c LIKE ?'=>'d','e',true),array('LIMIT'=>array(10,20))),true));
 		core::connect(false);	
 		
+		// 3. ã€åŸºç¡€åŠŸèƒ½ã€‘è°ƒè¯•SQLè¯­å¥ã€‚
+		$tmp = 'tmp.log';
+		$provider = 'mysql';
+		$arr = require 'config_mysql.php';
+		$arr['prefix_search'] = 'pre_';
+		$arr['prefix_replace'] = 'pre1_';
+		core::connect($arr);
+		ob_start();
+		core::prepare('SELECT aaa',null,null,true);
+		$this->assertSame(PHP_EOL.'('.$provider.'): SELECT aaa'.PHP_EOL,ob_get_clean());
+		ob_start();
+		core::prepare('SELECT ?',array('aaa'),null,true);
+		$this->assertSame(PHP_EOL.'('.$provider.'): SELECT ?'.PHP_EOL.'#0: string(3) aaa'.PHP_EOL,ob_get_clean());
+		ob_start();
+		core::prepare('SELECT ?',array('aaa'),true,true);
+		$this->assertSame(PHP_EOL.'('.$provider.'): SELECT \'aaa\''.PHP_EOL,ob_get_clean());
+		ob_start();
+		core::prepare('SELECT aaa',null,null,true, null,1000,'bbb');
+		$this->assertSame(PHP_EOL.'('.$provider.'): SELECT aaa'.PHP_EOL.'1000: bbb'.PHP_EOL,ob_get_clean());
+		@unlink($tmp);
+		core::prepare('SELECT aaa',null,null,true, $tmp);
+		$this->assertSame(PHP_EOL.'('.$provider.'): SELECT aaa'.PHP_EOL,file_get_contents($tmp));
+		@unlink($tmp);
+		core::connect(false);
+		//PDO
+		$provider = 'pdo';
+		$arr = require 'config_pdo.php';
+		$arr['prefix_search'] = 'pre_';
+		$arr['prefix_replace'] = 'pre1_';
+		core::connect($arr);
+		ob_start();
+		core::prepare('SELECT aaa',null,null,true);
+		$this->assertSame(PHP_EOL.'('.$provider.'): SELECT aaa'.PHP_EOL,ob_get_clean());
+		ob_start();
+		core::prepare('SELECT ?',array('aaa'),null,true);
+		$this->assertSame(PHP_EOL.'('.$provider.'): SELECT ?'.PHP_EOL.'#0: string(3) aaa'.PHP_EOL,ob_get_clean());
+		ob_start();
+		core::prepare('SELECT ?',array('aaa'),true,true);
+		$this->assertSame(PHP_EOL.'('.$provider.'): SELECT \'aaa\''.PHP_EOL,ob_get_clean());
+		ob_start();
+		core::prepare('SELECT aaa',null,null,true, null,1000,'bbb');
+		$this->assertSame(PHP_EOL.'('.$provider.'): SELECT aaa'.PHP_EOL.'1000: bbb'.PHP_EOL,ob_get_clean());
+		@unlink($tmp);
+		core::prepare('SELECT aaa',null,null,true, $tmp);
+		$this->assertSame(PHP_EOL.'('.$provider.'): SELECT aaa'.PHP_EOL,file_get_contents($tmp));
+		@unlink($tmp);
+		core::connect(false);
+		//ADODB
+		$provider = 'adodb';
+		$arr = require 'config_adodb.php';
+		$arr['prefix_search'] = 'pre_';
+		$arr['prefix_replace'] = 'pre1_';
+		core::connect($arr);
+		ob_start();
+		core::prepare('SELECT aaa',null,null,true);
+		$this->assertSame(PHP_EOL.'('.$provider.'): SELECT aaa'.PHP_EOL,ob_get_clean());
+		ob_start();
+		core::prepare('SELECT ?',array('aaa'),null,true);
+		$this->assertSame(PHP_EOL.'('.$provider.'): SELECT ?'.PHP_EOL.'#0: string(3) aaa'.PHP_EOL,ob_get_clean());
+		ob_start();
+		core::prepare('SELECT ?',array('aaa'),true,true);
+		$this->assertSame(PHP_EOL.'('.$provider.'): SELECT \'aaa\''.PHP_EOL,ob_get_clean());
+		ob_start();
+		core::prepare('SELECT aaa',null,null,true, null,1000,'bbb');
+		$this->assertSame(PHP_EOL.'('.$provider.'): SELECT aaa'.PHP_EOL.'1000: bbb'.PHP_EOL,ob_get_clean());
+		@unlink($tmp);
+		core::prepare('SELECT aaa',null,null,true, $tmp);
+		$this->assertSame(PHP_EOL.'('.$provider.'): SELECT aaa'.PHP_EOL,file_get_contents($tmp));
+		@unlink($tmp);
+		core::connect(false);
+		
 	}
 
 	/**
@@ -1015,7 +1147,7 @@ class coreTest extends PHPUnit_Framework_TestCase {
 	 */
 	public function testSequence() {
 		
-		// 1. ¡¾»ù´¡¹¦ÄÜ¡¿Éú³ÉÖ¸¶¨×ÔÔöÐòÁÐ£¬·µ»ØÐòÁÐºÅ¡£
+		// 1. ã€åŸºç¡€åŠŸèƒ½ã€‘ç”ŸæˆæŒ‡å®šè‡ªå¢žåºåˆ—ï¼Œè¿”å›žåºåˆ—å·ã€‚
 		$arr = require 'config_mysql.php';
 		$arr['prefix_search'] = 'pre_';
 		$arr['prefix_replace'] = 'pre1_';
@@ -1032,7 +1164,7 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		core::execute("DROP TABLE pre_sequence");
 		core::connect(false);
 
-		// 2. ¡¾À©Õ¹¹¦ÄÜ¡¿Éú³ÉÖ¸¶¨×ÔÔöÐòÁÐ£¬·µ»ØÐòÁÐºÅ¡£
+		// 2. ã€æ‰©å±•åŠŸèƒ½ã€‘ç”ŸæˆæŒ‡å®šè‡ªå¢žåºåˆ—ï¼Œè¿”å›žåºåˆ—å·ã€‚
 		//PDO
 		$arr = require 'config_pdo.php';
 		$arr['prefix_search'] = 'pre_';
@@ -1075,7 +1207,7 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		
 		require_once 'test.php';
 		
-		// 1. ¡¾»ù´¡¹¦ÄÜ¡¿·µ»ØÊµÀýÊý×é¡£
+		// 1. ã€åŸºç¡€åŠŸèƒ½ã€‘è¿”å›žå®žä¾‹æ•°ç»„ã€‚
 		$arr1 = array('b','d');
 		$arr2 = array('b','d','f');
 		$arr3 = array('a'=>'b','c'=>'d');
@@ -1100,7 +1232,7 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		$obj4->a = 'b';
 		$obj4->c = 'd';
 		$obj4->e = 'f';
-		//»ù±¾ÐÍ
+		//åŸºæœ¬åž‹
 		$this->assertEquals(array($arr3,$arr4), core::structs(array($arr7,$arr6),array(null, 'assoc'=>null)) );
 		$this->assertEquals(array($arr2,$arr2), core::structs(array($arr7,$arr6),array(null, 'num'=>null)) );
 		$this->assertEquals(array($arr5,$arr6), core::structs(array($arr7,$arr6),array(null, 'both'=>null)) );
@@ -1115,7 +1247,7 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals(array($obj3,$obj4), core::structs(array($arr7,$arr6),array(null, 'class'=>'test')) );
 		$this->assertEquals(array($obj1), core::structs(array($arr9),array(null, 'class|classtype'=>null)) );
 		$this->assertEquals(array($obj3,$obj4), core::structs(array($arr7,$arr6),array(null, 'clone'=>new test)) );
-		//Ä¬ÈÏÐÍ
+		//é»˜è®¤åž‹
 		if(function_exists('get_called_class')){
 			$this->assertEquals(array($obj3,$obj4), test::structs(array($arr7,$arr6),null) );
 		}else{
@@ -1123,7 +1255,7 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		}
 		$this->assertEquals(array($obj3,$obj4), core::structs(array($arr7,$arr6),'test') );
 		$this->assertEquals(array($obj3,$obj4), core::structs(array($arr7,$arr6),new test) );
-		//À©Õ¹ÐÍ
+		//æ‰©å±•åž‹
 		$this->assertEquals(array('f'=>$obj4), core::structs(array($arr7,$arr6),array(2, 'class'=>'test')) );
 		$this->assertEquals(array(''=>$obj3,'f'=>$obj4), core::structs(array($arr7,$arr6),array('e', 'class'=>'test')) );
 		$this->assertEquals(array('f'=>array($obj3,$obj4)), core::structs(array($arr7,$arr6),array(2, null, 'class'=>'test')) );
@@ -1139,7 +1271,7 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		
 		require_once 'test.php';
 		
-		// 1. ¡¾»ù´¡¹¦ÄÜ¡¿Ñ¡Ôñ¶ÔÏóÊý¾Ý¡£
+		// 1. ã€åŸºç¡€åŠŸèƒ½ã€‘é€‰æ‹©å¯¹è±¡æ•°æ®ã€‚
 		$arr = require 'config_mysql.php';
 		$arr['prefix_search'] = 'pre_';
 		$arr['prefix_replace'] = 'pre1_';
@@ -1247,10 +1379,16 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals(array($obj2),core::selects('SELECT * FROM pre_test LIMIT 10',null,true,array('page'=>&$page)));
 		$this->assertEquals(array('page'=>2,'size'=>1,'count'=>3,'limit'=>'LIMIT 10','total'=>3),$page);
 
+		core::connect(array('debug_enable'=>true));
+		ob_start();
+		core::selects('SELECT ?,?',array(1,'a'),true);
+		$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): SELECT ?,?'.PHP_EOL.'#0: int(1)'.PHP_EOL.'#1: string(1) a'.PHP_EOL,ob_get_clean());
+		core::connect(array('debug_enable'=>''));
+
 		core::execute("DROP TABLE pre1_test");
 		core::connect(false);
 		
-		// 2. ¡¾À©Õ¹¹¦ÄÜ¡¿Ñ¡ÔñÊµÀýÊý¾Ý¡£
+		// 2. ã€æ‰©å±•åŠŸèƒ½ã€‘é€‰æ‹©å®žä¾‹æ•°æ®ã€‚
 		//PDO
 		$arr = require 'config_pdo.php';
 		$arr['prefix_search'] = 'pre_';
@@ -1358,6 +1496,12 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		$page = array('page'=>2,'size'=>1,'count'=>null,'limit'=>'LIMIT 10');
 		$this->assertEquals(array($obj2),core::selects('SELECT * FROM pre_test LIMIT 10',null,true,array('page'=>&$page)));
 		$this->assertEquals(array('page'=>2,'size'=>1,'count'=>3,'limit'=>'LIMIT 10','total'=>3),$page);
+
+		core::connect(array('debug_enable'=>true));
+		ob_start();
+		core::selects('SELECT ?,?',array(1,'a'),true);
+		$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): SELECT ?,?'.PHP_EOL.'#0: int(1)'.PHP_EOL.'#1: string(1) a'.PHP_EOL,ob_get_clean());
+		core::connect(array('debug_enable'=>''));
 
 		core::execute("DROP TABLE pre1_test");
 		core::connect(false);
@@ -1468,6 +1612,12 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		$page = array('page'=>2,'size'=>1,'count'=>null,'limit'=>'LIMIT 10');
 		$this->assertEquals(array($obj2),core::selects('SELECT * FROM pre_test LIMIT 10',null,true,array('page'=>&$page)));
 		$this->assertEquals(array('page'=>2,'size'=>1,'count'=>3,'limit'=>'LIMIT 10','total'=>3),$page);
+
+		core::connect(array('debug_enable'=>true));
+		ob_start();
+		core::selects('SELECT ?,?',array(1,'a'),true);
+		$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): SELECT ?,?'.PHP_EOL.'#0: int(1)'.PHP_EOL.'#1: string(1) a'.PHP_EOL,ob_get_clean());
+		core::connect(array('debug_enable'=>''));
 
 		core::execute("DROP TABLE pre1_test");
 		core::connect(false);
@@ -1481,7 +1631,7 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		
 		require_once 'test.php';
 		
-		// 1. ¡¾»ù´¡¹¦ÄÜ¡¿²åÈë¶ÔÏóÊý¾Ý¡£
+		// 1. ã€åŸºç¡€åŠŸèƒ½ã€‘æ’å…¥å¯¹è±¡æ•°æ®ã€‚
 		$arr = require 'config_mysql.php';
 		$arr['prefix_search'] = 'pre_';
 		$arr['prefix_replace'] = 'pre1_';
@@ -1514,10 +1664,17 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,'pre_test'));
 		core::execute("TRUNCATE pre1_test");
 
+		core::connect(array('debug_enable'=>true));
+		ob_start();
+		core::inserts('INSERT pre1_test(id,name) VALUES(?,?)',array(1,'a'),true);
+		$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): INSERT pre1_test(id,name) VALUES(?,?)'.PHP_EOL.'#0: int(1)'.PHP_EOL.'#1: string(1) a'.PHP_EOL,ob_get_clean());
+		core::connect(array('debug_enable'=>''));
+		core::execute("TRUNCATE pre1_test");
+
 		core::execute("DROP TABLE pre1_test");
 		core::connect(false);
 		
-		// 2. ¡¾À©Õ¹¹¦ÄÜ¡¿²åÈëÊµÀýÊý¾Ý¡£
+		// 2. ã€æ‰©å±•åŠŸèƒ½ã€‘æ’å…¥å®žä¾‹æ•°æ®ã€‚
 		//PDO
 		$arr = require 'config_pdo.php';
 		$arr['prefix_search'] = 'pre_';
@@ -1549,6 +1706,13 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		$this->assertSame(1,core::inserts('INSERT INTO pre_test VALUES (?,?)',array(1,'core'),true));
 		$this->assertSame(2,core::inserts('INSERT INTO pre_test (name) VALUES (?),(?)',array('test','test'),true));
 		$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,'pre_test'));
+		core::execute("TRUNCATE pre1_test");
+
+		core::connect(array('debug_enable'=>true));
+		ob_start();
+		core::inserts('INSERT pre1_test(id,name) VALUES(?,?)',array(1,'a'),true);
+		$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): INSERT pre1_test(id,name) VALUES(?,?)'.PHP_EOL.'#0: int(1)'.PHP_EOL.'#1: string(1) a'.PHP_EOL,ob_get_clean());
+		core::connect(array('debug_enable'=>''));
 		core::execute("TRUNCATE pre1_test");
 
 		core::execute("DROP TABLE pre1_test");
@@ -1584,6 +1748,13 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		$this->assertSame(1,core::inserts('INSERT INTO pre_test VALUES (?,?)',array(1,'core'),true));
 		$this->assertSame(2,core::inserts('INSERT INTO pre_test (name) VALUES (?),(?)',array('test','test'),true));
 		$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,'pre_test'));
+		core::execute("TRUNCATE pre1_test");
+
+		core::connect(array('debug_enable'=>true));
+		ob_start();
+		core::inserts('INSERT pre1_test(id,name) VALUES(?,?)',array(1,'a'),true);
+		$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): INSERT pre1_test(id,name) VALUES(?,?)'.PHP_EOL.'#0: int(1)'.PHP_EOL.'#1: string(1) a'.PHP_EOL,ob_get_clean());
+		core::connect(array('debug_enable'=>''));
 		core::execute("TRUNCATE pre1_test");
 
 		core::execute("DROP TABLE pre1_test");
@@ -1598,7 +1769,7 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		
 		require_once 'test.php';
 		
-		// 1. ¡¾»ù´¡¹¦ÄÜ¡¿ÐÞ¸Ä¶ÔÏóÊý¾Ý¡£
+		// 1. ã€åŸºç¡€åŠŸèƒ½ã€‘ä¿®æ”¹å¯¹è±¡æ•°æ®ã€‚
 		$arr = require 'config_mysql.php';
 		$arr['prefix_search'] = 'pre_';
 		$arr['prefix_replace'] = 'pre1_';
@@ -1634,10 +1805,19 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,'pre_test'));
 		core::execute("TRUNCATE pre1_test");
 
+		core::execute("INSERT INTO pre1_test(id,name) VALUES (1,'core')");
+		core::connect(array('debug_enable'=>true));
+		ob_start();
+		core::updates('UPDATE pre1_test SET id=?,name=?',array(1,'a'),true);
+		$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): UPDATE pre1_test SET id=?,name=?'.PHP_EOL.'#0: int(1)'.PHP_EOL.'#1: string(1) a'.PHP_EOL,ob_get_clean());
+		core::connect(array('debug_enable'=>''));
+		core::execute("TRUNCATE pre1_test");
+
+
 		core::execute("DROP TABLE pre1_test");
 		core::connect(false);
 		
-		// 2. ¡¾À©Õ¹¹¦ÄÜ¡¿ÐÞ¸ÄÊµÀýÊý¾Ý¡£
+		// 2. ã€æ‰©å±•åŠŸèƒ½ã€‘ä¿®æ”¹å®žä¾‹æ•°æ®ã€‚
 		//PDO
 		$arr = require 'config_pdo.php';
 		$arr['prefix_search'] = 'pre_';
@@ -1672,6 +1852,14 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		$this->assertSame(1,core::updates('UPDATE pre_test SET name=? WHERE id=?',array('core1',1),true));
 		$this->assertSame(2,core::updates('UPDATE pre_test SET name=? WHERE id IN (?,?)',array('test1',2,3),true));
 		$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,'pre_test'));
+		core::execute("TRUNCATE pre1_test");
+
+		core::execute("INSERT INTO pre1_test(id,name) VALUES (1,'core')");
+		core::connect(array('debug_enable'=>true));
+		ob_start();
+		core::updates('UPDATE pre1_test SET id=?,name=?',array(1,'a'),true);
+		$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): UPDATE pre1_test SET id=?,name=?'.PHP_EOL.'#0: int(1)'.PHP_EOL.'#1: string(1) a'.PHP_EOL,ob_get_clean());
+		core::connect(array('debug_enable'=>''));
 		core::execute("TRUNCATE pre1_test");
 
 		core::execute("DROP TABLE pre1_test");
@@ -1710,6 +1898,14 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		$this->assertSame(1,core::updates('UPDATE pre_test SET name=? WHERE id=?',array('core1',1),true));
 		$this->assertSame(2,core::updates('UPDATE pre_test SET name=? WHERE id IN (?,?)',array('test1',2,3),true));
 		$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,'pre_test'));
+		core::execute("TRUNCATE pre1_test");
+
+		core::execute("INSERT INTO pre1_test(id,name) VALUES (1,'core')");
+		core::connect(array('debug_enable'=>true));
+		ob_start();
+		core::updates('UPDATE pre1_test SET id=?,name=?',array(1,'a'),true);
+		$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): UPDATE pre1_test SET id=?,name=?'.PHP_EOL.'#0: int(1)'.PHP_EOL.'#1: string(1) a'.PHP_EOL,ob_get_clean());
+		core::connect(array('debug_enable'=>''));
 		core::execute("TRUNCATE pre1_test");
 
 		core::execute("DROP TABLE pre1_test");
@@ -1724,7 +1920,7 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		
 		require_once 'test.php';
 		
-		// 1. ¡¾»ù´¡¹¦ÄÜ¡¿É¾³ý¶ÔÏóÊý¾Ý¡£
+		// 1. ã€åŸºç¡€åŠŸèƒ½ã€‘åˆ é™¤å¯¹è±¡æ•°æ®ã€‚
 		$arr = require 'config_mysql.php';
 		$arr['prefix_search'] = 'pre_';
 		$arr['prefix_replace'] = 'pre1_';
@@ -1763,10 +1959,18 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals(array(),core::selects(null,'pre_test'));
 		core::execute("TRUNCATE pre1_test");
 
+		core::execute("INSERT INTO pre1_test(id,name) VALUES (1,'core')");
+		core::connect(array('debug_enable'=>true));
+		ob_start();
+		core::deletes('DELETE FROM pre1_test WHERE id=? OR name=?',array(1,'a'),true);
+		$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): DELETE FROM pre1_test WHERE id=? OR name=?'.PHP_EOL.'#0: int(1)'.PHP_EOL.'#1: string(1) a'.PHP_EOL,ob_get_clean());
+		core::connect(array('debug_enable'=>''));
+		core::execute("TRUNCATE pre1_test");
+
 		core::execute("DROP TABLE pre1_test");
 		core::connect(false);
 		
-		// 2. ¡¾À©Õ¹¹¦ÄÜ¡¿É¾³ýÊµÀýÊý¾Ý¡£
+		// 2. ã€æ‰©å±•åŠŸèƒ½ã€‘åˆ é™¤å®žä¾‹æ•°æ®ã€‚
 		//PDO
 		$arr = require 'config_pdo.php';
 		$arr['prefix_search'] = 'pre_';
@@ -1804,6 +2008,14 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals(array($obj2,$obj3),core::selects(null,'pre_test'));
 		$this->assertSame(2,core::deletes('DELETE FROM pre_test WHERE id IN (?,?)',array(2,3),true));
 		$this->assertEquals(array(),core::selects(null,'pre_test'));
+		core::execute("TRUNCATE pre1_test");
+
+		core::execute("INSERT INTO pre1_test(id,name) VALUES (1,'core')");
+		core::connect(array('debug_enable'=>true));
+		ob_start();
+		core::deletes('DELETE FROM pre1_test WHERE id=? OR name=?',array(1,'a'),true);
+		$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): DELETE FROM pre1_test WHERE id=? OR name=?'.PHP_EOL.'#0: int(1)'.PHP_EOL.'#1: string(1) a'.PHP_EOL,ob_get_clean());
+		core::connect(array('debug_enable'=>''));
 		core::execute("TRUNCATE pre1_test");
 
 		core::execute("DROP TABLE pre1_test");
@@ -1845,6 +2057,14 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals(array($obj2,$obj3),core::selects(null,'pre_test'));
 		$this->assertSame(2,core::deletes('DELETE FROM pre_test WHERE id IN (?,?)',array(2,3),true));
 		$this->assertEquals(array(),core::selects(null,'pre_test'));
+		core::execute("TRUNCATE pre1_test");
+
+		core::execute("INSERT INTO pre1_test(id,name) VALUES (1,'core')");
+		core::connect(array('debug_enable'=>true));
+		ob_start();
+		core::deletes('DELETE FROM pre1_test WHERE id=? OR name=?',array(1,'a'),true);
+		$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): DELETE FROM pre1_test WHERE id=? OR name=?'.PHP_EOL.'#0: int(1)'.PHP_EOL.'#1: string(1) a'.PHP_EOL,ob_get_clean());
+		core::connect(array('debug_enable'=>''));
 		core::execute("TRUNCATE pre1_test");
 
 		core::execute("DROP TABLE pre1_test");
@@ -1858,7 +2078,7 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		
 		require_once 'test.php';
 		
-		// 1. ¡¾»ù´¡¹¦ÄÜ¡¿²åÈë¶ÔÏóÊý¾Ý¡£
+		// 1. ã€åŸºç¡€åŠŸèƒ½ã€‘æ’å…¥å¯¹è±¡æ•°æ®ã€‚
 		$arr = require 'config_mysql.php';
 		$arr['prefix_search'] = 'pre_';
 		$arr['prefix_replace'] = 'pre1_';
@@ -1897,10 +2117,18 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,'pre_test'));
 		core::execute("TRUNCATE pre1_test");
 
+		core::execute("INSERT INTO pre1_test(id,name) VALUES (1,'core')");
+		core::connect(array('debug_enable'=>true));
+		ob_start();
+		core::replaces('REPLACE INTO pre1_test VALUES (?,?)',array(1,'a'),true);
+		$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): REPLACE INTO pre1_test VALUES (?,?)'.PHP_EOL.'#0: int(1)'.PHP_EOL.'#1: string(1) a'.PHP_EOL,ob_get_clean());
+		core::connect(array('debug_enable'=>''));
+		core::execute("TRUNCATE pre1_test");
+
 		core::execute("DROP TABLE pre1_test");
 		core::connect(false);
 		
-		// 2. ¡¾À©Õ¹¹¦ÄÜ¡¿²åÈëÊµÀýÊý¾Ý¡£
+		// 2. ã€æ‰©å±•åŠŸèƒ½ã€‘æ’å…¥å®žä¾‹æ•°æ®ã€‚
 		//PDO
 		$arr = require 'config_pdo.php';
 		$arr['prefix_search'] = 'pre_';
@@ -1938,6 +2166,14 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		$this->assertSame(2,core::replaces('REPLACE INTO pre_test (name) VALUES (?),(?)',array('test','test'),true));
 		$this->assertSame(4,core::replaces('REPLACE INTO pre_test (id,name) VALUES (2,?),(3,?)',array('test','test'),true));
 		$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,'pre_test'));
+		core::execute("TRUNCATE pre1_test");
+
+		core::execute("INSERT INTO pre1_test(id,name) VALUES (1,'core')");
+		core::connect(array('debug_enable'=>true));
+		ob_start();
+		core::replaces('REPLACE INTO pre1_test VALUES (?,?)',array(1,'a'),true);
+		$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): REPLACE INTO pre1_test VALUES (?,?)'.PHP_EOL.'#0: int(1)'.PHP_EOL.'#1: string(1) a'.PHP_EOL,ob_get_clean());
+		core::connect(array('debug_enable'=>''));
 		core::execute("TRUNCATE pre1_test");
 
 		core::execute("DROP TABLE pre1_test");
@@ -1981,6 +2217,14 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,'pre_test'));
 		core::execute("TRUNCATE pre1_test");
 
+		core::execute("INSERT INTO pre1_test(id,name) VALUES (1,'core')");
+		core::connect(array('debug_enable'=>true));
+		ob_start();
+		core::replaces('REPLACE INTO pre1_test VALUES (?,?)',array(1,'a'),true);
+		$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): REPLACE INTO pre1_test VALUES (?,?)'.PHP_EOL.'#0: int(1)'.PHP_EOL.'#1: string(1) a'.PHP_EOL,ob_get_clean());
+		core::connect(array('debug_enable'=>''));
+		core::execute("TRUNCATE pre1_test");
+
 		core::execute("DROP TABLE pre1_test");
 		core::connect(false);
 	
@@ -1991,7 +2235,7 @@ class coreTest extends PHPUnit_Framework_TestCase {
 	 */
 	public function testStruct() {
 		
-		// 1. ¡¾»ù´¡¹¦ÄÜ¡¿·µ»ØÊµÀýÊý×é¡£
+		// 1. ã€åŸºç¡€åŠŸèƒ½ã€‘è¿”å›žå®žä¾‹æ•°ç»„ã€‚
 		$arr = array(
 			'a' => 1,
 			'b' => 'b',
@@ -2003,11 +2247,11 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		$obj->c = array('c');
 		$this->assertSame($arr,$obj->struct());
 		
-		// 2. ¡¾»ù´¡¹¦ÄÜ¡¿·µ»ØÊµÀýÊý¾Ý¡£
+		// 2. ã€åŸºç¡€åŠŸèƒ½ã€‘è¿”å›žå®žä¾‹æ•°æ®ã€‚
 		$this->assertSame("b",$obj->struct(1));
 		$this->assertSame("b",$obj->struct("b"));
 		
-		// 3. ¡¾»ù´¡¹¦ÄÜ¡¿ÔØÈëÊµÀýÊý×é¡£
+		// 3. ã€åŸºç¡€åŠŸèƒ½ã€‘è½½å…¥å®žä¾‹æ•°ç»„ã€‚
 		$obj2 = new core;
 		$this->assertSame($arr,$obj2->struct($obj));
 		$this->assertEquals($obj,$obj2);
@@ -2030,7 +2274,7 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		
 		require_once 'test.php';
 		
-		// 1. ¡¾»ù´¡¹¦ÄÜ¡¿Ñ¡ÔñÊµÀýÊý¾Ý¡£
+		// 1. ã€åŸºç¡€åŠŸèƒ½ã€‘é€‰æ‹©å®žä¾‹æ•°æ®ã€‚
 		$arr = require 'config_mysql.php';
 		$arr['prefix_search'] = 'pre_';
 		$arr['prefix_replace'] = 'pre1_';
@@ -2049,10 +2293,18 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		$this->assertTrue($test->select());
 		$test->id = 3;
 		$this->assertFalse($test->select());
+
+		core::connect(array('debug_enable'=>true));
+		ob_start();
+		$obj->id = 1;
+		$obj->select('pre_test');
+		$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): SELECT * FROM pre1_test WHERE id=? LIMIT 1'.PHP_EOL.'#0: int(1)'.PHP_EOL,ob_get_clean());
+		core::connect(array('debug_enable'=>''));
+
 		core::execute("DROP TABLE pre1_test");
 		core::connect(false);
 		
-		// 2. ¡¾À©Õ¹¹¦ÄÜ¡¿Ñ¡ÔñÊµÀýÊý¾Ý¡£
+		// 2. ã€æ‰©å±•åŠŸèƒ½ã€‘é€‰æ‹©å®žä¾‹æ•°æ®ã€‚
 		//PDO
 		$arr = require 'config_pdo.php';
 		$arr['prefix_search'] = 'pre_';
@@ -2072,6 +2324,14 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		$this->assertTrue($test->select());
 		$test->id = 3;
 		$this->assertFalse($test->select());
+
+		core::connect(array('debug_enable'=>true));
+		ob_start();
+		$obj->id = 1;
+		$obj->select('pre_test');
+		$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): SELECT * FROM pre1_test WHERE id=? LIMIT 1'.PHP_EOL.'#0: int(1)'.PHP_EOL,ob_get_clean());
+		core::connect(array('debug_enable'=>''));
+
 		core::execute("DROP TABLE pre1_test");
 		core::connect(false);
 		//ADODB
@@ -2093,6 +2353,14 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		$this->assertTrue($test->select());
 		$test->id = 3;
 		$this->assertFalse($test->select());
+
+		core::connect(array('debug_enable'=>true));
+		ob_start();
+		$obj->id = 1;
+		$obj->select('pre_test');
+		$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): SELECT * FROM pre1_test WHERE id=? LIMIT 1'.PHP_EOL.'#0: int(1)'.PHP_EOL,ob_get_clean());
+		core::connect(array('debug_enable'=>''));
+
 		core::execute("DROP TABLE pre1_test");
 		core::connect(false);
 		
@@ -2105,7 +2373,7 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		
 		require_once 'test.php';
 		
-		// 1. ¡¾»ù´¡¹¦ÄÜ¡¿²åÈëÊµÀýÊý¾Ý¡£
+		// 1. ã€åŸºç¡€åŠŸèƒ½ã€‘æ’å…¥å®žä¾‹æ•°æ®ã€‚
 		$arr = require 'config_mysql.php';
 		$arr['prefix_search'] = 'pre_';
 		$arr['prefix_replace'] = 'pre1_';
@@ -2128,10 +2396,19 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		$this->assertTrue($test->insert());
 		$this->assertSame('4',$test->id);
 		$this->assertFalse($test->insert('',-1));
+
+		core::connect(array('debug_enable'=>true));
+		ob_start();
+		$obj->id = null;
+		$obj->name = 'a';
+		$obj->insert('pre_test');
+		$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): INSERT INTO pre1_test (name) VALUES (?)'.PHP_EOL.'#0: string(1) a'.PHP_EOL,ob_get_clean());
+		core::connect(array('debug_enable'=>''));
+
 		core::execute("DROP TABLE pre1_test");
 		core::connect(false);
 		
-		// 2. ¡¾À©Õ¹¹¦ÄÜ¡¿²åÈëÊµÀýÊý¾Ý¡£
+		// 2. ã€æ‰©å±•åŠŸèƒ½ã€‘æ’å…¥å®žä¾‹æ•°æ®ã€‚
 		//PDO
 		$arr = require 'config_pdo.php';
 		$arr['prefix_search'] = 'pre_';
@@ -2155,6 +2432,15 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		$this->assertTrue($test->insert());
 		$this->assertSame('4',$test->id);
 		$this->assertFalse($test->insert('',-1));
+
+		core::connect(array('debug_enable'=>true));
+		ob_start();
+		$obj->id = null;
+		$obj->name = 'a';
+		$obj->insert('pre_test');
+		$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): INSERT INTO pre1_test (name) VALUES (?)'.PHP_EOL.'#0: string(1) a'.PHP_EOL,ob_get_clean());
+		core::connect(array('debug_enable'=>''));
+
 		core::execute("DROP TABLE pre1_test");
 		core::connect(false);
 		//ADODB
@@ -2180,6 +2466,15 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		$this->assertTrue($test->insert());
 		$this->assertSame('4',$test->id);
 		$this->assertFalse($test->insert('',-1));
+
+		core::connect(array('debug_enable'=>true));
+		ob_start();
+		$obj->id = null;
+		$obj->name = 'a';
+		$obj->insert('pre_test');
+		$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): INSERT INTO pre1_test (name) VALUES (?)'.PHP_EOL.'#0: string(1) a'.PHP_EOL,ob_get_clean());
+		core::connect(array('debug_enable'=>''));
+
 		core::execute("DROP TABLE pre1_test");
 		core::connect(false);
 	}
@@ -2191,7 +2486,7 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		
 		require_once 'test.php';
 		
-		// 1. ¡¾»ù´¡¹¦ÄÜ¡¿ÐÞ¸ÄÊµÀýÊý¾Ý¡£
+		// 1. ã€åŸºç¡€åŠŸèƒ½ã€‘ä¿®æ”¹å®žä¾‹æ•°æ®ã€‚
 		$arr = require 'config_mysql.php';
 		$arr['prefix_search'] = 'pre_';
 		$arr['prefix_replace'] = 'pre1_';
@@ -2219,10 +2514,19 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		$this->assertTrue($test->update('',-1));
 		$test->id = 3;
 		$this->assertFalse($test->update());
+
+		core::connect(array('debug_enable'=>true));
+		ob_start();
+		$obj->id = 1;
+		$obj->name = 'a';
+		$obj->update('pre_test');
+		$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): UPDATE pre1_test SET name=? WHERE id=? LIMIT 1'.PHP_EOL.'#0: string(1) a'.PHP_EOL.'#1: int(1)'.PHP_EOL,ob_get_clean());
+		core::connect(array('debug_enable'=>''));
+
 		core::execute("DROP TABLE pre1_test");
 		core::connect(false);
 		
-		// 2. ¡¾À©Õ¹¹¦ÄÜ¡¿ÐÞ¸ÄÊµÀýÊý¾Ý¡£
+		// 2. ã€æ‰©å±•åŠŸèƒ½ã€‘ä¿®æ”¹å®žä¾‹æ•°æ®ã€‚
 		//PDO
 		$arr = require 'config_pdo.php';
 		$arr['prefix_search'] = 'pre_';
@@ -2251,6 +2555,15 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		$this->assertTrue($test->update('',-1));
 		$test->id = 3;
 		$this->assertFalse($test->update());
+
+		core::connect(array('debug_enable'=>true));
+		ob_start();
+		$obj->id = 1;
+		$obj->name = 'a';
+		$obj->update('pre_test');
+		$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): UPDATE pre1_test SET name=? WHERE id=? LIMIT 1'.PHP_EOL.'#0: string(1) a'.PHP_EOL.'#1: int(1)'.PHP_EOL,ob_get_clean());
+		core::connect(array('debug_enable'=>''));
+
 		core::execute("DROP TABLE pre1_test");
 		core::connect(false);
 		//ADODB
@@ -2281,6 +2594,15 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		$this->assertTrue($test->update('',-1));
 		$test->id = 3;
 		$this->assertFalse($test->update());
+
+		core::connect(array('debug_enable'=>true));
+		ob_start();
+		$obj->id = 1;
+		$obj->name = 'a';
+		$obj->update('pre_test');
+		$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): UPDATE pre1_test SET name=? WHERE id=? LIMIT 1'.PHP_EOL.'#0: string(1) a'.PHP_EOL.'#1: int(1)'.PHP_EOL,ob_get_clean());
+		core::connect(array('debug_enable'=>''));
+
 		core::execute("DROP TABLE pre1_test");
 		core::connect(false);
 		
@@ -2293,7 +2615,7 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		
 		require_once 'test.php';
 		
-		// 1. ¡¾»ù´¡¹¦ÄÜ¡¿É¾³ýÊµÀýÊý¾Ý¡£
+		// 1. ã€åŸºç¡€åŠŸèƒ½ã€‘åˆ é™¤å®žä¾‹æ•°æ®ã€‚
 		$arr = require 'config_mysql.php';
 		$arr['prefix_search'] = 'pre_';
 		$arr['prefix_replace'] = 'pre1_';
@@ -2317,10 +2639,20 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		$test->id = 2;
 		$this->assertTrue($test->delete());
 		$this->assertFalse($test->delete());
+
+		core::execute("INSERT INTO pre1_test(id,name) VALUES (1,'b')");
+		core::connect(array('debug_enable'=>true));
+		ob_start();
+		$obj->id = 1;
+		$obj->name = 'a';
+		$obj->delete('pre_test');
+		$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): DELETE FROM pre1_test WHERE id=? LIMIT 1'.PHP_EOL.'#0: int(1)'.PHP_EOL,ob_get_clean());
+		core::connect(array('debug_enable'=>''));
+
 		core::execute("DROP TABLE pre1_test");
 		core::connect(false);
 		
-		// 2. ¡¾À©Õ¹¹¦ÄÜ¡¿É¾³ýÊµÀýÊý¾Ý¡£
+		// 2. ã€æ‰©å±•åŠŸèƒ½ã€‘åˆ é™¤å®žä¾‹æ•°æ®ã€‚
 		//PDO
 		$arr = require 'config_pdo.php';
 		$arr['prefix_search'] = 'pre_';
@@ -2345,6 +2677,16 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		$test->id = 2;
 		$this->assertTrue($test->delete());
 		$this->assertFalse($test->delete());
+
+		core::execute("INSERT INTO pre1_test(id,name) VALUES (1,'b')");
+		core::connect(array('debug_enable'=>true));
+		ob_start();
+		$obj->id = 1;
+		$obj->name = 'a';
+		$obj->delete('pre_test');
+		$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): DELETE FROM pre1_test WHERE id=? LIMIT 1'.PHP_EOL.'#0: int(1)'.PHP_EOL,ob_get_clean());
+		core::connect(array('debug_enable'=>''));
+
 		core::execute("DROP TABLE pre1_test");
 		core::connect(false);
 		//ADODB
@@ -2371,6 +2713,16 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		$test->id = 2;
 		$this->assertTrue($test->delete());
 		$this->assertFalse($test->delete());
+
+		core::execute("INSERT INTO pre1_test(id,name) VALUES (1,'b')");
+		core::connect(array('debug_enable'=>true));
+		ob_start();
+		$obj->id = 1;
+		$obj->name = 'a';
+		$obj->delete('pre_test');
+		$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): DELETE FROM pre1_test WHERE id=? LIMIT 1'.PHP_EOL.'#0: int(1)'.PHP_EOL,ob_get_clean());
+		core::connect(array('debug_enable'=>''));
+
 		core::execute("DROP TABLE pre1_test");
 		core::connect(false);
 		
@@ -2383,7 +2735,7 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		
 		require_once 'test.php';
 		
-		// 1. ¡¾»ù´¡¹¦ÄÜ¡¿¸üÐÂÊµÀýÊý¾Ý¡£
+		// 1. ã€åŸºç¡€åŠŸèƒ½ã€‘æ›´æ–°å®žä¾‹æ•°æ®ã€‚
 		$arr = require 'config_mysql.php';
 		$arr['prefix_search'] = 'pre_';
 		$arr['prefix_replace'] = 'pre1_';
@@ -2399,10 +2751,19 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		$obj->id = 3;
 		$obj->name = 'd';
 		$this->assertTrue($obj->replace('pre_test'));
+
+		core::connect(array('debug_enable'=>true));
+		ob_start();
+		$obj->id = 1;
+		$obj->name = 'a';
+		$obj->replace('pre_test');
+		$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): REPLACE INTO pre1_test (id,name) VALUES (?,?)'.PHP_EOL.'#0: int(1)'.PHP_EOL.'#1: string(1) a'.PHP_EOL,ob_get_clean());
+		core::connect(array('debug_enable'=>''));
+
 		core::execute("DROP TABLE pre1_test");
 		core::connect(false);
 		
-		// 2. ¡¾À©Õ¹¹¦ÄÜ¡¿¸üÐÂÊµÀýÊý¾Ý¡£
+		// 2. ã€æ‰©å±•åŠŸèƒ½ã€‘æ›´æ–°å®žä¾‹æ•°æ®ã€‚
 		//PDO
 		$arr = require 'config_pdo.php';
 		$arr['prefix_search'] = 'pre_';
@@ -2419,6 +2780,15 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		$obj->id = 3;
 		$obj->name = 'd';
 		$this->assertTrue($obj->replace('pre_test'));
+
+		core::connect(array('debug_enable'=>true));
+		ob_start();
+		$obj->id = 1;
+		$obj->name = 'a';
+		$obj->replace('pre_test');
+		$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): REPLACE INTO pre1_test (id,name) VALUES (?,?)'.PHP_EOL.'#0: int(1)'.PHP_EOL.'#1: string(1) a'.PHP_EOL,ob_get_clean());
+		core::connect(array('debug_enable'=>''));
+
 		core::execute("DROP TABLE pre1_test");
 		core::connect(false);
 		//ADODB
@@ -2437,6 +2807,15 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		$obj->id = 3;
 		$obj->name = 'd';
 		$this->assertTrue($obj->replace('pre_test'));
+
+		core::connect(array('debug_enable'=>true));
+		ob_start();
+		$obj->id = 1;
+		$obj->name = 'a';
+		$obj->replace('pre_test');
+		$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): REPLACE INTO pre1_test (id,name) VALUES (?,?)'.PHP_EOL.'#0: int(1)'.PHP_EOL.'#1: string(1) a'.PHP_EOL,ob_get_clean());
+		core::connect(array('debug_enable'=>''));
+
 		core::execute("DROP TABLE pre1_test");
 		core::connect(false);
 				

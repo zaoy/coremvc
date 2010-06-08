@@ -39,12 +39,13 @@ class db_pdo {
 	 * 执行语句
 	 * @param dbh $dbh
 	 * @param array $args
+	 * @param string $class
 	 * @param string $sql
 	 * @param array $param
 	 * @param array &$ref
 	 * @return sth
 	 */
-	public static function execute($dbh, $args, $sql, $param = null, &$ref = null) {
+	public static function execute($dbh, $args, $class, $sql, $param = null, &$ref = null) {
 		if (is_array ( $param )) {
 			if (is_array ( $ref )) {
 				unset($ref['insert_id']);
@@ -70,12 +71,20 @@ class db_pdo {
 				$sth = $dbh->query ( $sql );
 			}
 		}
+		if ($args ['debug_enable'] === true) {
+			if ($sth === false) {
+				$err = $dbh->errorInfo();
+				call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'], $err[1], $err[2] );
+			} else {
+				call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'] );
+			}
+		}
 		if(func_num_args()>4){
 			$ref = array();
 			$ref ['insert_id'] = $dbh->lastInsertId();
-			$ref ['affected_rows'] = $sth->rowCount();
-			$ref ['num_fields'] = $sth->columnCount();
-			$ref ['num_rows'] = $sth->rowCount();
+			$ref ['affected_rows'] = is_object($sth)?$sth->rowCount():0;
+			$ref ['num_fields'] = is_object($sth)?$sth->columnCount():0;
+			$ref ['num_rows'] = is_object($sth)?$sth->rowCount():0;
 		}
 		return $sth;
 	}
@@ -87,22 +96,27 @@ class db_pdo {
 	 * @param string $class
 	 * @param string $sql
 	 * @param array $param
-	 * @param bool $bool
-	 * @return array
+	 * @param bool $format
+	 * @param bool $debug
+	 * @param string $output
+	 * @param string $errno
+	 * @param string $error
+	 * @return mix
 	 */
-	public static function prepare($dbh, $args, $class, $sql, $param, $bool) {
-		return call_user_func ( array($class,'prepare'), 'mysql_' . $sql, $param, $bool );
+	public static function prepare($dbh, $args, $class, $sql, $param = null, $format = null, $debug = null, $output = null, $errno = null, $error = null) {
+		return call_user_func ( array($class,'prepare'), 'mysql_' . $sql, $param, $format, $debug, $output, $errno, $error );
 	}
 	
 	/**
 	 * 自增序列
 	 * @param dbh $dbh
 	 * @param array $args
+	 * @param string $class
 	 * @param string $tablename
 	 * @param int $start_index
 	 * @return int
 	 */
-	public static function sequence($dbh, $args, $tablename, $start_index) {
+	public static function sequence($dbh, $args, $class, $tablename, $start_index) {
 		$result = $dbh->exec ( 'UPDATE ' . $tablename . ' SET id=LAST_INSERT_ID(id+1)' );
 		if ( $result === false ) {
 			$dbh->exec ( 'CREATE TABLE ' . $tablename . ' (id INT NOT NULL)');
@@ -172,6 +186,14 @@ class db_pdo {
 			}
 		}
 		$result = $sth->execute ();
+		if ($args ['debug_enable'] === true) {
+			if ($result === false) {
+				$err = $dbh->errorInfo();
+				call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'], $err[1], $err[2] );
+			} else {
+				call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'] );
+			}
+		}
 		if ($result === false) {
 			return false;
 		}
@@ -294,8 +316,16 @@ class db_pdo {
 				$sth->bindValue($key, $value, PDO::PARAM_STR);
 			}
 		}
-		$sth->execute ();
-		return $sth->rowCount ();
+		$result = $sth->execute ();
+		if ($args ['debug_enable'] === true) {
+			if ($result === false) {
+				$err = $dbh->errorInfo();
+				call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'], $err[1], $err[2] );
+			} else {
+				call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'] );
+			}
+		}
+		return is_object($sth)?$sth->rowCount ():0;
 	}
 	
 	/**
@@ -323,8 +353,16 @@ class db_pdo {
 				$sth->bindValue($key, $value, PDO::PARAM_STR);
 			}
 		}
-		$sth->execute ();
-		return $sth->rowCount ();
+		$result = $sth->execute ();
+		if ($args ['debug_enable'] === true) {
+			if ($result === false) {
+				$err = $dbh->errorInfo();
+				call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'], $err[1], $err[2] );
+			} else {
+				call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'] );
+			}
+		}
+		return is_object($sth)?$sth->rowCount ():0;
 	}
 	
 	/**
@@ -352,8 +390,16 @@ class db_pdo {
 				$sth->bindValue($key, $value, PDO::PARAM_STR);
 			}
 		}
-		$sth->execute ();
-		return $sth->rowCount ();
+		$result = $sth->execute ();
+		if ($args ['debug_enable'] === true) {
+			if ($result === false) {
+				$err = $dbh->errorInfo();
+				call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'], $err[1], $err[2] );
+			} else {
+				call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'] );
+			}
+		}
+		return is_object($sth)?$sth->rowCount ():0;
 	}
 	
 	/**
@@ -381,8 +427,16 @@ class db_pdo {
 				$sth->bindValue($key, $value, PDO::PARAM_STR);
 			}
 		}
-		$sth->execute ();
-		return $sth->rowCount ();
+		$result = $sth->execute ();
+		if ($args ['debug_enable'] === true) {
+			if ($result === false) {
+				$err = $dbh->errorInfo();
+				call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'], $err[1], $err[2] );
+			} else {
+				call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'] );
+			}
+		}
+		return is_object($sth)?$sth->rowCount ():0;
 	}
 	
 	/**
@@ -400,11 +454,21 @@ class db_pdo {
 		if ($primary_name !== null) {
 			$sql = 'SELECT * FROM ' . $tablename . ' WHERE ' . $primary_name . '=? LIMIT 1';
 			$sth = $dbh->prepare ( $sql, array (PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY ) );
-			$sth->execute ( array ($primary_value ) );
+			$paramvars = array ($primary_value );
+			$result = $sth->execute ( $paramvars );
 		} else {
 			$sql = 'SELECT * FROM ' . $tablename . ' LIMIT 1';
+			$paramvars = null;
 			$sth = $dbh->prepare ( $sql, array (PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY ) );
-			$sth->execute ();
+			$result = $sth->execute ();
+		}
+		if ($args ['debug_enable'] === true) {
+			if ($result === false) {
+				$err = $dbh->errorInfo();
+				call_user_func ( array(get_class($that),'prepare'), $sql, $paramvars, null, true, $args ['debug_file'], $err[1], $err[2] );
+			} else {
+				call_user_func ( array(get_class($that),'prepare'), $sql, $paramvars, null, true, $args ['debug_file'] );
+			}
 		}
 		if ($sth->rowCount () == 0) {
 			$sth->closeCursor ();
@@ -433,6 +497,14 @@ class db_pdo {
 		$sql = 'INSERT INTO ' . $tablename . ' (' . $fieldname . ') VALUES (' . $valuename . ')';
 		$sth = $dbh->prepare ( $sql );
 		$result = ( bool ) $sth->execute ( $paramvars );
+		if ($args ['debug_enable'] === true) {
+			if ($result === false) {
+				$err = $dbh->errorInfo();
+				call_user_func ( array(get_class($that),'prepare'), $sql, $paramvars, null, true, $args ['debug_file'], $err[1], $err[2] );
+			} else {
+				call_user_func ( array(get_class($that),'prepare'), $sql, $paramvars, null, true, $args ['debug_file'] );
+			}
+		}
 		if ($result && $primary_name !== null) {
 			$that->$primary_name = $dbh->lastInsertId ();
 		}
@@ -458,6 +530,14 @@ class db_pdo {
 		}
 		$sth = $dbh->prepare ( $sql );
 		$result = ( bool ) $sth->execute ( $paramvars );
+		if ($args ['debug_enable'] === true) {
+			if ($result === false) {
+				$err = $dbh->errorInfo();
+				call_user_func ( array(get_class($that),'prepare'), $sql, $paramvars, null, true, $args ['debug_file'], $err[1], $err[2] );
+			} else {
+				call_user_func ( array(get_class($that),'prepare'), $sql, $paramvars, null, true, $args ['debug_file'] );
+			}
+		}
 		if($result && $sth->rowCount()===0){
 			return false;
 		}
@@ -478,12 +558,22 @@ class db_pdo {
 		extract($params);
 		if ($primary_name !== null) {
 			$sql = 'DELETE FROM ' . $tablename . ' WHERE ' . $primary_name . '=? LIMIT 1';
+			$paramvars = array ($primary_value );
 			$sth = $dbh->prepare ( $sql );
-			$result = ( bool ) $sth->execute ( array ($primary_value ) );
+			$result = ( bool ) $sth->execute ( $paramvars );
 		} else {
 			$sql = 'DELETE FROM ' . $tablename . ' LIMIT 1';
+			$paramvars = null;
 			$sth = $dbh->prepare ( $sql );
 			$result = ( bool ) $sth->execute ();
+		}
+		if ($args ['debug_enable'] === true) {
+			if ($result === false) {
+				$err = $dbh->errorInfo();
+				call_user_func ( array(get_class($that),'prepare'), $sql, $paramvars, null, true, $args ['debug_file'], $err[1], $err[2] );
+			} else {
+				call_user_func ( array(get_class($that),'prepare'), $sql, $paramvars, null, true, $args ['debug_file'] );
+			}
 		}
 		if($result && $sth->rowCount()===0){
 			return false;
@@ -506,6 +596,14 @@ class db_pdo {
 		$sql = 'REPLACE INTO ' . $tablename . ' (' . $fieldname . ') VALUES (' . $valuename . ')';
 		$sth = $dbh->prepare ( $sql );
 		$result = ( bool ) $sth->execute ( $paramvars );
+		if ($args ['debug_enable'] === true) {
+			if ($result === false) {
+				$err = $dbh->errorInfo();
+				call_user_func ( array(get_class($that),'prepare'), $sql, $paramvars, null, true, $args ['debug_file'], $err[1], $err[2] );
+			} else {
+				call_user_func ( array(get_class($that),'prepare'), $sql, $paramvars, null, true, $args ['debug_file'] );
+			}
+		}
 		if ($result && $primary_name !== null) {
 			$that->$primary_name = $dbh->lastInsertId ();
 		}
