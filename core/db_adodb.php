@@ -58,16 +58,24 @@ class db_adodb {
 	 * 执行语句
 	 * @param dbh $dbh
 	 * @param array $args
+	 * @param string $class
 	 * @param string $sql
 	 * @param array $param
 	 * @param array &$ref
 	 * @return rs
 	 */
-	public static function execute($dbh, $args, $sql, $param = null, &$ref = null) {
+	public static function execute($dbh, $args, $class, $sql, $param = null, &$ref = null) {
 		if (is_array( $param )) {
 			$rs = $dbh->Execute ( $sql, $param );
 		} else {
 			$rs = $dbh->Execute ( $sql );
+		}
+		if ($args ['debug_enable'] === true) {
+			if ($rs === false) {
+				call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'], $dbh->ErrorNo(), $dbh->ErrorMsg() );
+			} else {
+				call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'] );
+			}
 		}
 		if(func_num_args()>4){
 			$ref = array();
@@ -86,22 +94,27 @@ class db_adodb {
 	 * @param string $class
 	 * @param string $sql
 	 * @param array $param
-	 * @param bool $bool
-	 * @return array
+	 * @param bool $format
+	 * @param bool $debug
+	 * @param string $output
+	 * @param string $errno
+	 * @param string $error
+	 * @return mix
 	 */
-	public static function prepare($dbh, $args, $class, $sql, $param, $bool) {
-		return call_user_func ( array($class,'prepare'), 'mysql_' . $sql, $param, $bool );
+	public static function prepare($dbh, $args, $class, $sql, $param = null, $format = null, $debug = null, $output = null, $errno = null, $error = null) {
+		return call_user_func ( array($class,'prepare'), 'mysql_' . $sql, $param, $format, $debug, $output, $errno, $error );
 	}
 	
 	/**
 	 * 自增序列
 	 * @param dbh $dbh
 	 * @param array $args
+	 * @param string $class
 	 * @param string $tablename
 	 * @param int $start_index
 	 * @return int
 	 */
-	public static function sequence($dbh, $args, $tablename, $start_index) {
+	public static function sequence($dbh, $args, $class, $tablename, $start_index) {
 		$return = $dbh->GenID ( $tablename, $start_index );
 		if($start_index>$return){
 			$dbh->Execute('UPDATE '.$tablename.' SET id='.$start_index);
@@ -147,6 +160,13 @@ class db_adodb {
 		if($data_key!==array()){
 			$mode = $dbh->setFetchMode(ADODB_FETCH_BOTH);
 			$sth = $dbh->Execute($sql,$param);
+			if ($args ['debug_enable'] === true) {
+				if ($sth === false) {
+					call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'], $dbh->ErrorNo(), $dbh->ErrorMsg() );
+				} else {
+					call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'] );
+				}
+			}
 			while ( $obj = $sth->FetchRow (  ) ) {
 				$obj_arr = array();
 				foreach($data_key as $value){
@@ -163,22 +183,50 @@ class db_adodb {
 			case 'assoc' :
 				$mode = $dbh->setFetchMode(ADODB_FETCH_ASSOC);
 				$data_arr = $dbh->GetALL($sql,$param);
+				if ($args ['debug_enable'] === true) {
+					if ($sth === false) {
+						call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'], $dbh->ErrorNo(), $dbh->ErrorMsg() );
+					} else {
+						call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'] );
+					}
+				}
 				$dbh->setFetchMode($mode);
 				break;
 			case 'num' :
 				$mode = $dbh->setFetchMode(ADODB_FETCH_NUM);
 				$data_arr = $dbh->GetALL($sql,$param);
+				if ($args ['debug_enable'] === true) {
+					if ($sth === false) {
+						call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'], $dbh->ErrorNo(), $dbh->ErrorMsg() );
+					} else {
+						call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'] );
+					}
+				}
 				$dbh->setFetchMode($mode);
 				break;
 			case 'both' :
 			case 'array' :
 				$mode = $dbh->setFetchMode(ADODB_FETCH_BOTH);
 				$data_arr = $dbh->GetALL($sql,$param);
+				if ($args ['debug_enable'] === true) {
+					if ($sth === false) {
+						call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'], $dbh->ErrorNo(), $dbh->ErrorMsg() );
+					} else {
+						call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'] );
+					}
+				}
 				$dbh->setFetchMode($mode);
 				break;
 			case 'column' :
 				$mode = $dbh->setFetchMode(ADODB_FETCH_BOTH);
 				$sth = $dbh->Execute($sql,$param);
+				if ($args ['debug_enable'] === true) {
+					if ($sth === false) {
+						call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'], $dbh->ErrorNo(), $dbh->ErrorMsg() );
+					} else {
+						call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'] );
+					}
+				}
 				while ( $obj = $sth->FetchRow (  ) ) {
 					if (isset ( $obj [$classname] )) {
 						$data_arr[] = $obj [$classname] ;
@@ -197,6 +245,13 @@ class db_adodb {
 				}
 				$mode = $dbh->setFetchMode(ADODB_FETCH_ASSOC);
 				$sth = $dbh->Execute($sql,$param);
+				if ($args ['debug_enable'] === true) {
+					if ($sth === false) {
+						call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'], $dbh->ErrorNo(), $dbh->ErrorMsg() );
+					} else {
+						call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'] );
+					}
+				}
 				while ( $obj = $sth->FetchRow (  ) ) {
 					$clone = new $obj_classname ;
 					foreach($obj as $key=>$value){
@@ -209,6 +264,13 @@ class db_adodb {
 			case 'class|classtype' :
 				$mode = $dbh->setFetchMode(ADODB_FETCH_ASSOC);
 				$sth = $dbh->Execute($sql,$param);
+				if ($args ['debug_enable'] === true) {
+					if ($sth === false) {
+						call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'], $dbh->ErrorNo(), $dbh->ErrorMsg() );
+					} else {
+						call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'] );
+					}
+				}
 				while ( $obj = $sth->FetchRow (  ) ) {
 					$obj_classname = $classname;
 					foreach($obj as $key=>$obj_classname){
@@ -237,6 +299,13 @@ class db_adodb {
 				}
 				$mode = $dbh->setFetchMode(ADODB_FETCH_ASSOC);
 				$sth = $dbh->Execute($sql,$param);
+				if ($args ['debug_enable'] === true) {
+					if ($sth === false) {
+						call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'], $dbh->ErrorNo(), $dbh->ErrorMsg() );
+					} else {
+						call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'] );
+					}
+				}
 				while ( $obj = $sth->FetchRow (  ) ) {
 					$clone = clone $obj_classname ;
 					foreach($obj as $key=>$value){
@@ -266,7 +335,14 @@ class db_adodb {
 	 * @return int
 	 */
 	public static function inserts($dbh, $args, $class, $sql, $param) {
-		$dbh->Execute ( $sql, $param );
+		$result = $dbh->Execute ( $sql, $param );
+		if ($args ['debug_enable'] === true) {
+			if ($result === false) {
+				call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'], $dbh->ErrorNo(), $dbh->ErrorMsg() );
+			} else {
+				call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'] );
+			}
+		}
 		return (int)$dbh->Affected_Rows();
 	}
 	
@@ -280,7 +356,14 @@ class db_adodb {
 	 * @return int
 	 */
 	public static function updates($dbh, $args, $class, $sql, $param) {
-		$dbh->Execute ( $sql, $param );
+		$result = $dbh->Execute ( $sql, $param );
+		if ($args ['debug_enable'] === true) {
+			if ($result === false) {
+				call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'], $dbh->ErrorNo(), $dbh->ErrorMsg() );
+			} else {
+				call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'] );
+			}
+		}
 		return (int)$dbh->Affected_Rows();
 	}
 	
@@ -294,7 +377,14 @@ class db_adodb {
 	 * @return int
 	 */
 	public static function deletes($dbh, $args, $class, $sql, $param) {
-		$dbh->Execute ( $sql, $param );
+		$result = $dbh->Execute ( $sql, $param );
+		if ($args ['debug_enable'] === true) {
+			if ($result === false) {
+				call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'], $dbh->ErrorNo(), $dbh->ErrorMsg() );
+			} else {
+				call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'] );
+			}
+		}
 		return (int)$dbh->Affected_Rows();
 	}
 	
@@ -308,7 +398,14 @@ class db_adodb {
 	 * @return int
 	 */
 	public static function replaces($dbh, $args, $class, $sql, $param) {
-		$dbh->Execute ( $sql, $param );
+		$result = $dbh->Execute ( $sql, $param );
+		if ($args ['debug_enable'] === true) {
+			if ($result === false) {
+				call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'], $dbh->ErrorNo(), $dbh->ErrorMsg() );
+			} else {
+				call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'] );
+			}
+		}
 		return (int)$dbh->Affected_Rows();
 	}
 	
@@ -325,11 +422,21 @@ class db_adodb {
 	public static function select($dbh, $args, $that, $tablename, $primary_index, $params) {
 		extract($params);
 		if ($primary_name !== null) {
-			$sql = 'SELECT * FROM ' . $tablename . ' WHERE ' . $primary_name . '=?';
-			$rs = $dbh->SelectLimit ( $sql, 1, - 1, array ($primary_value ) );
+			$sql = 'SELECT * FROM ' . $tablename . ' WHERE ' . $primary_name . '=? LIMIT 1';
+			$paramvars = array ($primary_value );
+			$rs = $dbh->Execute ( $sql, $paramvars );
 		} else {
-			$sql = 'SELECT * FROM ' . $tablename;
-			$rs = $dbh->SelectLimit ( $sql, 1, - 1 );
+			$sql = 'SELECT * FROM ' . $tablename . ' LIMIT 1';
+			$paramvars = null;
+			$rs = $dbh->Execute ( $sql );
+		}
+		$result = ( bool ) $rs;
+		if ($args ['debug_enable'] === true) {
+			if ($result === false) {
+				call_user_func ( array(get_class($that),'prepare'), $sql, $paramvars, null, true, $args ['debug_file'], $dbh->ErrorNo(), $dbh->ErrorMsg() );
+			} else {
+				call_user_func ( array(get_class($that),'prepare'), $sql, $paramvars, null, true, $args ['debug_file'] );
+			}
 		}
 		if (! $rs) {
 			return false;
@@ -360,6 +467,13 @@ class db_adodb {
 		extract($params);
 		$sql = 'INSERT INTO ' . $tablename . ' (' . $fieldname . ') VALUES (' . $valuename . ')';
 		$result = ( bool ) $dbh->Execute ( $sql, $paramvars );
+		if ($args ['debug_enable'] === true) {
+			if ($result === false) {
+				call_user_func ( array(get_class($that),'prepare'), $sql, $paramvars, null, true, $args ['debug_file'], $dbh->ErrorNo(), $dbh->ErrorMsg() );
+			} else {
+				call_user_func ( array(get_class($that),'prepare'), $sql, $paramvars, null, true, $args ['debug_file'] );
+			}
+		}
 		if ($result && $primary_name !== null) {
 			$that->$primary_name = $dbh->Insert_ID ();
 		}
@@ -384,6 +498,13 @@ class db_adodb {
 			$sql = 'UPDATE ' . $tablename . ' SET ' . $valuename . ' LIMIT 1';
 		}
 		$result = ( bool ) $dbh->Execute ( $sql, $paramvars );
+		if ($args ['debug_enable'] === true) {
+			if ($result === false) {
+				call_user_func ( array(get_class($that),'prepare'), $sql, $paramvars, null, true, $args ['debug_file'], $dbh->ErrorNo(), $dbh->ErrorMsg() );
+			} else {
+				call_user_func ( array(get_class($that),'prepare'), $sql, $paramvars, null, true, $args ['debug_file'] );
+			}
+		}
 		if($result && $dbh->Affected_Rows()==0){
 			return false;
 		}
@@ -404,10 +525,19 @@ class db_adodb {
 		extract($params);
 		if ($primary_name !== null) {
 			$sql = 'DELETE FROM ' . $tablename . ' WHERE ' . $primary_name . '=? LIMIT 1';
-			$result =( bool ) $dbh->Execute ( $sql, array ($primary_value ) );
+			$paramvars = array ($primary_value );
+			$result =( bool ) $dbh->Execute ( $sql, $paramvars );
 		} else {
 			$sql = 'DELETE FROM ' . $tablename . ' LIMIT 1';
+			$paramvars = null;
 			$result = ( bool ) $dbh->Execute ( $sql );
+		}
+		if ($args ['debug_enable'] === true) {
+			if ($result === false) {
+				call_user_func ( array(get_class($that),'prepare'), $sql, $paramvars, null, true, $args ['debug_file'], $dbh->ErrorNo(), $dbh->ErrorMsg() );
+			} else {
+				call_user_func ( array(get_class($that),'prepare'), $sql, $paramvars, null, true, $args ['debug_file'] );
+			}
 		}
 		if($result && $dbh->Affected_Rows()==0){
 			return false;
@@ -429,7 +559,14 @@ class db_adodb {
 		extract($params);
 		$sql = 'REPLACE INTO ' . $tablename . ' (' . $fieldname . ') VALUES (' . $valuename . ')';
 		$result = ( bool ) $dbh->Execute ( $sql, $paramvars );
-		if ($result && $primary_name !== null) {
+			if ($args ['debug_enable'] === true) {
+			if ($result === false) {
+				call_user_func ( array(get_class($that),'prepare'), $sql, $paramvars, null, true, $args ['debug_file'], $dbh->ErrorNo(), $dbh->ErrorMsg() );
+			} else {
+				call_user_func ( array(get_class($that),'prepare'), $sql, $paramvars, null, true, $args ['debug_file'] );
+			}
+		}
+	if ($result && $primary_name !== null) {
 			$that->$primary_name = $dbh->Insert_ID ();
 		}
 		return $result;
