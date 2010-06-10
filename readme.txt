@@ -2,7 +2,7 @@
 
 CoreMVC是PHP的一款小巧精致的MVC框架。
 
-2010年5月26日
+2010年6月9日
 
 〖版权说明〗
 
@@ -11,7 +11,7 @@ CoreMVC遵从new BSD许可证，所以您可以在法律允许的范围以内任
 /**
  * CoreMVC核心模块
  * 
- * @version 1.1.0 alpha 8
+ * @version 1.1.0 alpha 9
  * @author Z <602000@gmail.com>
  * @link http://code.google.com/p/coremvc/
  */
@@ -55,6 +55,8 @@ CoreMVC 1.1.0 相对于 CoreMVC 1.0.0版本的改进
 4. 增加了自动载入顺序的参数设置。
 
 5. 增加了数据库调试功能。
+
+6. 增加了core:selects指定表名功能。
 
 
 CoreMVC 1.0.0 相对于 CoreMVC 0.7.3版本的改进
@@ -844,4 +846,5 @@ core->replace	实例更新数据
 ├───────────────────────┼──────────────────────┤
 │array(……, 'clone'=>对象)　　　　　　　　　　│$return ...＝clone 对象 　　　　　　　　　　│
 └───────────────────────┴──────────────────────┘
-注：空值＝null或''，整数＝非负数整，文本＝非空字符串；static|self＝PHP 5.3使用static|PHP 5.2使用self。
+注1：空值＝null或''，整数＝非负数整，文本＝非空字符串；static|self＝PHP 5.3使用static|PHP 5.2使用self。
+注2：最后一个值的下标可以用粘附“|table=文本”来指定表名，如：'class|table=test'=>null。

@@ -2,7 +2,7 @@
 /**
  * CoreMVC核心模块
  * 
- * @version 1.1.0 alpha 8
+ * @version 1.1.0 alpha 9
  * @author Z <602000@gmail.com>
  * @link http://code.google.com/p/coremvc/
  */
@@ -1398,10 +1398,11 @@ class core {
 				}
 				if ($args ['debug_enable'] === true) {
 					if ($result === false) {
-						self::prepare( $sql, $param, null, true, $args ['debug_file'] , mysql_errno ( $dbh ), mysql_error ( $dbh ) );
+						$extra = array( 'errno'=>mysql_errno ( $dbh ), 'error'=>mysql_error ( $dbh ) );
 					} else {
-						self::prepare( $sql, $param, null, true, $args ['debug_file'] );
+						$extra = null;
 					}
+					self::prepare( $sql, $param, null, true, $args ['debug_file'] ,$extra );
 				}
 				if ($ref_flag) {
 					$ref = array ();
@@ -1451,18 +1452,17 @@ class core {
 	 * // 调试SQL语句
 	 *core::prepare('SELECT ?,?',array(1,'a'),null,true); //页面显示SQL语句
 	 *core::prepare('SELECT ?,?',array(1,'a'),null,true,'db.log'); //将SQL语句写入文件
-	 *core::prepare('SELECT ?,?',array(1,'a'),null,true,null,mysql_errno($dbh),mysql_error($dbh)); //同时显示错误信息
+	 *core::prepare('SELECT ?,?',array(1,'a'),null,true,null,array('errno'=>mysql_errno($dbh),'error'=>mysql_error($dbh))); //同时显示错误信息
 	 * </code>
 	 * @param string $sql
 	 * @param array $param
 	 * @param bool $format
 	 * @param bool $debug
 	 * @param string $output
-	 * @param string $errno
-	 * @param string $error
+	 * @param array $extra
 	 * @return mix
 	 */
-	static public function prepare($sql, $param = null, $format = null, $debug = null, $output = null, $errno = null, $error = null) {
+	static public function prepare($sql, $param = null, $format = null, $debug = null, $output = null, $extra = null) {
 		
 		// 【基础功能】准备SQL语句
 		$mysql_escape_search = array ("\\", "\x00", "\n", "\r", "'", "\"", "\x1a" );
@@ -2053,8 +2053,8 @@ class core {
 					$echo .= $echo2;
 				}
 				$echo .= PHP_EOL;
-				if ( !empty($errno) ) {
-					$echo .= $errno . ": " . $error . PHP_EOL;
+				if ( !empty($extra['errno']) ) {
+					$echo .= $extra['errno'] . ": " . $extra['error'] . PHP_EOL;
 				}
 			} else {
 				$echo = PHP_EOL . '<hr />' . PHP_EOL . '(' . $debug_provider . '): ' . htmlentities ( $debug_sql ) .PHP_EOL;
@@ -2062,8 +2062,8 @@ class core {
 					$echo .= str_replace ( PHP_EOL, '<br />'.PHP_EOL, htmlentities ($echo2) );
 				}
 				$echo = '<hr />' . PHP_EOL;
-				if ( !empty($errno) ) {
-					$echo .= $errno . ": " . htmlentities ( $error ) . '<br />' . PHP_EOL;
+				if ( !empty($extra['errno']) ) {
+					$echo .= $extra['errno'] . ": " . htmlentities ( $extra['error'] ) . '<br />' . PHP_EOL;
 				}
 			}
 			if (empty($output)) {
@@ -2447,13 +2447,27 @@ class core {
 		} else {
 			$calledclass = __CLASS__;
 		}
+		$classkey_arr = null;
+		if (strpos($classkey,'|') !== false){
+			$classkey_arr = explode('|',$classkey);
+			$classkey = array_shift($classkey_arr);
+			foreach ($classkey_arr as $classkey_key){
+				if (strncmp($classkey_key,'table=',6) === 0) {
+					$table_class = substr($classkey_key,6);
+					if ($table_class === '') {
+						$table_class = $calledclass;
+					}
+				}
+			}
+		}
 		// 参数
 		if (is_bool ( $where_bool )) {
 			$sql = $field_sql;
 			$param = is_array ( $table_param ) ? $table_param : array ();
 		} else {
 			if ($table_param === null) {
-				if (is_string ( $classname )) {
+				if (isset($table_class)) {
+				} elseif (is_string ( $classname )) {
 					if (class_exists ( $classname )) {
 						$table_class = $classname;
 					} else {
@@ -2596,33 +2610,34 @@ class core {
 						break;
 					default :
 					case 'class' :
-						if (class_exists ( $classname )) {
-							$obj_classname = $classname;
+						if ( isset($classkey_arr) && in_array('classtype',$classkey_arr) ) {
+							while ( $obj = mysql_fetch_assoc ( $result ) ) {
+								$obj_classname = $classname;
+								foreach ( $obj as $key => $obj_classname ) {
+									unset ( $obj [$key] );
+									break;
+								}
+								if (preg_match ( '/^[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*$/', $obj_classname ) && class_exists ( $obj_classname )) {
+									$clone = new $obj_classname ( );
+								} elseif (class_exists ( $classname )) {
+									$clone = new $classname ( );
+								} else {
+									$clone = new $calledclass ( );
+								}
+								foreach ( $obj as $key => $value ) {
+									$clone->$key = $value;
+								}
+								$data_arr [] = $clone;
+							}
 						} else {
-							$obj_classname = $calledclass;
-						}
-						while ( $obj = mysql_fetch_object ( $result, $obj_classname ) ) {
-							$data_arr [] = $obj;
-						}
-						break;
-					case 'class|classtype' :
-						while ( $obj = mysql_fetch_assoc ( $result ) ) {
-							$obj_classname = $classname;
-							foreach ( $obj as $key => $obj_classname ) {
-								unset ( $obj [$key] );
-								break;
-							}
-							if (preg_match ( '/^[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*$/', $obj_classname ) && class_exists ( $obj_classname )) {
-								$clone = new $obj_classname ( );
-							} elseif (class_exists ( $classname )) {
-								$clone = new $classname ( );
+							if (class_exists ( $classname )) {
+								$obj_classname = $classname;
 							} else {
-								$clone = new $calledclass ( );
+								$obj_classname = $calledclass;
 							}
-							foreach ( $obj as $key => $value ) {
-								$clone->$key = $value;
+							while ( $obj = mysql_fetch_object ( $result, $obj_classname ) ) {
+								$data_arr [] = $obj;
 							}
-							$data_arr [] = $clone;
 						}
 						break;
 					case 'clone' :
@@ -2648,7 +2663,7 @@ class core {
 				if ($args ['prefix_search'] !== '' && $args ['prefix_search'] !== $args ['prefix_replace']) {
 					$sql = str_replace ( $args ['prefix_search'], $args ['prefix_replace'], $sql );
 				}
-				$ref = array ('page' => &$page, 'class_arr' => $class_arr, 'classkey' => $classkey, 'classname' => $classname, 'calledclass' => $calledclass );
+				$ref = array ('page' => &$page, 'class_arr' => $class_arr, 'classkey' => $classkey, 'classkey_arr' => $classkey_arr, 'classname' => $classname, 'calledclass' => $calledclass );
 				list ( $data_arr, $data_all ) = call_user_func ( array ('db_' . $provider, 'selects' ), $dbh, $args, __CLASS__, $sql, $param, $ref );
 		
 		}
