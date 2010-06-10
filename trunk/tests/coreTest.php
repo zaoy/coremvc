@@ -1086,7 +1086,7 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		core::prepare('SELECT ?',array('aaa'),true,true);
 		$this->assertSame(PHP_EOL.'('.$provider.'): SELECT \'aaa\''.PHP_EOL,ob_get_clean());
 		ob_start();
-		core::prepare('SELECT aaa',null,null,true, null,1000,'bbb');
+		core::prepare('SELECT aaa',null,null,true, null,array('errno'=>1000,'error'=>'bbb'));
 		$this->assertSame(PHP_EOL.'('.$provider.'): SELECT aaa'.PHP_EOL.'1000: bbb'.PHP_EOL,ob_get_clean());
 		@unlink($tmp);
 		core::prepare('SELECT aaa',null,null,true, $tmp);
@@ -1109,7 +1109,7 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		core::prepare('SELECT ?',array('aaa'),true,true);
 		$this->assertSame(PHP_EOL.'('.$provider.'): SELECT \'aaa\''.PHP_EOL,ob_get_clean());
 		ob_start();
-		core::prepare('SELECT aaa',null,null,true, null,1000,'bbb');
+		core::prepare('SELECT aaa',null,null,true, null,array('errno'=>1000,'error'=>'bbb'));
 		$this->assertSame(PHP_EOL.'('.$provider.'): SELECT aaa'.PHP_EOL.'1000: bbb'.PHP_EOL,ob_get_clean());
 		@unlink($tmp);
 		core::prepare('SELECT aaa',null,null,true, $tmp);
@@ -1132,7 +1132,7 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		core::prepare('SELECT ?',array('aaa'),true,true);
 		$this->assertSame(PHP_EOL.'('.$provider.'): SELECT \'aaa\''.PHP_EOL,ob_get_clean());
 		ob_start();
-		core::prepare('SELECT aaa',null,null,true, null,1000,'bbb');
+		core::prepare('SELECT aaa',null,null,true, null,array('errno'=>1000,'error'=>'bbb'));
 		$this->assertSame(PHP_EOL.'('.$provider.'): SELECT aaa'.PHP_EOL.'1000: bbb'.PHP_EOL,ob_get_clean());
 		@unlink($tmp);
 		core::prepare('SELECT aaa',null,null,true, $tmp);
@@ -1362,8 +1362,12 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			core::selects(null,'pre_test',null,null,array('name','id1','clone'=>new test)));
 
 		$this->assertEquals(array($test1,$test2,$test3),core::selects(null,null,null,null,'test'));
+		$this->assertEquals(array($test1,$test2,$test3),core::selects(null,null,null,null,array(null,'class|table=test'=>'test')));
+		$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,null,null,null,array(null,'class|table=test'=>null)));
 		if(function_exists('get_called_class')){
 			$this->assertEquals(array($test1,$test2,$test3),test::selects());
+			$this->assertEquals(array($test1,$test2,$test3),test::selects(null,null,null,null,array(null,'class|table=test'=>null)));
+			$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,null,null,null,array(null,'class|table=test'=>null)));
 		}
 		$this->assertEquals(array($obj3,$obj2),core::selects(null,'pre_test',array('name'=>'test'),array('ORDER BY id DESC')));
 		$this->assertEquals(array($obj1,$obj2,$obj3),core::selects('SELECT * FROM pre_test',null,true));
@@ -1480,8 +1484,12 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			core::selects(null,'pre_test',null,null,array('name','id1','clone'=>new test)));
 
 		$this->assertEquals(array($test1,$test2,$test3),core::selects(null,null,null,null,'test'));
+		$this->assertEquals(array($test1,$test2,$test3),core::selects(null,null,null,null,array(null,'class|table=test'=>'test')));
+		$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,null,null,null,array(null,'class|table=test'=>null)));
 		if(function_exists('get_called_class')){
 			$this->assertEquals(array($test1,$test2,$test3),test::selects());
+			$this->assertEquals(array($test1,$test2,$test3),test::selects(null,null,null,null,array(null,'class|table=test'=>null)));
+			$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,null,null,null,array(null,'class|table=test'=>null)));
 		}
 		$this->assertEquals(array($obj3,$obj2),core::selects(null,'pre_test',array('name'=>'test'),array('ORDER BY id DESC')));
 		$this->assertEquals(array($obj1,$obj2,$obj3),core::selects('SELECT * FROM pre_test',null,true));
@@ -1596,8 +1604,12 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			core::selects(null,'pre_test',null,null,array('name','id1','clone'=>new test)));
 
 		$this->assertEquals(array($test1,$test2,$test3),core::selects(null,null,null,null,'test'));
+		$this->assertEquals(array($test1,$test2,$test3),core::selects(null,null,null,null,array(null,'class|table=test'=>'test')));
+		$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,null,null,null,array(null,'class|table=test'=>null)));
 		if(function_exists('get_called_class')){
 			$this->assertEquals(array($test1,$test2,$test3),test::selects());
+			$this->assertEquals(array($test1,$test2,$test3),test::selects(null,null,null,null,array(null,'class|table=test'=>null)));
+			$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,null,null,null,array(null,'class|table=test'=>null)));
 		}
 		$this->assertEquals(array($obj3,$obj2),core::selects(null,'pre_test',array('name'=>'test'),array('ORDER BY id DESC')));
 		$this->assertEquals(array($obj1,$obj2,$obj3),core::selects('SELECT * FROM pre_test',null,true));

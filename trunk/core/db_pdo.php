@@ -53,10 +53,10 @@ class db_pdo {
 				unset($ref['num_fields']);
 				unset($ref['num_rows']);
 				$sth = $dbh->prepare ( $sql, $ref );
-				$sth->execute ( $param );
+				$result = $sth->execute ( $param );
 			} else {
 				$sth = $dbh->prepare ( $sql );
-				$sth->execute ( $param );
+				$result = $sth->execute ( $param );
 			}
 		} else {
 			if (is_array ( $ref )) {
@@ -66,18 +66,19 @@ class db_pdo {
 				unset($ref['num_rows']);
 				$ref = array_values($ref);
 				array_unshift ( $ref, $sql );
-				$sth = call_user_func_array ( array ($dbh, 'query' ), $ref );
+				$result = $sth = call_user_func_array ( array ($dbh, 'query' ), $ref );
 			} else {
-				$sth = $dbh->query ( $sql );
+				$result = $sth = $dbh->query ( $sql );
 			}
 		}
 		if ($args ['debug_enable'] === true) {
-			if ($sth === false) {
+			if ($result === false) {
 				$err = $dbh->errorInfo();
-				call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'], $err[1], $err[2] );
+				$extra = array('errno'=>$err[1],'error'=>$err[2]);
 			} else {
-				call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'] );
+				$extra = null;
 			}
+			call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'], $extra );
 		}
 		if(func_num_args()>4){
 			$ref = array();
@@ -99,12 +100,11 @@ class db_pdo {
 	 * @param bool $format
 	 * @param bool $debug
 	 * @param string $output
-	 * @param string $errno
-	 * @param string $error
+	 * @param array $extra
 	 * @return mix
 	 */
-	public static function prepare($dbh, $args, $class, $sql, $param = null, $format = null, $debug = null, $output = null, $errno = null, $error = null) {
-		return call_user_func ( array($class,'prepare'), 'mysql_' . $sql, $param, $format, $debug, $output, $errno, $error );
+	public static function prepare($dbh, $args, $class, $sql, $param = null, $format = null, $debug = null, $output = null, $extra = null) {
+		return call_user_func ( array($class,'prepare'), 'mysql_' . $sql, $param, $format, $debug, $output, $extra );
 	}
 	
 	/**
@@ -151,6 +151,7 @@ class db_pdo {
 		$page = &$ref['page'];
 		$class_arr = $ref['class_arr'];
 		$classkey = $ref['classkey'];
+		$classkey_arr = $ref['classkey_arr'];
 		$classname = $ref['classname'];
 		$calledclass = $ref['calledclass'];
 		if($page !== null){
@@ -189,10 +190,11 @@ class db_pdo {
 		if ($args ['debug_enable'] === true) {
 			if ($result === false) {
 				$err = $dbh->errorInfo();
-				call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'], $err[1], $err[2] );
+				$extra = array('errno'=>$err[1],'error'=>$err[2]);
 			} else {
-				call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'] );
+				$extra = null;
 			}
+			call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'], $extra );
 		}
 		if ($result === false) {
 			return false;
@@ -246,31 +248,32 @@ class db_pdo {
 				break;
 			default :
 			case 'class' :
-				if (class_exists ( $classname )) {
-					$obj_classname = $classname;
-				}else{
-					$obj_classname = $calledclass;
-				}
-				$data_arr = $sth->fetchAll(PDO::FETCH_CLASS,$obj_classname);
-				break;
-			case 'class|classtype' :
-				while ( $obj = $sth->fetch ( PDO::FETCH_ASSOC ) ){
-					$obj_classname = $classname;
-					foreach($obj as $key=>$obj_classname){
-						unset($obj[$key]);
-						break;
+				if ( isset($classkey_arr) && in_array('classtype',$classkey_arr) ) {
+					while ( $obj = $sth->fetch ( PDO::FETCH_ASSOC ) ){
+						$obj_classname = $classname;
+						foreach($obj as $key=>$obj_classname){
+							unset($obj[$key]);
+							break;
+						}
+						if(preg_match ( '/^[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*$/', $obj_classname ) && class_exists($obj_classname)){
+							$clone = new $obj_classname ();
+						}elseif(class_exists ( $classname )){
+							$clone = new $classname ();
+						}else{
+							$clone = new $calledclass ();
+						}
+						foreach($obj as $key=>$value){
+							$clone->$key = $value;
+						}
+						$data_arr[] = $clone ;
 					}
-					if(preg_match ( '/^[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*$/', $obj_classname ) && class_exists($obj_classname)){
-						$clone = new $obj_classname ();
-					}elseif(class_exists ( $classname )){
-						$clone = new $classname ();
+				} else {
+					if (class_exists ( $classname )) {
+						$obj_classname = $classname;
 					}else{
-						$clone = new $calledclass ();
+						$obj_classname = $calledclass;
 					}
-					foreach($obj as $key=>$value){
-						$clone->$key = $value;
-					}
-					$data_arr[] = $clone ;
+					$data_arr = $sth->fetchAll(PDO::FETCH_CLASS,$obj_classname);
 				}
 				break;
 			case 'clone' :
@@ -320,10 +323,11 @@ class db_pdo {
 		if ($args ['debug_enable'] === true) {
 			if ($result === false) {
 				$err = $dbh->errorInfo();
-				call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'], $err[1], $err[2] );
+				$extra = array('errno'=>$err[1],'error'=>$err[2]);
 			} else {
-				call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'] );
+				$extra = null;
 			}
+			call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'], $extra );
 		}
 		return is_object($sth)?$sth->rowCount ():0;
 	}
@@ -357,10 +361,11 @@ class db_pdo {
 		if ($args ['debug_enable'] === true) {
 			if ($result === false) {
 				$err = $dbh->errorInfo();
-				call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'], $err[1], $err[2] );
+				$extra = array('errno'=>$err[1],'error'=>$err[2]);
 			} else {
-				call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'] );
+				$extra = null;
 			}
+			call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'], $extra );
 		}
 		return is_object($sth)?$sth->rowCount ():0;
 	}
@@ -394,10 +399,11 @@ class db_pdo {
 		if ($args ['debug_enable'] === true) {
 			if ($result === false) {
 				$err = $dbh->errorInfo();
-				call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'], $err[1], $err[2] );
+				$extra = array('errno'=>$err[1],'error'=>$err[2]);
 			} else {
-				call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'] );
+				$extra = null;
 			}
+			call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'], $extra );
 		}
 		return is_object($sth)?$sth->rowCount ():0;
 	}
@@ -431,10 +437,11 @@ class db_pdo {
 		if ($args ['debug_enable'] === true) {
 			if ($result === false) {
 				$err = $dbh->errorInfo();
-				call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'], $err[1], $err[2] );
+				$extra = array('errno'=>$err[1],'error'=>$err[2]);
 			} else {
-				call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'] );
+				$extra = null;
 			}
+			call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'], $extra );
 		}
 		return is_object($sth)?$sth->rowCount ():0;
 	}
@@ -465,10 +472,11 @@ class db_pdo {
 		if ($args ['debug_enable'] === true) {
 			if ($result === false) {
 				$err = $dbh->errorInfo();
-				call_user_func ( array(get_class($that),'prepare'), $sql, $paramvars, null, true, $args ['debug_file'], $err[1], $err[2] );
+				$extra = array('errno'=>$err[1],'error'=>$err[2]);
 			} else {
-				call_user_func ( array(get_class($that),'prepare'), $sql, $paramvars, null, true, $args ['debug_file'] );
+				$extra = null;
 			}
+			call_user_func ( array(get_class($that),'prepare'), $sql, $paramvars, null, true, $args ['debug_file'], $extra );
 		}
 		if ($sth->rowCount () == 0) {
 			$sth->closeCursor ();
@@ -500,10 +508,11 @@ class db_pdo {
 		if ($args ['debug_enable'] === true) {
 			if ($result === false) {
 				$err = $dbh->errorInfo();
-				call_user_func ( array(get_class($that),'prepare'), $sql, $paramvars, null, true, $args ['debug_file'], $err[1], $err[2] );
+				$extra = array('errno'=>$err[1],'error'=>$err[2]);
 			} else {
-				call_user_func ( array(get_class($that),'prepare'), $sql, $paramvars, null, true, $args ['debug_file'] );
+				$extra = null;
 			}
+			call_user_func ( array(get_class($that),'prepare'), $sql, $paramvars, null, true, $args ['debug_file'], $extra );
 		}
 		if ($result && $primary_name !== null) {
 			$that->$primary_name = $dbh->lastInsertId ();
@@ -533,10 +542,11 @@ class db_pdo {
 		if ($args ['debug_enable'] === true) {
 			if ($result === false) {
 				$err = $dbh->errorInfo();
-				call_user_func ( array(get_class($that),'prepare'), $sql, $paramvars, null, true, $args ['debug_file'], $err[1], $err[2] );
+				$extra = array('errno'=>$err[1],'error'=>$err[2]);
 			} else {
-				call_user_func ( array(get_class($that),'prepare'), $sql, $paramvars, null, true, $args ['debug_file'] );
+				$extra = null;
 			}
+			call_user_func ( array(get_class($that),'prepare'), $sql, $paramvars, null, true, $args ['debug_file'], $extra );
 		}
 		if($result && $sth->rowCount()===0){
 			return false;
@@ -570,10 +580,11 @@ class db_pdo {
 		if ($args ['debug_enable'] === true) {
 			if ($result === false) {
 				$err = $dbh->errorInfo();
-				call_user_func ( array(get_class($that),'prepare'), $sql, $paramvars, null, true, $args ['debug_file'], $err[1], $err[2] );
+				$extra = array('errno'=>$err[1],'error'=>$err[2]);
 			} else {
-				call_user_func ( array(get_class($that),'prepare'), $sql, $paramvars, null, true, $args ['debug_file'] );
+				$extra = null;
 			}
+			call_user_func ( array(get_class($that),'prepare'), $sql, $paramvars, null, true, $args ['debug_file'], $extra );
 		}
 		if($result && $sth->rowCount()===0){
 			return false;
@@ -599,10 +610,11 @@ class db_pdo {
 		if ($args ['debug_enable'] === true) {
 			if ($result === false) {
 				$err = $dbh->errorInfo();
-				call_user_func ( array(get_class($that),'prepare'), $sql, $paramvars, null, true, $args ['debug_file'], $err[1], $err[2] );
+				$extra = array('errno'=>$err[1],'error'=>$err[2]);
 			} else {
-				call_user_func ( array(get_class($that),'prepare'), $sql, $paramvars, null, true, $args ['debug_file'] );
+				$extra = null;
 			}
+			call_user_func ( array(get_class($that),'prepare'), $sql, $paramvars, null, true, $args ['debug_file'], $extra );
 		}
 		if ($result && $primary_name !== null) {
 			$that->$primary_name = $dbh->lastInsertId ();
