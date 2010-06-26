@@ -2,7 +2,7 @@
 
 CoreMVC是PHP的一款小巧精致的MVC框架。
 
-2010年6月9日
+2010年6月26日
 
 〖版权说明〗
 
@@ -11,7 +11,7 @@ CoreMVC遵从new BSD许可证，所以您可以在法律允许的范围以内任
 /**
  * CoreMVC核心模块
  * 
- * @version 1.1.0 alpha 9
+ * @version 1.1.0 alpha 10
  * @author Z <602000@gmail.com>
  * @link http://code.google.com/p/coremvc/
  */
@@ -39,7 +39,7 @@ CoreMVC遵从new BSD许可证，所以您可以在法律允许的范围以内任
 
 9. 数据库连接自动化，可使用多个连接。
 
-10. 整个核心文件只有：1个类、33项设置、21个方法。
+10. 整个核心文件只有：1个类、35项设置、21个方法。
 
 
 ●　版本更新说明
@@ -57,6 +57,14 @@ CoreMVC 1.1.0 相对于 CoreMVC 1.0.0版本的改进
 5. 增加了数据库调试功能。
 
 6. 增加了core:selects指定表名功能。
+
+7. 增加了扩展类库开关的参数设置。
+
+8. 去掉了包括数据库和视图在内的扩展文件的前缀。
+
+9. 增强了自动载入功能可在设置参数阶段生效并可自定义载入函数。
+
+10.目前可扩展的类库有：数据库扩展：pdo5、adodb5、adodb5zip；模板扩展：smarty2、smarty2zip、smarty3；其他扩展：Zend、Symfony、PHPUnit、PHPExcel、PHPMailer、PHPCharts。
 
 
 CoreMVC 1.0.0 相对于 CoreMVC 0.7.3版本的改进
@@ -122,25 +130,58 @@ CoreMVC 1.0.0 相对于 CoreMVC 0.7.3版本的改进
 
 〖目录结构〗
 
-core.php			核心程序，CoreMVC核心程序，必须有。
+core.php				核心程序，CoreMVC核心程序，必须有。
 
-core				扩展目录，CoreMVC扩展目录，可删除。
+core/					扩展目录，CoreMVC扩展目录，可删除。
 　│
-　├─　db_pdo.php		扩展程序，使用PDO操作数据库时用到，可删除。
+　├─　pdo5.php			模型扩展，PDO连接器。
 　│
-　├─　db_adodb.php		扩展程序，使用Adodb操作数据库时用到，可删除。
+　├─　adodb5.php			模型扩展，Adodb连接器。
 　│
-　├─　AdodbZip.php		独立模块，Adodb自动装载器，可删除。
+　├─　adodb5/				模型扩展，Adodb类库。
 　│
-　├─　view_smarty.php		扩展程序，使用Smarty模板时用到，可删除。
+　├─　adodb5zip.php			模型扩展，AdodbZip连接器。
 　│
-　├─　SmartyZip.php		独立模块，Smarty自动装载器，可删除。
+　├─　adodb5zip/AdodbZip.php		模型扩展，Adodb自动装载器。
 　│
-　└─　.htaccess		配置文件，用于Apache服务器的访问限制，可删除。
+　├─　smarty2.php			视图扩展，Smarty 2.x连接器。
+　│
+　├─　smarty2/			视图扩展，Smarty 2.x类库。
+　│
+　├─　smarty2zip.php			视图扩展，SmartyZip连接器。
+　│
+　├─　smarty2zip/SmartyZip.php	视图扩展，Smarty自动装载器。
+　│
+　├─　smarty3.php			视图扩展，Smarty 3.x连接器。
+　│
+　├─　smarty3/			视图扩展，Smarty 3.x类库。
+　│
+　├─　Zend.php			类库扩展，Zend类自动载入程序。
+　│
+　├─　Zend/				类库扩展，Zend类库。
+　│
+　└─　.htaccess			配置文件，用于Apache服务器的访问限制。
 
-readme.txt			说明文档，CoreMVC的产品说明和简易教程，可删除。
+readme.txt				说明文档，CoreMVC的产品说明和简易教程，可删除。
 
-tests				测试目录，对核心程序进行单元测试的目录，可删除。
+tests/					测试目录，对核心程序进行单元测试的目录，可删除。
+
+
+〖扩展程序〗
+
+模型扩展
+pdo5		需开启相关的pdo扩展
+adodb5		需自行下载相关类库到adodb5文件夹
+adodb5zip
+
+视图扩展
+smarty2		需自行下载相关类库(libs)到smarty2文件夹
+smarty2zip
+smarty3		需自行下载相关类库(libs)到smarty3文件夹
+
+类库扩展（其他扩展还在测试）
+Zend		需自行下载相关类库(library/Zend)到Zend文件夹
+PHPExcel	需自行下载相关类库(Classes)到当前文件夹
 
 
 〖框架结构〗
@@ -377,7 +418,7 @@ base::init(require dirname (__FILE__) . '/config.php');
 
 ┌────┐　┌──────┐　┌────┐
 │应用模块├─┤外部核心模块├┄┤配置文件│
-└────┘　└──────┘  └────┘
+└────┘　└──────┘　└────┘
 
 该设计模式用于已有框架或面向过程的项目，仅将核心文件当作ORM工具使用。
 配置文件是是可选的，在外部核心模块里导入设置即可。
@@ -412,6 +453,30 @@ class foo extends core { ... }
  * 执行(execute)
  */
 foo::stub () and foo::main ();
+?>
+
+
+●　路由应用模块(RAM)
+
+┌──────┐　┌────┐　┌────┐
+│路由应用模块├─┤核心模块├┄┤配置文件│
+└──┬───┘　└────┘　└─┬──┘
+　　　│　　　　　　　　　　　　　　│
+　　　└──────────────┘
+
+该设计模式用于单点路由方式的的项目，使用CoreMVC框架。
+配置文件是可选的，可以直接在路由模块里写配置。例子如下：
+<?php
+/**
+ * 导入(import)
+ */
+require_once dirname (__FILE__) . '/core.php';
+
+/**
+ * 执行(execute)
+ */
+core::init (require 'config.php');
+core::stub () and foo::main ();
 ?>
 
 
@@ -710,7 +775,8 @@ core::execute	执行SQL语句
 		
 core::prepare	准备SQL语句
 		1. 【基础功能】准备SQL语句，返回SQL和参数的数组。
-		2. 【扩展功能】使用扩展方式。
+		2. 【基础功能】调试SQL语句。
+		3. 【扩展功能】使用扩展方式。
 		
 core::sequence	生成自增序列
 		1. 【基础功能】生成自增序列，返回序列号。

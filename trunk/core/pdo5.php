@@ -2,7 +2,7 @@
 /**
  * 定义(define)
  */
-class db_pdo {
+class pdo5 {
 	
 	/**
 	 * 连接数据库

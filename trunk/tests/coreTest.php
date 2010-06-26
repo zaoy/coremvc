@@ -10,7 +10,10 @@ class coreTest extends PHPUnit_Framework_TestCase {
 	/**
 	 * @var core
 	 */
-	private $core;
+	private $db_arr;
+	private $view_arr;
+	private $lib_arr;
+	private $log_file;
 	
 	/**
 	 * Prepares the environment before running a test.
@@ -18,10 +21,27 @@ class coreTest extends PHPUnit_Framework_TestCase {
 	protected function setUp() {
 		parent::setUp ();
 		
-		// TODO Auto-generated coreTest::setUp()
+		// 1. adodb和smarty系列由于类名相同，只能选择一个类测试。
+		// 2. adodb5、smarty2、smarty3、Zend、PHPExcel等，需要先自行安装相应类库才可测试。
 		
-
-		//$this->core = new core(/* parameters */);
+		$this->db_arr = array(
+			'mysql' => array((require 'config_db_mysql.php'),'resource','resource'),
+			'pdo5' => array((require 'config_db_pdo5.php'),'PDO','PDOStatement'),
+			'adodb5zip' => array((require 'config_db_adodb5zip.php'),'ADODB_mysqlt','ADORecordSet_mysqlt'),
+			//'adodb5' => array((require 'config_db_adodb5.php'),'ADORecordSet_mysqlt'),
+		);
+		$this->view_arr = array(
+			'include' => array(array('z'=>'b')),
+			'string' =>  array(array('z'=>'b')),
+			'smarty2zip' =>  array(array('z'=>'b')),
+			//'smarty2' =>  array(array('z'=>'b')),
+			//'smarty3' =>  array(array('z'=>'b')),
+		);
+		$this->lib_arr = array(
+			//'Zend' => array('Zend_Acl'),
+			//'PHPExcel' =>  array('PHPExcel_Reader_Excel2007'),
+		);
+		$this->log_file = 'tmp.log';
 	
 	}
 	
@@ -29,10 +49,11 @@ class coreTest extends PHPUnit_Framework_TestCase {
 	 * Cleans up the environment after running a test.
 	 */
 	protected function tearDown() {
-		// TODO Auto-generated coreTest::tearDown()
 		
-
-		//$this->core = null;
+		$this->db_arr = null;
+		$this->view_arr = null;
+		$this->lib_arr = null;
+		$this->log_file = null;
 		
 		parent::tearDown ();
 	}
@@ -105,21 +126,54 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		)));
 		
 		// 2. 【基础功能】自动载入功能，默认关闭。
+		//设置路径
+		$include_path = get_include_path ();
+		core::stub(array('autoload_path'=>'abc'));
+		$this->assertSame($include_path.PATH_SEPARATOR.'abc',get_include_path ());
+		core::stub(array('autoload_path'=>'xyz'));
+		$this->assertSame($include_path.PATH_SEPARATOR.'xyz',get_include_path ());
+		core::stub(array('autoload_prepend'=>true));
+		$this->assertSame('xyz'.PATH_SEPARATOR.$include_path,get_include_path ());
+		core::stub(array('autoload_prepend'=>''));
+		$this->assertSame($include_path.PATH_SEPARATOR.'xyz',get_include_path ());
+		core::stub(array('autoload_path'=>''));
+		$this->assertSame($include_path,get_include_path ());
+		//设置后缀
+		$autoload_extensions = spl_autoload_extensions ();
+		core::stub(array('autoload_extensions'=>'.inc.php'));
+		$this->assertSame('.inc.php',spl_autoload_extensions ());
+		core::stub(array('autoload_extensions'=>'.class.php'));
+		$this->assertSame('.class.php',spl_autoload_extensions ());
+		core::stub(array('autoload_extensions'=>''));
+		$this->assertSame($autoload_extensions,spl_autoload_extensions ());
+		//自动载入
+		$autoload_functions = spl_autoload_functions ();
+		core::stub(array('autoload_enable'=>true));
+		$this->assertSame(array_merge($autoload_functions,array('spl_autoload')),spl_autoload_functions ());
+		core::stub(array('autoload_prepend'=>true));
+		if ( version_compare(PHP_VERSION,'5.3.0','>=') ) {
+			$this->assertSame(array_merge(array('spl_autoload'),$autoload_functions),spl_autoload_functions ());
+		} else {
+			$this->assertSame(array_merge($autoload_functions,array('spl_autoload')),spl_autoload_functions ());
+		}
+		core::stub(array('autoload_enable'=>'','autoload_prepend'=>''));
+		$this->assertSame($autoload_functions,spl_autoload_functions ());
+
 		//自动载入
 		$this->assertFalse(class_exists('stub_2_1',false));
 		core::stub(true);
 		$this->assertTrue(class_exists('stub_2_1'));
-		core::stub('','','');
+		core::stub('','','','');
 		//设置路径
 		$this->assertFalse(class_exists('stub_2_2',false));
 		core::stub(true,'@tests/stub_2');
 		$this->assertTrue(class_exists('stub_2_2'));
-		core::stub('','','');
+		core::stub('','','','');
 		//设置后缀
 		$this->assertFalse(class_exists('stub_2_3',false));
 		core::stub(true,'','.inc.php');
 		$this->assertTrue(class_exists('stub_2_3'));
-		core::stub('','','');
+		core::stub('','','','');
 		//设置顺序
 		$this->assertFalse(class_exists('stub_2_2x',false));
 		core::stub(true,'@tests/stub_2a');
@@ -295,44 +349,60 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		// 1. 【基础功能】设置路径参数，返回参数数组。
 		//初始化
 		core::path(array(
+			'extension_enable'=>'',
 			'extension_path'=>'',
+			'extension_prepend'=>'',
 			'template_path'=>'',
 		));
 		//返回值
 		$this->assertSame(array(
+			'extension_enable'=>'',
 			'extension_path'=>'',
+			'extension_prepend'=>'',
 			'template_path'=>'',
 		),core::path(array()));
 		//设置值
 		$this->assertSame(array(
+			'extension_enable'=>'',
 			'extension_path'=>'@ext',
+			'extension_prepend'=>'',
 			'template_path'=>'',
 		),core::path(array(
 			'extension_path'=>'@ext',
 		)));
 		//取前值
 		$this->assertSame(array(
+			'extension_enable'=>'',
 			'extension_path'=>'@ext',
+			'extension_prepend'=>'',
 			'template_path'=>'',
 		),core::path(array()));
 		//再设置
 		$this->assertSame(array(
+			'extension_enable'=>'',
 			'extension_path'=>'@ext',
+			'extension_prepend'=>'',
 			'template_path'=>'@tpl',
 		),core::path(array(
 			'template_path'=>'@tpl',
 		)));
 		//再取前
 		$this->assertSame(array(
+			'extension_enable'=>'',
 			'extension_path'=>'@ext',
+			'extension_prepend'=>'',
 			'template_path'=>'@tpl',
 		),core::path(array()));
 		//恢复值
 		$this->assertSame(array(
+			'extension_enable'=>'',
 			'extension_path'=>'',
+			'extension_prepend'=>'',
 			'template_path'=>'',
 		),core::path(array(
+			'extension_enable'=>'',
 			'extension_path'=>'',
+			'extension_prepend'=>'',
 			'template_path'=>'',
 		)));
 		
@@ -398,8 +468,47 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		core::path(array(
 			'extension_path'=>'',
 		));
+		
+		// 4. 【基础功能】使用扩展类库。
+		$include_path = get_include_path();
+		$include_path_prepend = core::path('@tests/path_4','extension').PATH_SEPARATOR.$include_path;
+		$include_path_append = $include_path.PATH_SEPARATOR.core::path('@tests/path_4','extension');
+		core::path(array('extension_enable'=>true,'extension_path'=>'@tests/path_4'));
+		$this->assertSame($include_path_append,get_include_path());
+		$this->assertTrue(require 'path_4_1.php');
+		core::path(array('extension_prepend'=>true));
+		$this->assertSame($include_path_prepend,get_include_path());
+		core::path(array('extension_prepend'=>''));
+		$this->assertSame($include_path_prepend,get_include_path());
+		core::path(array('extension_prepend'=>false));
+		$this->assertSame($include_path_append,get_include_path());
+		core::path(array('extension_prepend'=>''));
+		$this->assertSame($include_path_append,get_include_path());
+		core::path(array('extension_enable'=>'','extension_path'=>'','extension_prepend'=>''));
+		
+		core::path(array('extension_enable'=>true,'extension_path'=>'@tests/path_4','extension_prepend'=>true));
+		$this->assertSame($include_path_prepend,get_include_path());
+		core::path(array('extension_enable'=>'','extension_path'=>'','extension_prepend'=>''));
+		
+		core::path(array('extension_enable'=>'Foo','extension_path'=>'@tests/path_4'));
+		$this->assertTrue(class_exists('Foo_Foo'));
+		$this->assertTrue(class_exists('Foo_Foo_Foo',false));
+		core::path(array('extension_enable'=>'','extension_path'=>'','extension_prepend'=>''));
 
-		// 4. 【基础功能】返回视图路径，默认相对于当前的程序路径。
+		// 5. 【基础功能】其他类库测试
+		foreach($this->lib_arr as $provider=>$lib_arr){
+			for($i=0;$i<count($lib_arr);$i++){
+				$this->assertFalse(class_exists($lib_arr[$i],false));
+			}
+			core::path(array('extension_enable'=>$provider));
+			for($i=0;$i<count($lib_arr);$i++){
+				new $lib_arr[$i];
+				$this->assertTrue(class_exists($lib_arr[$i],false));
+			}
+			core::path(array('extension_enable'=>''));
+		}
+
+		// 6. 【基础功能】返回视图路径，默认相对于当前的程序路径。
 		//(1)初始化空值
 		core::path(array(
 			'template_path'=>'',
@@ -467,7 +576,9 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			'framework_require' => '',
 			'framework_module' => '',
 			'framework_action' => '',
+			'extension_enable'=>'',
 			'extension_path' => '',
+			'extension_prepend'=>'',
 			'template_path' => '',
 			'template_search' => '',
 			'template_replace' => '',
@@ -550,23 +661,23 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		$this->assertSame(array(
 			'template_search'=>'',
 			'template_replace'=>'',
-			'template_type'=>'smarty',
+			'template_type'=>'smarty2',
 			'template_show'=>'',
 		),core::view(array(
-			'template_type'=>'smarty',
+			'template_type'=>'smarty2',
 		)));
 		//取前值
 		$this->assertSame(array(
 			'template_search'=>'',
 			'template_replace'=>'',
-			'template_type'=>'smarty',
+			'template_type'=>'smarty2',
 			'template_show'=>'',
 		),core::view(array()));
 		//再设置
 		$this->assertSame(array(
 			'template_search'=>'',
 			'template_replace'=>'',
-			'template_type'=>'smarty',
+			'template_type'=>'smarty2',
 			'template_show'=>false,
 		),core::view(array(
 			'template_show'=>false,
@@ -575,7 +686,7 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		$this->assertSame(array(
 			'template_search'=>'',
 			'template_replace'=>'',
-			'template_type'=>'smarty',
+			'template_type'=>'smarty2',
 			'template_show'=>false,
 		),core::view(array()));
 		//恢复值
@@ -591,74 +702,36 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			'template_show'=>'',
 		)));
 		
-		// 2. 【基础功能】原生模板和字符串模板。
-		//原生模板
-		ob_start();
-		core::view('@tests/view_2_1.php',array('z'=>'b'));
-		$this->assertSame('abc', ob_get_clean());
-		//仅返回
-		$this->assertSame('abc', core::view('@tests/view_2_1.php',array('z'=>'b'),null,false));
-		$this->assertSame('abc', core::view('@tests/view_2_1.php',array('z'=>'b'),'',false));
-		$this->assertSame('abc', core::view('@tests/view_2_1.php',array('z'=>'b'),'include',false));
-		//设置值
-		core::view(array(
-			'template_search'=>'.tpl',
-			'template_replace'=>'.php',
-			'template_type'=>'',
-			'template_show'=>false,
-		));
-		$this->assertSame('abc', core::view('@tests/view_2_1.tpl',array('z'=>'b')));
-		//恢复值
-		core::view(array(
-			'template_search'=>'',
-			'template_replace'=>'',
-			'template_type'=>'',
-			'template_show'=>'',
-		));
-		//字符串模板
-		ob_start();
-		core::view('@tests/view_2_2.php',array('z'=>'b'),'string');
-		$this->assertSame('abc', ob_get_clean());
-		//仅返回
-		$this->assertSame('abc', core::view('@tests/view_2_2.php',array('z'=>'b'),'string',false));
-		//设置值
-		core::view(array(
-			'template_search'=>'.tpl',
-			'template_replace'=>'.php',
-			'template_type'=>'string',
-			'template_show'=>false,
-		));
-		$this->assertSame('abc', core::view('@tests/view_2_2.tpl',array('z'=>'b')));
-		//恢复值
-		core::view(array(
-			'template_search'=>'',
-			'template_replace'=>'',
-			'template_type'=>'',
-			'template_show'=>'',
-		));
-		
-		// 3. 【扩展功能】其他类型模板。
-		//Smarty模板
-		ob_start();
-		core::view('@tests/view_2_3.php',array('z'=>'b'),'string');
-		$this->assertSame('abc', ob_get_clean());
-		//仅返回
-		$this->assertSame('abc', core::view('@tests/view_2_3.php',array('z'=>'b'),'smarty',false));
-		//设置值
-		core::view(array(
-			'template_search'=>'.tpl',
-			'template_replace'=>'.php',
-			'template_type'=>'smarty',
-			'template_show'=>false,
-		));
-		$this->assertSame('abc', core::view('@tests/view_2_3.tpl',array('z'=>'b')));
-		//恢复值
-		core::view(array(
-			'template_search'=>'',
-			'template_replace'=>'',
-			'template_type'=>'',
-			'template_show'=>'',
-		));
+		// 2. 【基础功能】【扩展功能】模板。
+		foreach ( $this->view_arr as $provider=>$view_arr ) {
+			for($i=0;$i<count($view_arr);$i++){
+				$tpl = '@tests/view_'.$provider.'_'.($i+1).'_tpl.php';
+				ob_start();
+				require core::path('@tests/view_'.$provider.'_'.($i+1).'_rtn.php');
+				$result = ob_get_clean();
+				//仅显示
+				ob_start();
+				core::view($tpl,$view_arr[$i],$provider);
+				$this->assertSame($result, ob_get_clean());
+				//仅返回
+				$this->assertSame($result, core::view($tpl,$view_arr[$i],$provider,false));
+				//设置值
+				core::view(array(
+					'template_search'=>'.tpl',
+					'template_replace'=>'.php',
+					'template_type'=>$provider,
+					'template_show'=>false,
+				));
+				$this->assertSame($result, core::view($tpl,$view_arr[$i]));
+				//恢复值
+				core::view(array(
+					'template_search'=>'',
+					'template_replace'=>'',
+					'template_type'=>'',
+					'template_show'=>'',
+				));
+			}
+		}
 		
 	}
 	
@@ -723,15 +796,13 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		$this->assertTrue(core::connect(false,$ref));
 		$this->assertSame($config,$ref);
 		
-		// 3. 【扩展功能】连接数据库、断开数据库。
-		//PDO
-		core::connect(require 'config_pdo.php');
-		$this->assertSame('PDO',get_class(core::connect(true)));
-		$this->assertTrue(core::connect(false));
-		//ADODB
-		core::connect(require 'config_adodb.php');
-		$this->assertSame('ADODB_mysqlt', get_class(core::connect(true)));
-		$this->assertTrue(core::connect(false));
+		// 3. 【基础功能】【扩展功能】连接数据库、断开数据库。
+		foreach ( $this->db_arr as $provider=>$db_arr ) {
+			list($arr,$con,$cls) = $db_arr;
+			core::connect($arr);
+			$this->assertSame($con,is_resource($result = core::connect(true))?'resource':get_class($result));
+			$this->assertTrue(core::connect(false));
+		}
 		
 	}
 	
@@ -740,95 +811,35 @@ class coreTest extends PHPUnit_Framework_TestCase {
 	 */
 	public function testExecute() {
 		
-		// 1. 【基础功能】执行SQL语句，返回结果集。
-		$tmp = 'tmp.log';
-		$provider = 'mysql';
-		core::connect(require 'config_mysql.php');
-		$this->assertTrue(core::execute("SET NAMES GBK"));
-		$this->assertType("resource", $result = core::execute("SELECT ?",array('2')));
-		$this->assertSame("2", mysql_result($result,0));
-		$this->assertType("resource", core::execute("SELECT 1",null,$ref));
-		$this->assertSame(1, $ref['num_rows']);
-		$this->assertType("resource", core::execute("SELECT ? UNION select ?",array(1,2),$ref));
-		$this->assertSame(1, $ref['num_fields']);
-		$this->assertSame(2, $ref['num_rows']);
-		core::connect(array('debug_enable'=>true));
-		ob_start();
-		core::execute('SELECT 1');
-		$this->assertSame(PHP_EOL.'('.$provider.'): SELECT 1'.PHP_EOL,ob_get_clean());
-		ob_start();
-		core::execute('SELECT ?,?',array(1,'a'));
-		$this->assertSame(PHP_EOL.'('.$provider.'): SELECT ?,?'.PHP_EOL.'#0: int(1)'.PHP_EOL.'#1: string(1) a'.PHP_EOL,ob_get_clean());
-		core::connect(array('debug_file'=>$tmp));
-		@unlink($tmp);
-		core::execute('SELECT 1');
-		$this->assertSame(PHP_EOL.'('.$provider.'): SELECT 1'.PHP_EOL,file_get_contents($tmp));
-		@unlink($tmp);
-		core::connect(array('debug_file'=>''));
-		ob_start();
-		core::execute('SELECT aaa');
-		$this->assertSame(PHP_EOL.'('.$provider.'): SELECT aaa'.PHP_EOL.'1054: Unknown column \'aaa\' in \'field list\''.PHP_EOL,ob_get_clean());
-		core::connect(false);
-		
-		// 2. 【扩展功能】执行SQL语句，返回结果集。
-		//PDO
-		core::connect(require 'config_pdo.php');
-		$tmp = 'tmp.log';
-		$provider = 'pdo';
-		$this->assertSame("PDOStatement", get_class(core::execute("SET NAMES GBK")));
-		$this->assertSame("PDOStatement", get_class(core::execute("SELECT 1")));
-		$this->assertSame("PDOStatement", get_class(core::execute("SELECT ?",array('2'))));
-		$this->assertSame("PDOStatement", get_class(core::execute("SELECT 1",null,$ref)));
-		$this->assertSame(1, $ref['num_rows']);
-		$this->assertSame("PDOStatement", get_class(core::execute("SELECT ? UNION SELECT ?",array(1,2),$ref)));
-		$this->assertSame(1, $ref['num_fields']);
-		$this->assertSame(2, $ref['num_rows']);
-		core::connect(array('debug_enable'=>true));
-		ob_start();
-		core::execute('SELECT 1');
-		$this->assertSame(PHP_EOL.'('.$provider.'): SELECT 1'.PHP_EOL,ob_get_clean());
-		ob_start();
-		core::execute('SELECT ?,?',array(1,'a'));
-		$this->assertSame(PHP_EOL.'('.$provider.'): SELECT ?,?'.PHP_EOL.'#0: int(1)'.PHP_EOL.'#1: string(1) a'.PHP_EOL,ob_get_clean());
-		core::connect(array('debug_file'=>$tmp));
-		@unlink($tmp);
-		core::execute('SELECT 1');
-		$this->assertSame(PHP_EOL.'('.$provider.'): SELECT 1'.PHP_EOL,file_get_contents($tmp));
-		@unlink($tmp);
-		core::connect(array('debug_file'=>''));
-		ob_start();
-		core::execute('SELECT aaa');
-		$this->assertSame(PHP_EOL.'('.$provider.'): SELECT aaa'.PHP_EOL.'1054: Unknown column \'aaa\' in \'field list\''.PHP_EOL,ob_get_clean());
-		core::connect(false);
-		//ADODB
-		$tmp = 'tmp.log';
-		$provider = 'adodb';
-		core::connect(require 'config_adodb.php');
-		$this->assertSame("ADORecordSet_empty", get_class(core::execute("SET NAMES GBK")));
-		$this->assertSame('ADORecordSet_mysqlt', get_class(core::execute("SELECT 1")));
-		$this->assertSame('ADORecordSet_mysqlt', get_class(core::execute("SELECT ?",array('2'))));
-		$this->assertSame('ADORecordSet_mysqlt', get_class(core::execute("SELECT 1",null,$ref)));
-		$this->assertSame(1, $ref['num_rows']);
-		$this->assertSame('ADORecordSet_mysqlt', get_class(core::execute("SELECT ? UNION SELECT ?",array(1,2),$ref)));
-		$this->assertSame(1, $ref['num_fields']);
-		$this->assertSame(2, $ref['num_rows']);
-		core::connect(array('debug_enable'=>true));
-		ob_start();
-		core::execute('SELECT 1');
-		$this->assertSame(PHP_EOL.'('.$provider.'): SELECT 1'.PHP_EOL,ob_get_clean());
-		ob_start();
-		core::execute('SELECT ?,?',array(1,'a'));
-		$this->assertSame(PHP_EOL.'('.$provider.'): SELECT ?,?'.PHP_EOL.'#0: int(1)'.PHP_EOL.'#1: string(1) a'.PHP_EOL,ob_get_clean());
-		core::connect(array('debug_file'=>$tmp));
-		@unlink($tmp);
-		core::execute('SELECT 1');
-		$this->assertSame(PHP_EOL.'('.$provider.'): SELECT 1'.PHP_EOL,file_get_contents($tmp));
-		@unlink($tmp);
-		core::connect(array('debug_file'=>''));
-		ob_start();
-		core::execute('SELECT aaa');
-		$this->assertSame(PHP_EOL.'('.$provider.'): SELECT aaa'.PHP_EOL.'1054: Unknown column \'aaa\' in \'field list\''.PHP_EOL,ob_get_clean());
-		core::connect(false);
+		// 1. 【基础功能】【扩展功能】执行SQL语句，返回结果集。
+		foreach ( $this->db_arr as $provider=>$db_arr ) {
+			list($arr,$con,$cls) = $db_arr;
+			core::connect($arr);
+			$this->assertSame($cls, is_resource($result = core::execute("SELECT 1"))?'resource':get_class($result));
+			$this->assertSame($cls, is_resource($result = core::execute("SELECT ?",array('2')))?'resource':get_class($result));
+			$this->assertSame($cls, is_resource($result = core::execute("SELECT 1",null,$ref))?'resource':get_class($result));
+			$this->assertSame(1, $ref['num_rows']);
+			$this->assertSame($cls, is_resource($result = core::execute("SELECT ? UNION select ?",array(1,2),$ref))?'resource':get_class($result));
+			$this->assertSame(1, $ref['num_fields']);
+			$this->assertSame(2, $ref['num_rows']);
+			core::connect(array('debug_enable'=>true));
+			ob_start();
+			core::execute('SELECT 1');
+			$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): SELECT 1'.PHP_EOL,ob_get_clean());
+			ob_start();
+			core::execute('SELECT ?,?',array(1,'a'));
+			$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): SELECT ?,?'.PHP_EOL.'#0: int(1)'.PHP_EOL.'#1: string(1) a'.PHP_EOL,ob_get_clean());
+			core::connect(array('debug_file'=>$this->log_file));
+			@unlink($this->log_file);
+			core::execute('SELECT 1');
+			$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): SELECT 1'.PHP_EOL,file_get_contents($this->log_file));
+			@unlink($this->log_file);
+			core::connect(array('debug_file'=>''));
+			ob_start();
+			core::execute('SELECT aaa');
+			$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): SELECT aaa'.PHP_EOL.'1054: Unknown column \'aaa\' in \'field list\''.PHP_EOL,ob_get_clean());
+			core::connect(false);
+		}
 		
 	}
 
@@ -864,10 +875,6 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			array("'\\\\'","'\\0'","'\\n'","'\\r'","'\\''", "'\\\"'","'\\Z'"),
 			core::prepare('mysql_escape_value',array('a'=>"\\",'b'=>"\x00",'c'=>"\n",'d'=>"\r",'e'=>"'",'f'=>"\"",'g'=>"\x1a"),true));
 
-		$arr = require 'config_mysql.php';
-		$arr['prefix_search'] = 'pre_';
-		$arr['prefix_replace'] = 'pre1_';
-		core::connect($arr);
 		$this->assertSame(array('',array()), core::prepare('mysql_field'));
 		$this->assertSame(array('a',array()), core::prepare('mysql_field','a'));
 		$this->assertSame(array('',array()), core::prepare('mysql_field',array()));
@@ -951,195 +958,71 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		$this->assertSame(
 			'a1,b1 \'b\',b2 100,b3 NULL,c1 \'c\',100,NULL,d1 \'d\',d2 100,d3 NULL,e1 \'e\',100,NULL',
 			core::prepare('mysql_other',$input,true));
-		$this->assertSame(array('INSERT tbl (col1,col2) VALUES (DEFAULT,DEFAULT)',array()), core::prepare('inserts',array('tbl','col1,col2','DEFAULT,DEFAULT')));
-		$this->assertSame(array('INSERT tbl (col1,col2) VALUES (DEFAULT,?)',array('txt1')), core::prepare('inserts',array('tbl',array('col1','col2'),array('DEFAULT','col2'=>'txt1'))));
-		$this->assertSame(array('INSERT tbl  VALUES (DEFAULT,?),(DEFAULT,?)',array('txt1','txt2')), 
-			core::prepare('inserts',array('tbl',null,array(array('DEFAULT','col2'=>'txt1'),array('DEFAULT','col2'=>'txt2')))));
-		$this->assertSame(array('INSERT tbl (col1,col2) SELECT ...',array()), core::prepare('inserts',array('tbl',array('col1','col2'),null,'SELECT ...')));
-		$this->assertSame(array('INSERT tbl SET col1=DEFAULT,col2=?',array('txt1')), core::prepare('inserts',array('tbl',array('col1=DEFAULT','col2'=>'txt1'))));
-		$this->assertSame('INSERT tbl SET col1=DEFAULT,col2=\'txt1\'', core::prepare('inserts',array('tbl',array('col1=DEFAULT','col2'=>'txt1')),true));
-		$this->assertSame(array('UPDATE tbl SET col1=DEFAULT,col2=?',array('txt1')), core::prepare('updates',array('tbl',array('col1=DEFAULT','col2'=>'txt1'))));
-		$this->assertSame(array('UPDATE tbl SET col1=DEFAULT,col2=? WHERE col3=?',array('txt1','txt2')), 
-			core::prepare('updates',array('tbl',array('col1=DEFAULT','col2'=>'txt1'),array('col3'=>'txt2'))));
-		$this->assertSame('UPDATE tbl SET col1=DEFAULT,col2=\'txt1\' WHERE col3=\'txt2\'', 
-			core::prepare('updates',array('tbl',array('col1=DEFAULT','col2'=>'txt1'),array('col3'=>'txt2')),true));
-		$this->assertSame(array('UPDATE tbl SET col1=DEFAULT,col2=? WHERE col3=? AND col4=? AND (col5=? OR col6=?)',array('txt1','txt2','txt3','txt4','txt5')), 
-			core::prepare('updates',array('tbl',array('col1=DEFAULT','col2'=>'txt1'),array('col3'=>'txt2','col4'=>'txt3',array('col5'=>'txt4','col6'=>'txt5')))));
-		$this->assertSame('UPDATE tbl SET col1=DEFAULT,col2=\'txt1\' WHERE col3=\'txt2\' AND col4=\'txt3\' AND (col5=0 OR col6 IS NULL)', 
-			core::prepare('updates',array('tbl',array('col1=DEFAULT','col2'=>'txt1'),array('col3'=>'txt2','col4'=>'txt3',array('col5'=>false,'col6 IS NULL'))),true));
-		$this->assertSame(array('DELETE  FROM tbl WHERE col3=? AND col4=? AND (col5=? OR col6=?)',array('txt2','txt3','txt4','txt5')), 
-			core::prepare('deletes',array(null,'tbl',array('col3'=>'txt2','col4'=>'txt3',array('col5'=>'txt4','col6'=>'txt5')))));
-		$this->assertSame('DELETE  FROM tbl WHERE col3=\'txt2\' AND col4=\'txt3\' AND (col5=0 OR col6 IS NULL)', 
-			core::prepare('deletes',array(null,'tbl',array('col3'=>'txt2','col4'=>'txt3',array('col5'=>false,'col6 IS NULL'))),true));
-		$this->assertSame(array('SELECT * FROM tbl',array()), 
-			core::prepare('selects',array(null,'tbl',null,array('page'=>array('page'=>1,'size'=>2,'total'=>3,'count'=>4)))));
-		$this->assertSame(array('SELECT a,c AS b,100,NULL,1,0 LIMIT ?,?',array(10,20)), 
-			core::prepare('selects',array(array('a','b'=>'c',100,null,true,false),null,null,array('LIMIT'=>array(10,20)))));
-		$this->assertSame('SELECT a,c AS b,100,NULL,1,0 LIMIT 10,20', 
-			core::prepare('selects',array(array('a','b'=>'c',100,null,true,false),null,null,array('LIMIT'=>array(10,20))),true));
-		$this->assertSame(array('SELECT a,c AS b,100,NULL,1,0 FROM tbl LIMIT ?,?',array(10,20)), 
-			core::prepare('selects',array(array('a','b'=>'c',100,null,true,false),array('tbl'),null,array('LIMIT'=>array(10,20)))));
-		$this->assertSame('SELECT a,c AS b,100,NULL,1,0 FROM tbl LIMIT 10,20', 
-			core::prepare('selects',array(array('a','b'=>'c',100,null,true,false),array('tbl'),null,array('LIMIT'=>array(10,20))),true));
-		$this->assertSame(array('SELECT a,c AS b,100,NULL,1,0 FROM tbl WHERE a=? AND c LIKE ? AND e AND 1 LIMIT ?,?',array('b','d',10,20)), 
-			core::prepare('selects',array(array('a','b'=>'c',100,null,true,false),array('tbl'),array('a'=>'b','c LIKE ?'=>'d','e',true),array('LIMIT'=>array(10,20)))));
-		$this->assertSame('SELECT a,c AS b,100,NULL,1,0 FROM tbl WHERE a=\'b\' AND c LIKE \'d\' AND e AND 1 LIMIT 10,20', 
-			core::prepare('selects',array(array('a','b'=>'c',100,null,true,false),array('tbl'),array('a'=>'b','c LIKE ?'=>'d','e',true),array('LIMIT'=>array(10,20))),true));
-		core::connect(false);
 
-		// 2. 【扩展功能】准备SQL语句。
-		//PDO
-		$arr = require 'config_pdo.php';
-		$arr['prefix_search'] = 'pre_';
-		$arr['prefix_replace'] = 'pre1_';
-		core::connect($arr);
-		$this->assertSame(array('INSERT tbl (col1,col2) VALUES (DEFAULT,DEFAULT)',array()), core::prepare('inserts',array('tbl','col1,col2','DEFAULT,DEFAULT')));
-		$this->assertSame(array('INSERT tbl (col1,col2) VALUES (DEFAULT,?)',array('txt1')), core::prepare('inserts',array('tbl',array('col1','col2'),array('DEFAULT','col2'=>'txt1'))));
-		$this->assertSame(array('INSERT tbl  VALUES (DEFAULT,?),(DEFAULT,?)',array('txt1','txt2')), 
-			core::prepare('inserts',array('tbl',null,array(array('DEFAULT','col2'=>'txt1'),array('DEFAULT','col2'=>'txt2')))));
-		$this->assertSame(array('INSERT tbl (col1,col2) SELECT ...',array()), core::prepare('inserts',array('tbl',array('col1','col2'),null,'SELECT ...')));
-		$this->assertSame(array('INSERT tbl SET col1=DEFAULT,col2=?',array('txt1')), core::prepare('inserts',array('tbl',array('col1=DEFAULT','col2'=>'txt1'))));
-		$this->assertSame('INSERT tbl SET col1=DEFAULT,col2=\'txt1\'', core::prepare('inserts',array('tbl',array('col1=DEFAULT','col2'=>'txt1')),true));
-		$this->assertSame(array('UPDATE tbl SET col1=DEFAULT,col2=?',array('txt1')), core::prepare('updates',array('tbl',array('col1=DEFAULT','col2'=>'txt1'))));
-		$this->assertSame(array('UPDATE tbl SET col1=DEFAULT,col2=? WHERE col3=?',array('txt1','txt2')), 
-			core::prepare('updates',array('tbl',array('col1=DEFAULT','col2'=>'txt1'),array('col3'=>'txt2'))));
-		$this->assertSame('UPDATE tbl SET col1=DEFAULT,col2=\'txt1\' WHERE col3=\'txt2\'', 
-			core::prepare('updates',array('tbl',array('col1=DEFAULT','col2'=>'txt1'),array('col3'=>'txt2')),true));
-		$this->assertSame(array('UPDATE tbl SET col1=DEFAULT,col2=? WHERE col3=? AND col4=? AND (col5=? OR col6=?)',array('txt1','txt2','txt3','txt4','txt5')), 
-			core::prepare('updates',array('tbl',array('col1=DEFAULT','col2'=>'txt1'),array('col3'=>'txt2','col4'=>'txt3',array('col5'=>'txt4','col6'=>'txt5')))));
-		$this->assertSame('UPDATE tbl SET col1=DEFAULT,col2=\'txt1\' WHERE col3=\'txt2\' AND col4=\'txt3\' AND (col5=0 OR col6 IS NULL)', 
-			core::prepare('updates',array('tbl',array('col1=DEFAULT','col2'=>'txt1'),array('col3'=>'txt2','col4'=>'txt3',array('col5'=>false,'col6 IS NULL'))),true));
-		$this->assertSame(array('DELETE  FROM tbl WHERE col3=? AND col4=? AND (col5=? OR col6=?)',array('txt2','txt3','txt4','txt5')), 
-			core::prepare('deletes',array(null,'tbl',array('col3'=>'txt2','col4'=>'txt3',array('col5'=>'txt4','col6'=>'txt5')))));
-		$this->assertSame('DELETE  FROM tbl WHERE col3=\'txt2\' AND col4=\'txt3\' AND (col5=0 OR col6 IS NULL)', 
-			core::prepare('deletes',array(null,'tbl',array('col3'=>'txt2','col4'=>'txt3',array('col5'=>false,'col6 IS NULL'))),true));
-		$this->assertSame(array('SELECT * FROM tbl',array()), 
-			core::prepare('selects',array(null,'tbl',null,array('page'=>array('page'=>1,'size'=>2,'total'=>3,'count'=>4)))));
-		$this->assertSame(array('SELECT a,c AS b,100,NULL,1,0 LIMIT ?,?',array(10,20)), 
-			core::prepare('selects',array(array('a','b'=>'c',100,null,true,false),null,null,array('LIMIT'=>array(10,20)))));
-		$this->assertSame('SELECT a,c AS b,100,NULL,1,0 LIMIT 10,20', 
-			core::prepare('selects',array(array('a','b'=>'c',100,null,true,false),null,null,array('LIMIT'=>array(10,20))),true));
-		$this->assertSame(array('SELECT a,c AS b,100,NULL,1,0 FROM tbl LIMIT ?,?',array(10,20)), 
-			core::prepare('selects',array(array('a','b'=>'c',100,null,true,false),array('tbl'),null,array('LIMIT'=>array(10,20)))));
-		$this->assertSame('SELECT a,c AS b,100,NULL,1,0 FROM tbl LIMIT 10,20', 
-			core::prepare('selects',array(array('a','b'=>'c',100,null,true,false),array('tbl'),null,array('LIMIT'=>array(10,20))),true));
-		$this->assertSame(array('SELECT a,c AS b,100,NULL,1,0 FROM tbl WHERE a=? AND c LIKE ? AND e AND 1 LIMIT ?,?',array('b','d',10,20)), 
-			core::prepare('selects',array(array('a','b'=>'c',100,null,true,false),array('tbl'),array('a'=>'b','c LIKE ?'=>'d','e',true),array('LIMIT'=>array(10,20)))));
-		$this->assertSame('SELECT a,c AS b,100,NULL,1,0 FROM tbl WHERE a=\'b\' AND c LIKE \'d\' AND e AND 1 LIMIT 10,20', 
-			core::prepare('selects',array(array('a','b'=>'c',100,null,true,false),array('tbl'),array('a'=>'b','c LIKE ?'=>'d','e',true),array('LIMIT'=>array(10,20))),true));
-		core::connect(false);
-		//ADODB
-		$arr = require 'config_adodb.php';
-		$arr['prefix_search'] = 'pre_';
-		$arr['prefix_replace'] = 'pre1_';
-		core::connect($arr);
-		$this->assertSame(array('INSERT tbl (col1,col2) VALUES (DEFAULT,DEFAULT)',array()), core::prepare('inserts',array('tbl','col1,col2','DEFAULT,DEFAULT')));
-		$this->assertSame(array('INSERT tbl (col1,col2) VALUES (DEFAULT,?)',array('txt1')), core::prepare('inserts',array('tbl',array('col1','col2'),array('DEFAULT','col2'=>'txt1'))));
-		$this->assertSame(array('INSERT tbl  VALUES (DEFAULT,?),(DEFAULT,?)',array('txt1','txt2')), 
-			core::prepare('inserts',array('tbl',null,array(array('DEFAULT','col2'=>'txt1'),array('DEFAULT','col2'=>'txt2')))));
-		$this->assertSame(array('INSERT tbl (col1,col2) SELECT ...',array()), core::prepare('inserts',array('tbl',array('col1','col2'),null,'SELECT ...')));
-		$this->assertSame(array('INSERT tbl SET col1=DEFAULT,col2=?',array('txt1')), core::prepare('inserts',array('tbl',array('col1=DEFAULT','col2'=>'txt1'))));
-		$this->assertSame('INSERT tbl SET col1=DEFAULT,col2=\'txt1\'', core::prepare('inserts',array('tbl',array('col1=DEFAULT','col2'=>'txt1')),true));
-		$this->assertSame(array('UPDATE tbl SET col1=DEFAULT,col2=?',array('txt1')), core::prepare('updates',array('tbl',array('col1=DEFAULT','col2'=>'txt1'))));
-		$this->assertSame(array('UPDATE tbl SET col1=DEFAULT,col2=? WHERE col3=?',array('txt1','txt2')), 
-			core::prepare('updates',array('tbl',array('col1=DEFAULT','col2'=>'txt1'),array('col3'=>'txt2'))));
-		$this->assertSame('UPDATE tbl SET col1=DEFAULT,col2=\'txt1\' WHERE col3=\'txt2\'', 
-			core::prepare('updates',array('tbl',array('col1=DEFAULT','col2'=>'txt1'),array('col3'=>'txt2')),true));
-		$this->assertSame(array('UPDATE tbl SET col1=DEFAULT,col2=? WHERE col3=? AND col4=? AND (col5=? OR col6=?)',array('txt1','txt2','txt3','txt4','txt5')), 
-			core::prepare('updates',array('tbl',array('col1=DEFAULT','col2'=>'txt1'),array('col3'=>'txt2','col4'=>'txt3',array('col5'=>'txt4','col6'=>'txt5')))));
-		$this->assertSame('UPDATE tbl SET col1=DEFAULT,col2=\'txt1\' WHERE col3=\'txt2\' AND col4=\'txt3\' AND (col5=0 OR col6 IS NULL)', 
-			core::prepare('updates',array('tbl',array('col1=DEFAULT','col2'=>'txt1'),array('col3'=>'txt2','col4'=>'txt3',array('col5'=>false,'col6 IS NULL'))),true));
-		$this->assertSame(array('DELETE  FROM tbl WHERE col3=? AND col4=? AND (col5=? OR col6=?)',array('txt2','txt3','txt4','txt5')), 
-			core::prepare('deletes',array(null,'tbl',array('col3'=>'txt2','col4'=>'txt3',array('col5'=>'txt4','col6'=>'txt5')))));
-		$this->assertSame('DELETE  FROM tbl WHERE col3=\'txt2\' AND col4=\'txt3\' AND (col5=0 OR col6 IS NULL)', 
-			core::prepare('deletes',array(null,'tbl',array('col3'=>'txt2','col4'=>'txt3',array('col5'=>false,'col6 IS NULL'))),true));
-		$this->assertSame(array('SELECT * FROM tbl',array()), 
-			core::prepare('selects',array(null,'tbl',null,array('page'=>array('page'=>1,'size'=>2,'total'=>3,'count'=>4)))));
-		$this->assertSame(array('SELECT a,c AS b,100,NULL,1,0 LIMIT ?,?',array(10,20)), 
-			core::prepare('selects',array(array('a','b'=>'c',100,null,true,false),null,null,array('LIMIT'=>array(10,20)))));
-		$this->assertSame('SELECT a,c AS b,100,NULL,1,0 LIMIT 10,20', 
-			core::prepare('selects',array(array('a','b'=>'c',100,null,true,false),null,null,array('LIMIT'=>array(10,20))),true));
-		$this->assertSame(array('SELECT a,c AS b,100,NULL,1,0 FROM tbl LIMIT ?,?',array(10,20)), 
-			core::prepare('selects',array(array('a','b'=>'c',100,null,true,false),array('tbl'),null,array('LIMIT'=>array(10,20)))));
-		$this->assertSame('SELECT a,c AS b,100,NULL,1,0 FROM tbl LIMIT 10,20', 
-			core::prepare('selects',array(array('a','b'=>'c',100,null,true,false),array('tbl'),null,array('LIMIT'=>array(10,20))),true));
-		$this->assertSame(array('SELECT a,c AS b,100,NULL,1,0 FROM tbl WHERE a=? AND c LIKE ? AND e AND 1 LIMIT ?,?',array('b','d',10,20)), 
-			core::prepare('selects',array(array('a','b'=>'c',100,null,true,false),array('tbl'),array('a'=>'b','c LIKE ?'=>'d','e',true),array('LIMIT'=>array(10,20)))));
-		$this->assertSame('SELECT a,c AS b,100,NULL,1,0 FROM tbl WHERE a=\'b\' AND c LIKE \'d\' AND e AND 1 LIMIT 10,20', 
-			core::prepare('selects',array(array('a','b'=>'c',100,null,true,false),array('tbl'),array('a'=>'b','c LIKE ?'=>'d','e',true),array('LIMIT'=>array(10,20))),true));
-		core::connect(false);	
+		// 2. 【基础功能】【扩展功能】准备SQL语句。
+		foreach ( $this->db_arr as $provider=>$db_arr ) {
+			list($arr,$con,$cls) = $db_arr;
+			core::connect($arr);
+			$this->assertSame(array('INSERT tbl (col1,col2) VALUES (DEFAULT,DEFAULT)',array()), core::prepare('inserts',array('tbl','col1,col2','DEFAULT,DEFAULT')));
+			$this->assertSame(array('INSERT tbl (col1,col2) VALUES (DEFAULT,?)',array('txt1')), core::prepare('inserts',array('tbl',array('col1','col2'),array('DEFAULT','col2'=>'txt1'))));
+			$this->assertSame(array('INSERT tbl  VALUES (DEFAULT,?),(DEFAULT,?)',array('txt1','txt2')), 
+				core::prepare('inserts',array('tbl',null,array(array('DEFAULT','col2'=>'txt1'),array('DEFAULT','col2'=>'txt2')))));
+			$this->assertSame(array('INSERT tbl (col1,col2) SELECT ...',array()), core::prepare('inserts',array('tbl',array('col1','col2'),null,'SELECT ...')));
+			$this->assertSame(array('INSERT tbl SET col1=DEFAULT,col2=?',array('txt1')), core::prepare('inserts',array('tbl',array('col1=DEFAULT','col2'=>'txt1'))));
+			$this->assertSame('INSERT tbl SET col1=DEFAULT,col2=\'txt1\'', core::prepare('inserts',array('tbl',array('col1=DEFAULT','col2'=>'txt1')),true));
+			$this->assertSame(array('UPDATE tbl SET col1=DEFAULT,col2=?',array('txt1')), core::prepare('updates',array('tbl',array('col1=DEFAULT','col2'=>'txt1'))));
+			$this->assertSame(array('UPDATE tbl SET col1=DEFAULT,col2=? WHERE col3=?',array('txt1','txt2')), 
+				core::prepare('updates',array('tbl',array('col1=DEFAULT','col2'=>'txt1'),array('col3'=>'txt2'))));
+			$this->assertSame('UPDATE tbl SET col1=DEFAULT,col2=\'txt1\' WHERE col3=\'txt2\'', 
+				core::prepare('updates',array('tbl',array('col1=DEFAULT','col2'=>'txt1'),array('col3'=>'txt2')),true));
+			$this->assertSame(array('UPDATE tbl SET col1=DEFAULT,col2=? WHERE col3=? AND col4=? AND (col5=? OR col6=?)',array('txt1','txt2','txt3','txt4','txt5')), 
+				core::prepare('updates',array('tbl',array('col1=DEFAULT','col2'=>'txt1'),array('col3'=>'txt2','col4'=>'txt3',array('col5'=>'txt4','col6'=>'txt5')))));
+			$this->assertSame('UPDATE tbl SET col1=DEFAULT,col2=\'txt1\' WHERE col3=\'txt2\' AND col4=\'txt3\' AND (col5=0 OR col6 IS NULL)', 
+				core::prepare('updates',array('tbl',array('col1=DEFAULT','col2'=>'txt1'),array('col3'=>'txt2','col4'=>'txt3',array('col5'=>false,'col6 IS NULL'))),true));
+			$this->assertSame(array('DELETE  FROM tbl WHERE col3=? AND col4=? AND (col5=? OR col6=?)',array('txt2','txt3','txt4','txt5')), 
+				core::prepare('deletes',array(null,'tbl',array('col3'=>'txt2','col4'=>'txt3',array('col5'=>'txt4','col6'=>'txt5')))));
+			$this->assertSame('DELETE  FROM tbl WHERE col3=\'txt2\' AND col4=\'txt3\' AND (col5=0 OR col6 IS NULL)', 
+				core::prepare('deletes',array(null,'tbl',array('col3'=>'txt2','col4'=>'txt3',array('col5'=>false,'col6 IS NULL'))),true));
+			$this->assertSame(array('SELECT * FROM tbl',array()), 
+				core::prepare('selects',array(null,'tbl',null,array('page'=>array('page'=>1,'size'=>2,'total'=>3,'count'=>4)))));
+			$this->assertSame(array('SELECT a,c AS b,100,NULL,1,0 LIMIT ?,?',array(10,20)), 
+				core::prepare('selects',array(array('a','b'=>'c',100,null,true,false),null,null,array('LIMIT'=>array(10,20)))));
+			$this->assertSame('SELECT a,c AS b,100,NULL,1,0 LIMIT 10,20', 
+				core::prepare('selects',array(array('a','b'=>'c',100,null,true,false),null,null,array('LIMIT'=>array(10,20))),true));
+			$this->assertSame(array('SELECT a,c AS b,100,NULL,1,0 FROM tbl LIMIT ?,?',array(10,20)), 
+				core::prepare('selects',array(array('a','b'=>'c',100,null,true,false),array('tbl'),null,array('LIMIT'=>array(10,20)))));
+			$this->assertSame('SELECT a,c AS b,100,NULL,1,0 FROM tbl LIMIT 10,20', 
+				core::prepare('selects',array(array('a','b'=>'c',100,null,true,false),array('tbl'),null,array('LIMIT'=>array(10,20))),true));
+			$this->assertSame(array('SELECT a,c AS b,100,NULL,1,0 FROM tbl WHERE a=? AND c LIKE ? AND e AND 1 LIMIT ?,?',array('b','d',10,20)), 
+				core::prepare('selects',array(array('a','b'=>'c',100,null,true,false),array('tbl'),array('a'=>'b','c LIKE ?'=>'d','e',true),array('LIMIT'=>array(10,20)))));
+			$this->assertSame('SELECT a,c AS b,100,NULL,1,0 FROM tbl WHERE a=\'b\' AND c LIKE \'d\' AND e AND 1 LIMIT 10,20', 
+				core::prepare('selects',array(array('a','b'=>'c',100,null,true,false),array('tbl'),array('a'=>'b','c LIKE ?'=>'d','e',true),array('LIMIT'=>array(10,20))),true));
+			core::connect(false);
+		}
 		
-		// 3. 【基础功能】调试SQL语句。
-		$tmp = 'tmp.log';
-		$provider = 'mysql';
-		$arr = require 'config_mysql.php';
-		$arr['prefix_search'] = 'pre_';
-		$arr['prefix_replace'] = 'pre1_';
-		core::connect($arr);
-		ob_start();
-		core::prepare('SELECT aaa',null,null,true);
-		$this->assertSame(PHP_EOL.'('.$provider.'): SELECT aaa'.PHP_EOL,ob_get_clean());
-		ob_start();
-		core::prepare('SELECT ?',array('aaa'),null,true);
-		$this->assertSame(PHP_EOL.'('.$provider.'): SELECT ?'.PHP_EOL.'#0: string(3) aaa'.PHP_EOL,ob_get_clean());
-		ob_start();
-		core::prepare('SELECT ?',array('aaa'),true,true);
-		$this->assertSame(PHP_EOL.'('.$provider.'): SELECT \'aaa\''.PHP_EOL,ob_get_clean());
-		ob_start();
-		core::prepare('SELECT aaa',null,null,true, null,array('errno'=>1000,'error'=>'bbb'));
-		$this->assertSame(PHP_EOL.'('.$provider.'): SELECT aaa'.PHP_EOL.'1000: bbb'.PHP_EOL,ob_get_clean());
-		@unlink($tmp);
-		core::prepare('SELECT aaa',null,null,true, $tmp);
-		$this->assertSame(PHP_EOL.'('.$provider.'): SELECT aaa'.PHP_EOL,file_get_contents($tmp));
-		@unlink($tmp);
-		core::connect(false);
-		//PDO
-		$provider = 'pdo';
-		$arr = require 'config_pdo.php';
-		$arr['prefix_search'] = 'pre_';
-		$arr['prefix_replace'] = 'pre1_';
-		core::connect($arr);
-		ob_start();
-		core::prepare('SELECT aaa',null,null,true);
-		$this->assertSame(PHP_EOL.'('.$provider.'): SELECT aaa'.PHP_EOL,ob_get_clean());
-		ob_start();
-		core::prepare('SELECT ?',array('aaa'),null,true);
-		$this->assertSame(PHP_EOL.'('.$provider.'): SELECT ?'.PHP_EOL.'#0: string(3) aaa'.PHP_EOL,ob_get_clean());
-		ob_start();
-		core::prepare('SELECT ?',array('aaa'),true,true);
-		$this->assertSame(PHP_EOL.'('.$provider.'): SELECT \'aaa\''.PHP_EOL,ob_get_clean());
-		ob_start();
-		core::prepare('SELECT aaa',null,null,true, null,array('errno'=>1000,'error'=>'bbb'));
-		$this->assertSame(PHP_EOL.'('.$provider.'): SELECT aaa'.PHP_EOL.'1000: bbb'.PHP_EOL,ob_get_clean());
-		@unlink($tmp);
-		core::prepare('SELECT aaa',null,null,true, $tmp);
-		$this->assertSame(PHP_EOL.'('.$provider.'): SELECT aaa'.PHP_EOL,file_get_contents($tmp));
-		@unlink($tmp);
-		core::connect(false);
-		//ADODB
-		$provider = 'adodb';
-		$arr = require 'config_adodb.php';
-		$arr['prefix_search'] = 'pre_';
-		$arr['prefix_replace'] = 'pre1_';
-		core::connect($arr);
-		ob_start();
-		core::prepare('SELECT aaa',null,null,true);
-		$this->assertSame(PHP_EOL.'('.$provider.'): SELECT aaa'.PHP_EOL,ob_get_clean());
-		ob_start();
-		core::prepare('SELECT ?',array('aaa'),null,true);
-		$this->assertSame(PHP_EOL.'('.$provider.'): SELECT ?'.PHP_EOL.'#0: string(3) aaa'.PHP_EOL,ob_get_clean());
-		ob_start();
-		core::prepare('SELECT ?',array('aaa'),true,true);
-		$this->assertSame(PHP_EOL.'('.$provider.'): SELECT \'aaa\''.PHP_EOL,ob_get_clean());
-		ob_start();
-		core::prepare('SELECT aaa',null,null,true, null,array('errno'=>1000,'error'=>'bbb'));
-		$this->assertSame(PHP_EOL.'('.$provider.'): SELECT aaa'.PHP_EOL.'1000: bbb'.PHP_EOL,ob_get_clean());
-		@unlink($tmp);
-		core::prepare('SELECT aaa',null,null,true, $tmp);
-		$this->assertSame(PHP_EOL.'('.$provider.'): SELECT aaa'.PHP_EOL,file_get_contents($tmp));
-		@unlink($tmp);
-		core::connect(false);
-		
+		// 3. 【基础功能】【扩展功能】调试SQL语句。
+		foreach ( $this->db_arr as $provider=>$db_arr ) {
+			list($arr,$con,$cls) = $db_arr;
+			core::connect($arr);
+			ob_start();
+			core::prepare('SELECT aaa',null,null,true);
+			$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): SELECT aaa'.PHP_EOL,ob_get_clean());
+			ob_start();
+			core::prepare('SELECT ?',array('aaa'),null,true);
+			$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): SELECT ?'.PHP_EOL.'#0: string(3) aaa'.PHP_EOL,ob_get_clean());
+			ob_start();
+			core::prepare('SELECT ?',array('aaa'),true,true);
+			$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): SELECT \'aaa\''.PHP_EOL,ob_get_clean());
+			ob_start();
+			core::prepare('SELECT aaa',null,null,true, null,array('errno'=>1000,'error'=>'bbb'));
+			$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): SELECT aaa'.PHP_EOL.'1000: bbb'.PHP_EOL,ob_get_clean());
+			@unlink($this->log_file);
+			core::prepare('SELECT aaa',null,null,true, $this->log_file);
+			$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): SELECT aaa'.PHP_EOL,file_get_contents($this->log_file));
+			@unlink($this->log_file);
+			core::connect(false);
+		}
+	
 	}
 
 	/**
@@ -1147,57 +1030,23 @@ class coreTest extends PHPUnit_Framework_TestCase {
 	 */
 	public function testSequence() {
 		
-		// 1. 【基础功能】生成指定自增序列，返回序列号。
-		$arr = require 'config_mysql.php';
-		$arr['prefix_search'] = 'pre_';
-		$arr['prefix_replace'] = 'pre1_';
-		core::connect($arr);
-		core::execute("DROP TABLE IF EXISTS sequence");
-		$this->assertSame(1, core::sequence());
-		$this->assertSame(2, core::sequence());
-		core::execute("DROP TABLE sequence");
-		core::execute("DROP TABLE IF EXISTS pre_sequence");
-		$this->assertSame(2, core::sequence('pre_sequence',2));
-		$this->assertSame(3, core::sequence('pre_sequence',2));
-		$this->assertSame(9, core::sequence('pre_sequence',9));
-		$this->assertSame(10, core::sequence('pre_sequence',10));
-		core::execute("DROP TABLE pre_sequence");
-		core::connect(false);
-
-		// 2. 【扩展功能】生成指定自增序列，返回序列号。
-		//PDO
-		$arr = require 'config_pdo.php';
-		$arr['prefix_search'] = 'pre_';
-		$arr['prefix_replace'] = 'pre1_';
-		core::connect($arr);
-		core::execute("DROP TABLE IF EXISTS sequence");
-		$this->assertSame(1, core::sequence());
-		$this->assertSame(2, core::sequence());
-		core::execute("DROP TABLE sequence");
-		core::execute("DROP TABLE IF EXISTS pre_sequence");
-		$this->assertSame(2, core::sequence('pre_sequence',2));
-		$this->assertSame(3, core::sequence('pre_sequence',2));
-		$this->assertSame(9, core::sequence('pre_sequence',9));
-		$this->assertSame(10, core::sequence('pre_sequence',10));
-		core::execute("DROP TABLE pre_sequence");
-		core::connect(false);
-		//ADODB
-		$arr = require 'config_adodb.php';
-		$arr['prefix_search'] = 'pre_';
-		$arr['prefix_replace'] = 'pre1_';
-		core::connect($arr);
-		core::execute("DROP TABLE IF EXISTS sequence");
-		$this->assertSame(1, core::sequence());
-		$this->assertSame(2, core::sequence());
-		core::execute("DROP TABLE sequence");
-		core::execute("DROP TABLE IF EXISTS pre_sequence");
-		$this->assertSame(2, core::sequence('pre_sequence',2));
-		$this->assertSame(3, core::sequence('pre_sequence',2));
-		$this->assertSame(9, core::sequence('pre_sequence',9));
-		$this->assertSame(10, core::sequence('pre_sequence',10));
-		core::execute("DROP TABLE pre_sequence");
-		core::connect(false);	
-		
+		// 1. 【基础功能】【扩展功能】生成指定自增序列，返回序列号。
+		foreach ( $this->db_arr as $provider=>$db_arr ) {
+			list($arr,$con,$cls) = $db_arr;
+			core::connect($arr);
+			core::execute("DROP TABLE IF EXISTS sequence");
+			$this->assertSame(1, core::sequence());
+			$this->assertSame(2, core::sequence());
+			core::execute("DROP TABLE sequence");
+			core::execute("DROP TABLE IF EXISTS pre_sequence");
+			$this->assertSame(2, core::sequence('pre_sequence',2));
+			$this->assertSame(3, core::sequence('pre_sequence',2));
+			$this->assertSame(9, core::sequence('pre_sequence',9));
+			$this->assertSame(10, core::sequence('pre_sequence',10));
+			core::execute("DROP TABLE pre_sequence");
+			core::connect(false);
+		}
+	
 	}
 	
 	/**
@@ -1271,368 +1120,127 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		
 		require_once 'test.php';
 		
-		// 1. 【基础功能】选择对象数据。
-		$arr = require 'config_mysql.php';
-		$arr['prefix_search'] = 'pre_';
-		$arr['prefix_replace'] = 'pre1_';
-		core::connect($arr);
-		core::execute("DROP TABLE IF EXISTS pre1_test");
-		core::execute("CREATE TABLE pre1_test(id int auto_increment primary key,name varchar(20))");
-		core::execute("INSERT INTO pre1_test(id,name) VALUES (1,'core'),(2,'test'),(3,'test')");
-		$arr1 = array('id'=>1,1,'name'=>'core','core');
-		$arr2 = array('id'=>2,2,'name'=>'test','test');
-		$arr3 = array('id'=>3,3,'name'=>'test','test');
-		$obj1 = new core;
-		$obj1->id = 1;
-		$obj1->name = 'core';
-		$obj2 = new core;
-		$obj2->id = 2;
-		$obj2->name = 'test';
-		$obj3 = new core;
-		$obj3->id = 3;
-		$obj3->name = 'test';
-		$test1 = new test;
-		$test1->id = 1;
-		$test1->name = 'core';
-		$test2 = new test;
-		$test2->id = 2;
-		$test2->name = 'test';
-		$test3 = new test;
-		$test3->id = 3;
-		$test3->name = 'test';
-		$obj1a = new core;
-		$obj1a->id = 1;
-		$test2a = new test;
-		$test2a->id = 2;
-		$test3a = new test;
-		$test3a->id = 3;
+		// 1. 【基础功能】【扩展功能】选择对象数据。
+		foreach ( $this->db_arr as $provider=>$db_arr ) {
+			list($arr,$con,$cls) = $db_arr;
+			$arr['prefix_search'] = 'pre_';
+			$arr['prefix_replace'] = 'pre1_';
+			core::connect($arr);
+			core::execute("DROP TABLE IF EXISTS pre1_test");
+			core::execute("CREATE TABLE pre1_test(id int auto_increment primary key,name varchar(20))");
+			core::execute("INSERT INTO pre1_test(id,name) VALUES (1,'core'),(2,'test'),(3,'test')");
+			$arr1 = array('id'=>1,1,'name'=>'core','core');
+			$arr2 = array('id'=>2,2,'name'=>'test','test');
+			$arr3 = array('id'=>3,3,'name'=>'test','test');
+			$obj1 = new core;
+			$obj1->id = 1;
+			$obj1->name = 'core';
+			$obj2 = new core;
+			$obj2->id = 2;
+			$obj2->name = 'test';
+			$obj3 = new core;
+			$obj3->id = 3;
+			$obj3->name = 'test';
+			$test1 = new test;
+			$test1->id = 1;
+			$test1->name = 'core';
+			$test2 = new test;
+			$test2->id = 2;
+			$test2->name = 'test';
+			$test3 = new test;
+			$test3->id = 3;
+			$test3->name = 'test';
+			$obj1a = new core;
+			$obj1a->id = 1;
+			$test2a = new test;
+			$test2a->id = 2;
+			$test3a = new test;
+			$test3a->id = 3;
 
-		if(function_exists('get_called_class')){
-			$this->assertEquals(array($test1,$test2,$test3),test::selects(null,'pre_test'));
-		}
+			if(function_exists('get_called_class')){
+				$this->assertEquals(array($test1,$test2,$test3),test::selects(null,'pre_test'));
+			}
+			$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,'pre_test'));
+			$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,'pre_test',null,null,'core'));
+			$this->assertEquals(array($test1,$test2,$test3),core::selects(null,'pre_test',null,null,'test'));
+			$this->assertEquals(array(array('id'=>1,'name'=>'core'),array('id'=>2,'name'=>'test'),array('id'=>3,'name'=>'test')),
+				core::selects(null,'pre_test',null,null,array(null,'assoc'=>null)));
+			$this->assertEquals(array(array(1,'core'),array(2,'test'),array(3,'test')),
+				core::selects(null,'pre_test',null,null,array(null,'num'=>null)));
+			$this->assertEquals(array($arr1,$arr2,$arr3),core::selects(null,'pre_test',null,null,array(null,'both'=>null)));
+			$this->assertEquals(array('core','test','test'),core::selects(null,'pre_test',null,null,array(null,'column'=>1)));
+			$this->assertEquals(array('core','test','test'),core::selects(null,'pre_test',null,null,array(null,'column'=>'name')));
+			$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,'pre_test',null,null,array(null,'class'=>null)));
+			$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,'pre_test',null,null,array(null,'class'=>'core')));
+			$this->assertEquals(array($test1,$test2,$test3),core::selects(null,'pre_test',null,null,array(null,'class'=>'test')));
+			$this->assertEquals(array($obj1a,$test2a,$test3a),core::selects('name,id','pre_test',null,null,array(null,'class|classtype'=>null)));
+			$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,'pre_test',null,null,array(null,'clone'=>new core)));
+			$this->assertEquals(array($test1,$test2,$test3),core::selects(null,'pre_test',null,null,array(null,'clone'=>new test)));
 
-		$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,'pre_test'));
-		$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,'pre_test',null,null,'core'));
-		$this->assertEquals(array($test1,$test2,$test3),core::selects(null,'pre_test',null,null,'test'));
-		$this->assertEquals(array(array('id'=>1,'name'=>'core'),array('id'=>2,'name'=>'test'),array('id'=>3,'name'=>'test')),
-			core::selects(null,'pre_test',null,null,array(null,'assoc'=>null)));
-		$this->assertEquals(array(array(1,'core'),array(2,'test'),array(3,'test')),
-			core::selects(null,'pre_test',null,null,array(null,'num'=>null)));
-		$this->assertEquals(array($arr1,$arr2,$arr3),core::selects(null,'pre_test',null,null,array(null,'both'=>null)));
-		$this->assertEquals(array('core','test','test'),core::selects(null,'pre_test',null,null,array(null,'column'=>1)));
-		$this->assertEquals(array('core','test','test'),core::selects(null,'pre_test',null,null,array(null,'column'=>'name')));
-		$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,'pre_test',null,null,array(null,'class'=>null)));
-		$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,'pre_test',null,null,array(null,'class'=>'core')));
-		$this->assertEquals(array($test1,$test2,$test3),core::selects(null,'pre_test',null,null,array(null,'class'=>'test')));
-		$this->assertEquals(array($obj1a,$test2a,$test3a),core::selects('name,id','pre_test',null,null,array(null,'class|classtype'=>null)));
-		$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,'pre_test',null,null,array(null,'clone'=>new core)));
-		$this->assertEquals(array($test1,$test2,$test3),core::selects(null,'pre_test',null,null,array(null,'clone'=>new test)));
+			$this->assertEquals(array('id'=>3,'name'=>'test'),core::selects(null,'pre_test',null,null,array('assoc'=>null)));
+			$this->assertEquals(array(3,'test'),core::selects(null,'pre_test',null,null,array('num'=>null)));
+			$this->assertEquals($arr3,core::selects(null,'pre_test',null,null,array('both'=>null)));
+			$this->assertEquals('test',core::selects(null,'pre_test',null,null,array('column'=>1)));
+			$this->assertEquals('test',core::selects(null,'pre_test',null,null,array('column'=>'name')));
+			$this->assertEquals($obj3,core::selects(null,'pre_test',null,null,array('class'=>null)));
+			$this->assertEquals($obj3,core::selects(null,'pre_test',null,null,array('class'=>'core')));
+			$this->assertEquals($test3,core::selects(null,'pre_test',null,null,array('class'=>'test')));
+			$this->assertEquals($test3a,core::selects('name,id','pre_test',null,null,array('class|classtype'=>null)));
+			$this->assertEquals($obj3,core::selects(null,'pre_test',null,null,array('clone'=>new core)));
+			$this->assertEquals($test3,core::selects(null,'pre_test',null,null,array('clone'=>new test)));
 
-		$this->assertEquals(array('id'=>3,'name'=>'test'),core::selects(null,'pre_test',null,null,array('assoc'=>null)));
-		$this->assertEquals(array(3,'test'),core::selects(null,'pre_test',null,null,array('num'=>null)));
-		$this->assertEquals($arr3,core::selects(null,'pre_test',null,null,array('both'=>null)));
-		$this->assertEquals('test',core::selects(null,'pre_test',null,null,array('column'=>1)));
-		$this->assertEquals('test',core::selects(null,'pre_test',null,null,array('column'=>'name')));
-		$this->assertEquals($obj3,core::selects(null,'pre_test',null,null,array('class'=>null)));
-		$this->assertEquals($obj3,core::selects(null,'pre_test',null,null,array('class'=>'core')));
-		$this->assertEquals($test3,core::selects(null,'pre_test',null,null,array('class'=>'test')));
-		$this->assertEquals($test3a,core::selects('name,id','pre_test',null,null,array('class|classtype'=>null)));
-		$this->assertEquals($obj3,core::selects(null,'pre_test',null,null,array('clone'=>new core)));
-		$this->assertEquals($test3,core::selects(null,'pre_test',null,null,array('clone'=>new test)));
+			$this->assertEquals(array(array(array('id'=>1,'name'=>'core')),array(array('id'=>2,'name'=>'test')),array(array('id'=>3,'name'=>'test'))),
+				core::selects(null,'pre_test',null,null,array(null,null,'assoc'=>null)));
+			$this->assertEquals(array('core'=>array(1,'core'),'test'=>array(3,'test')),
+				core::selects(null,'pre_test',null,null,array(1,'num'=>null)));
+			$this->assertEquals(array('core'=>array($arr1),'test'=>array($arr2,$arr3)),
+				core::selects(null,'pre_test',null,null,array('name',null,'both'=>null)));
+			$this->assertEquals(array(1=>array('core'=>'core'),2=>array('test'=>'test'),3=>array('test'=>'test')),
+				core::selects(null,'pre_test',null,null,array(0,1,'column'=>1)));
+			$this->assertEquals(array('core'=>array(1=>'core'),'test'=>array(2=>'test',3=>'test')),
+				core::selects(null,'pre_test',null,null,array('name','id','column'=>'name')));
+			$this->assertEquals(array('core'=>array(1=>$obj1),'test'=>array(2=>$obj2,3=>$obj3)),
+				core::selects(null,'pre_test',null,null,array('name',0,'class'=>null)));
+			$this->assertEquals(array(''=>$obj3),core::selects(null,'pre_test',null,null,array('name1','class'=>'core')));
+			$this->assertEquals(array(''=>array($test1,$test2,$test3)),core::selects(null,'pre_test',null,null,array('name1',null,'class'=>'test')));
+			$this->assertEquals(array('core'=>array(1=>array($obj1a)),'test'=>array(2=>array($test2a),3=>array($test3a))),
+				core::selects('name,id','pre_test',null,null,array('name','id','','class|classtype'=>null)));
+			$this->assertEquals(array(''=>array('core'=>$obj1,'test'=>$obj3)),
+				core::selects(null,'pre_test',null,null,array('id1','name','clone'=>new core)));
+			$this->assertEquals(array('core'=>array(''=>$test1),'test'=>array(''=>$test3)),
+				core::selects(null,'pre_test',null,null,array('name','id1','clone'=>new test)));
 
-		$this->assertEquals(array(array(array('id'=>1,'name'=>'core')),array(array('id'=>2,'name'=>'test')),array(array('id'=>3,'name'=>'test'))),
-			core::selects(null,'pre_test',null,null,array(null,null,'assoc'=>null)));
-		$this->assertEquals(array('core'=>array(1,'core'),'test'=>array(3,'test')),
-			core::selects(null,'pre_test',null,null,array(1,'num'=>null)));
-		$this->assertEquals(array('core'=>array($arr1),'test'=>array($arr2,$arr3)),
-			core::selects(null,'pre_test',null,null,array('name',null,'both'=>null)));
-		$this->assertEquals(array(1=>array('core'=>'core'),2=>array('test'=>'test'),3=>array('test'=>'test')),
-			core::selects(null,'pre_test',null,null,array(0,1,'column'=>1)));
-		$this->assertEquals(array('core'=>array(1=>'core'),'test'=>array(2=>'test',3=>'test')),
-			core::selects(null,'pre_test',null,null,array('name','id','column'=>'name')));
-		$this->assertEquals(array('core'=>array(1=>$obj1),'test'=>array(2=>$obj2,3=>$obj3)),
-			core::selects(null,'pre_test',null,null,array('name',0,'class'=>null)));
-		$this->assertEquals(array(''=>$obj3),core::selects(null,'pre_test',null,null,array('name1','class'=>'core')));
-		$this->assertEquals(array(''=>array($test1,$test2,$test3)),core::selects(null,'pre_test',null,null,array('name1',null,'class'=>'test')));
-		$this->assertEquals(array('core'=>array(1=>array($obj1a)),'test'=>array(2=>array($test2a),3=>array($test3a))),
-			core::selects('name,id','pre_test',null,null,array('name','id','','class|classtype'=>null)));
-		$this->assertEquals(array(''=>array('core'=>$obj1,'test'=>$obj3)),
-			core::selects(null,'pre_test',null,null,array('id1','name','clone'=>new core)));
-		$this->assertEquals(array('core'=>array(''=>$test1),'test'=>array(''=>$test3)),
-			core::selects(null,'pre_test',null,null,array('name','id1','clone'=>new test)));
-
-		$this->assertEquals(array($test1,$test2,$test3),core::selects(null,null,null,null,'test'));
-		$this->assertEquals(array($test1,$test2,$test3),core::selects(null,null,null,null,array(null,'class|table=test'=>'test')));
-		$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,null,null,null,array(null,'class|table=test'=>null)));
-		if(function_exists('get_called_class')){
-			$this->assertEquals(array($test1,$test2,$test3),test::selects());
-			$this->assertEquals(array($test1,$test2,$test3),test::selects(null,null,null,null,array(null,'class|table=test'=>null)));
+			$this->assertEquals(array($test1,$test2,$test3),core::selects(null,null,null,null,'test'));
+			$this->assertEquals(array($test1,$test2,$test3),core::selects(null,null,null,null,array(null,'class|table=test'=>'test')));
 			$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,null,null,null,array(null,'class|table=test'=>null)));
+			if(function_exists('get_called_class')){
+				$this->assertEquals(array($test1,$test2,$test3),test::selects());
+				$this->assertEquals(array($test1,$test2,$test3),test::selects(null,null,null,null,array(null,'class|table=test'=>null)));
+				$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,null,null,null,array(null,'class|table=test'=>null)));
+			}
+			$this->assertEquals(array($obj3,$obj2),core::selects(null,'pre_test',array('name'=>'test'),array('ORDER BY id DESC')));
+			$this->assertEquals(array($obj1,$obj2,$obj3),core::selects('SELECT * FROM pre_test',null,true));
+			$this->assertEquals(array($obj2,$obj2,$obj2),core::selects('SELECT ? AS id,? AS name FROM pre_test',array(2,'test'),true));
+			$this->assertEquals(array($obj1,$obj2),core::selects('SELECT * FROM pre_test LIMIT 0,2',array(),true));
+			$page = array('page'=>2,'size'=>1);
+			$this->assertEquals(array($obj2),core::selects('SELECT * FROM pre_test',null,true,array('page'=>&$page)));
+			$this->assertEquals(array('page'=>2,'size'=>1,'count'=>3,'total'=>3),$page);
+			$page = array('page'=>2,'size'=>1,'count'=>4);
+			$this->assertEquals(array($obj2),core::selects('SELECT * FROM pre_test',null,true,array('page'=>&$page)));
+			$this->assertEquals(array('page'=>2,'size'=>1,'count'=>4,'total'=>4),$page);
+			$page = array('page'=>2,'size'=>1,'count'=>null,'limit'=>'LIMIT 10');
+			$this->assertEquals(array($obj2),core::selects('SELECT * FROM pre_test LIMIT 10',null,true,array('page'=>&$page)));
+			$this->assertEquals(array('page'=>2,'size'=>1,'count'=>3,'limit'=>'LIMIT 10','total'=>3),$page);
+
+			core::connect(array('debug_enable'=>true));
+			ob_start();
+			core::selects('SELECT ?,?',array(1,'a'),true);
+			$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): SELECT ?,?'.PHP_EOL.'#0: int(1)'.PHP_EOL.'#1: string(1) a'.PHP_EOL,ob_get_clean());
+			core::connect(array('debug_enable'=>''));
+
+			core::execute("DROP TABLE pre1_test");
+			core::connect(false);
 		}
-		$this->assertEquals(array($obj3,$obj2),core::selects(null,'pre_test',array('name'=>'test'),array('ORDER BY id DESC')));
-		$this->assertEquals(array($obj1,$obj2,$obj3),core::selects('SELECT * FROM pre_test',null,true));
-		$this->assertEquals(array($obj2,$obj2,$obj2),core::selects('SELECT ? AS id,? AS name FROM pre_test',array(2,'test'),true));
-		$this->assertEquals(array($obj1,$obj2),core::selects('SELECT * FROM pre_test LIMIT 0,2',array(),true));
-		$page = array('page'=>2,'size'=>1);
-		$this->assertEquals(array($obj2),core::selects('SELECT * FROM pre_test',null,true,array('page'=>&$page)));
-		$this->assertEquals(array('page'=>2,'size'=>1,'count'=>3,'total'=>3),$page);
-		$page = array('page'=>2,'size'=>1,'count'=>4);
-		$this->assertEquals(array($obj2),core::selects('SELECT * FROM pre_test',null,true,array('page'=>&$page)));
-		$this->assertEquals(array('page'=>2,'size'=>1,'count'=>4,'total'=>4),$page);
-		$page = array('page'=>2,'size'=>1,'count'=>null,'limit'=>'LIMIT 10');
-		$this->assertEquals(array($obj2),core::selects('SELECT * FROM pre_test LIMIT 10',null,true,array('page'=>&$page)));
-		$this->assertEquals(array('page'=>2,'size'=>1,'count'=>3,'limit'=>'LIMIT 10','total'=>3),$page);
-
-		core::connect(array('debug_enable'=>true));
-		ob_start();
-		core::selects('SELECT ?,?',array(1,'a'),true);
-		$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): SELECT ?,?'.PHP_EOL.'#0: int(1)'.PHP_EOL.'#1: string(1) a'.PHP_EOL,ob_get_clean());
-		core::connect(array('debug_enable'=>''));
-
-		core::execute("DROP TABLE pre1_test");
-		core::connect(false);
-		
-		// 2. 【扩展功能】选择实例数据。
-		//PDO
-		$arr = require 'config_pdo.php';
-		$arr['prefix_search'] = 'pre_';
-		$arr['prefix_replace'] = 'pre1_';
-		core::connect($arr);
-		core::execute("DROP TABLE IF EXISTS pre1_test");
-		core::execute("CREATE TABLE pre1_test(id int auto_increment primary key,name varchar(20))");
-		core::execute("INSERT INTO pre1_test(id,name) VALUES (1,'core'),(2,'test'),(3,'test')");
-		$arr1 = array('id'=>1,1,'name'=>'core','core');
-		$arr2 = array('id'=>2,2,'name'=>'test','test');
-		$arr3 = array('id'=>3,3,'name'=>'test','test');
-		$obj1 = new core;
-		$obj1->id = 1;
-		$obj1->name = 'core';
-		$obj2 = new core;
-		$obj2->id = 2;
-		$obj2->name = 'test';
-		$obj3 = new core;
-		$obj3->id = 3;
-		$obj3->name = 'test';
-		$test1 = new test;
-		$test1->id = 1;
-		$test1->name = 'core';
-		$test2 = new test;
-		$test2->id = 2;
-		$test2->name = 'test';
-		$test3 = new test;
-		$test3->id = 3;
-		$test3->name = 'test';
-		$obj1a = new core;
-		$obj1a->id = 1;
-		$test2a = new test;
-		$test2a->id = 2;
-		$test3a = new test;
-		$test3a->id = 3;
-
-		if(function_exists('get_called_class')){
-			$this->assertEquals(array($test1,$test2,$test3),test::selects(null,'pre_test'));
-		}
-
-		$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,'pre_test'));
-		$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,'pre_test',null,null,'core'));
-		$this->assertEquals(array($test1,$test2,$test3),core::selects(null,'pre_test',null,null,'test'));
-		$this->assertEquals(array(array('id'=>1,'name'=>'core'),array('id'=>2,'name'=>'test'),array('id'=>3,'name'=>'test')),
-			core::selects(null,'pre_test',null,null,array(null,'assoc'=>null)));
-		$this->assertEquals(array(array(1,'core'),array(2,'test'),array(3,'test')),
-			core::selects(null,'pre_test',null,null,array(null,'num'=>null)));
-		$this->assertEquals(array($arr1,$arr2,$arr3),core::selects(null,'pre_test',null,null,array(null,'both'=>null)));
-		$this->assertEquals(array('core','test','test'),core::selects(null,'pre_test',null,null,array(null,'column'=>1)));
-		$this->assertEquals(array('core','test','test'),core::selects(null,'pre_test',null,null,array(null,'column'=>'name')));
-		$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,'pre_test',null,null,array(null,'class'=>null)));
-		$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,'pre_test',null,null,array(null,'class'=>'core')));
-		$this->assertEquals(array($test1,$test2,$test3),core::selects(null,'pre_test',null,null,array(null,'class'=>'test')));
-		$this->assertEquals(array($obj1a,$test2a,$test3a),core::selects('name,id','pre_test',null,null,array(null,'class|classtype'=>null)));
-		$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,'pre_test',null,null,array(null,'clone'=>new core)));
-		$this->assertEquals(array($test1,$test2,$test3),core::selects(null,'pre_test',null,null,array(null,'clone'=>new test)));
-
-		$this->assertEquals(array('id'=>3,'name'=>'test'),core::selects(null,'pre_test',null,null,array('assoc'=>null)));
-		$this->assertEquals(array(3,'test'),core::selects(null,'pre_test',null,null,array('num'=>null)));
-		$this->assertEquals($arr3,core::selects(null,'pre_test',null,null,array('both'=>null)));
-		$this->assertEquals('test',core::selects(null,'pre_test',null,null,array('column'=>1)));
-		$this->assertEquals('test',core::selects(null,'pre_test',null,null,array('column'=>'name')));
-		$this->assertEquals($obj3,core::selects(null,'pre_test',null,null,array('class'=>null)));
-		$this->assertEquals($obj3,core::selects(null,'pre_test',null,null,array('class'=>'core')));
-		$this->assertEquals($test3,core::selects(null,'pre_test',null,null,array('class'=>'test')));
-		$this->assertEquals($test3a,core::selects('name,id','pre_test',null,null,array('class|classtype'=>null)));
-		$this->assertEquals($obj3,core::selects(null,'pre_test',null,null,array('clone'=>new core)));
-		$this->assertEquals($test3,core::selects(null,'pre_test',null,null,array('clone'=>new test)));
-
-		$this->assertEquals(array(array(array('id'=>1,'name'=>'core')),array(array('id'=>2,'name'=>'test')),array(array('id'=>3,'name'=>'test'))),
-			core::selects(null,'pre_test',null,null,array(null,null,'assoc'=>null)));
-		$this->assertEquals(array('core'=>array(1,'core'),'test'=>array(3,'test')),
-			core::selects(null,'pre_test',null,null,array(1,'num'=>null)));
-		$this->assertEquals(array('core'=>array($arr1),'test'=>array($arr2,$arr3)),
-			core::selects(null,'pre_test',null,null,array('name',null,'both'=>null)));
-		$this->assertEquals(array(1=>array('core'=>'core'),2=>array('test'=>'test'),3=>array('test'=>'test')),
-			core::selects(null,'pre_test',null,null,array(0,1,'column'=>1)));
-		$this->assertEquals(array('core'=>array(1=>'core'),'test'=>array(2=>'test',3=>'test')),
-			core::selects(null,'pre_test',null,null,array('name','id','column'=>'name')));
-		$this->assertEquals(array('core'=>array(1=>$obj1),'test'=>array(2=>$obj2,3=>$obj3)),
-			core::selects(null,'pre_test',null,null,array('name',0,'class'=>null)));
-		$this->assertEquals(array(''=>$obj3),core::selects(null,'pre_test',null,null,array('name1','class'=>'core')));
-		$this->assertEquals(array(''=>array($test1,$test2,$test3)),core::selects(null,'pre_test',null,null,array('name1',null,'class'=>'test')));
-		$this->assertEquals(array('core'=>array(1=>array($obj1a)),'test'=>array(2=>array($test2a),3=>array($test3a))),
-			core::selects('name,id','pre_test',null,null,array('name','id','','class|classtype'=>null)));
-		$this->assertEquals(array(''=>array('core'=>$obj1,'test'=>$obj3)),
-			core::selects(null,'pre_test',null,null,array('id1','name','clone'=>new core)));
-		$this->assertEquals(array('core'=>array(''=>$test1),'test'=>array(''=>$test3)),
-			core::selects(null,'pre_test',null,null,array('name','id1','clone'=>new test)));
-
-		$this->assertEquals(array($test1,$test2,$test3),core::selects(null,null,null,null,'test'));
-		$this->assertEquals(array($test1,$test2,$test3),core::selects(null,null,null,null,array(null,'class|table=test'=>'test')));
-		$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,null,null,null,array(null,'class|table=test'=>null)));
-		if(function_exists('get_called_class')){
-			$this->assertEquals(array($test1,$test2,$test3),test::selects());
-			$this->assertEquals(array($test1,$test2,$test3),test::selects(null,null,null,null,array(null,'class|table=test'=>null)));
-			$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,null,null,null,array(null,'class|table=test'=>null)));
-		}
-		$this->assertEquals(array($obj3,$obj2),core::selects(null,'pre_test',array('name'=>'test'),array('ORDER BY id DESC')));
-		$this->assertEquals(array($obj1,$obj2,$obj3),core::selects('SELECT * FROM pre_test',null,true));
-		$this->assertEquals(array($obj2,$obj2,$obj2),core::selects('SELECT ? AS id,? AS name FROM pre_test',array(2,'test'),true));
-		$this->assertEquals(array($obj1,$obj2),core::selects('SELECT * FROM pre_test LIMIT 0,2',array(),true));
-		$page = array('page'=>2,'size'=>1);
-		$this->assertEquals(array($obj2),core::selects('SELECT * FROM pre_test',null,true,array('page'=>&$page)));
-		$this->assertEquals(array('page'=>2,'size'=>1,'count'=>3,'total'=>3),$page);
-		$page = array('page'=>2,'size'=>1,'count'=>4);
-		$this->assertEquals(array($obj2),core::selects('SELECT * FROM pre_test',null,true,array('page'=>&$page)));
-		$this->assertEquals(array('page'=>2,'size'=>1,'count'=>4,'total'=>4),$page);
-		$page = array('page'=>2,'size'=>1,'count'=>null,'limit'=>'LIMIT 10');
-		$this->assertEquals(array($obj2),core::selects('SELECT * FROM pre_test LIMIT 10',null,true,array('page'=>&$page)));
-		$this->assertEquals(array('page'=>2,'size'=>1,'count'=>3,'limit'=>'LIMIT 10','total'=>3),$page);
-
-		core::connect(array('debug_enable'=>true));
-		ob_start();
-		core::selects('SELECT ?,?',array(1,'a'),true);
-		$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): SELECT ?,?'.PHP_EOL.'#0: int(1)'.PHP_EOL.'#1: string(1) a'.PHP_EOL,ob_get_clean());
-		core::connect(array('debug_enable'=>''));
-
-		core::execute("DROP TABLE pre1_test");
-		core::connect(false);
-		//ADODB
-		$arr = require(dirname(__FILE__).'/config_adodb.php');
-		$arr['prefix_search'] = 'pre_';
-		$arr['prefix_replace'] = 'pre1_';
-		core::connect($arr);
-		core::execute("DROP TABLE IF EXISTS pre1_test");
-		core::execute("CREATE TABLE pre1_test(id int auto_increment primary key,name varchar(20))");
-		core::execute("INSERT INTO pre1_test(id,name) VALUES (1,'core'),(2,'test'),(3,'test')");
-		$arr1 = array('id'=>1,1,'name'=>'core','core');
-		$arr2 = array('id'=>2,2,'name'=>'test','test');
-		$arr3 = array('id'=>3,3,'name'=>'test','test');
-		$obj1 = new core;
-		$obj1->id = 1;
-		$obj1->name = 'core';
-		$obj2 = new core;
-		$obj2->id = 2;
-		$obj2->name = 'test';
-		$obj3 = new core;
-		$obj3->id = 3;
-		$obj3->name = 'test';
-		$test1 = new test;
-		$test1->id = 1;
-		$test1->name = 'core';
-		$test2 = new test;
-		$test2->id = 2;
-		$test2->name = 'test';
-		$test3 = new test;
-		$test3->id = 3;
-		$test3->name = 'test';
-		$obj1a = new core;
-		$obj1a->id = 1;
-		$test2a = new test;
-		$test2a->id = 2;
-		$test3a = new test;
-		$test3a->id = 3;
-
-		if(function_exists('get_called_class')){
-			$this->assertEquals(array($test1,$test2,$test3),test::selects(null,'pre_test'));
-		}
-
-		$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,'pre_test'));
-		$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,'pre_test',null,null,'core'));
-		$this->assertEquals(array($test1,$test2,$test3),core::selects(null,'pre_test',null,null,'test'));
-		$this->assertEquals(array(array('id'=>1,'name'=>'core'),array('id'=>2,'name'=>'test'),array('id'=>3,'name'=>'test')),
-			core::selects(null,'pre_test',null,null,array(null,'assoc'=>null)));
-		$this->assertEquals(array(array(1,'core'),array(2,'test'),array(3,'test')),
-			core::selects(null,'pre_test',null,null,array(null,'num'=>null)));
-		$this->assertEquals(array($arr1,$arr2,$arr3),core::selects(null,'pre_test',null,null,array(null,'both'=>null)));
-		$this->assertEquals(array('core','test','test'),core::selects(null,'pre_test',null,null,array(null,'column'=>1)));
-		$this->assertEquals(array('core','test','test'),core::selects(null,'pre_test',null,null,array(null,'column'=>'name')));
-		$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,'pre_test',null,null,array(null,'class'=>null)));
-		$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,'pre_test',null,null,array(null,'class'=>'core')));
-		$this->assertEquals(array($test1,$test2,$test3),core::selects(null,'pre_test',null,null,array(null,'class'=>'test')));
-		$this->assertEquals(array($obj1a,$test2a,$test3a),core::selects('name,id','pre_test',null,null,array(null,'class|classtype'=>null)));
-		$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,'pre_test',null,null,array(null,'clone'=>new core)));
-		$this->assertEquals(array($test1,$test2,$test3),core::selects(null,'pre_test',null,null,array(null,'clone'=>new test)));
-
-		$this->assertEquals(array('id'=>3,'name'=>'test'),core::selects(null,'pre_test',null,null,array('assoc'=>null)));
-		$this->assertEquals(array(3,'test'),core::selects(null,'pre_test',null,null,array('num'=>null)));
-		$this->assertEquals($arr3,core::selects(null,'pre_test',null,null,array('both'=>null)));
-		$this->assertEquals('test',core::selects(null,'pre_test',null,null,array('column'=>1)));
-		$this->assertEquals('test',core::selects(null,'pre_test',null,null,array('column'=>'name')));
-		$this->assertEquals($obj3,core::selects(null,'pre_test',null,null,array('class'=>null)));
-		$this->assertEquals($obj3,core::selects(null,'pre_test',null,null,array('class'=>'core')));
-		$this->assertEquals($test3,core::selects(null,'pre_test',null,null,array('class'=>'test')));
-		$this->assertEquals($test3a,core::selects('name,id','pre_test',null,null,array('class|classtype'=>null)));
-		$this->assertEquals($obj3,core::selects(null,'pre_test',null,null,array('clone'=>new core)));
-		$this->assertEquals($test3,core::selects(null,'pre_test',null,null,array('clone'=>new test)));
-
-		$this->assertEquals(array(array(array('id'=>1,'name'=>'core')),array(array('id'=>2,'name'=>'test')),array(array('id'=>3,'name'=>'test'))),
-			core::selects(null,'pre_test',null,null,array(null,null,'assoc'=>null)));
-		$this->assertEquals(array('core'=>array(1,'core'),'test'=>array(3,'test')),
-			core::selects(null,'pre_test',null,null,array(1,'num'=>null)));
-		$this->assertEquals(array('core'=>array($arr1),'test'=>array($arr2,$arr3)),
-			core::selects(null,'pre_test',null,null,array('name',null,'both'=>null)));
-		$this->assertEquals(array(1=>array('core'=>'core'),2=>array('test'=>'test'),3=>array('test'=>'test')),
-			core::selects(null,'pre_test',null,null,array(0,1,'column'=>1)));
-		$this->assertEquals(array('core'=>array(1=>'core'),'test'=>array(2=>'test',3=>'test')),
-			core::selects(null,'pre_test',null,null,array('name','id','column'=>'name')));
-		$this->assertEquals(array('core'=>array(1=>$obj1),'test'=>array(2=>$obj2,3=>$obj3)),
-			core::selects(null,'pre_test',null,null,array('name',0,'class'=>null)));
-		$this->assertEquals(array(''=>$obj3),core::selects(null,'pre_test',null,null,array('name1','class'=>'core')));
-		$this->assertEquals(array(''=>array($test1,$test2,$test3)),core::selects(null,'pre_test',null,null,array('name1',null,'class'=>'test')));
-		$this->assertEquals(array('core'=>array(1=>array($obj1a)),'test'=>array(2=>array($test2a),3=>array($test3a))),
-			core::selects('name,id','pre_test',null,null,array('name','id','','class|classtype'=>null)));
-		$this->assertEquals(array(''=>array('core'=>$obj1,'test'=>$obj3)),
-			core::selects(null,'pre_test',null,null,array('id1','name','clone'=>new core)));
-		$this->assertEquals(array('core'=>array(''=>$test1),'test'=>array(''=>$test3)),
-			core::selects(null,'pre_test',null,null,array('name','id1','clone'=>new test)));
-
-		$this->assertEquals(array($test1,$test2,$test3),core::selects(null,null,null,null,'test'));
-		$this->assertEquals(array($test1,$test2,$test3),core::selects(null,null,null,null,array(null,'class|table=test'=>'test')));
-		$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,null,null,null,array(null,'class|table=test'=>null)));
-		if(function_exists('get_called_class')){
-			$this->assertEquals(array($test1,$test2,$test3),test::selects());
-			$this->assertEquals(array($test1,$test2,$test3),test::selects(null,null,null,null,array(null,'class|table=test'=>null)));
-			$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,null,null,null,array(null,'class|table=test'=>null)));
-		}
-		$this->assertEquals(array($obj3,$obj2),core::selects(null,'pre_test',array('name'=>'test'),array('ORDER BY id DESC')));
-		$this->assertEquals(array($obj1,$obj2,$obj3),core::selects('SELECT * FROM pre_test',null,true));
-		$this->assertEquals(array($obj2,$obj2,$obj2),core::selects('SELECT ? AS id,? AS name FROM pre_test',array(2,'test'),true));
-		$this->assertEquals(array($obj1,$obj2),core::selects('SELECT * FROM pre_test LIMIT 0,2',array(),true));
-		$page = array('page'=>2,'size'=>1);
-		$this->assertEquals(array($obj2),core::selects('SELECT * FROM pre_test',null,true,array('page'=>&$page)));
-		$this->assertEquals(array('page'=>2,'size'=>1,'count'=>3,'total'=>3),$page);
-		$page = array('page'=>2,'size'=>1,'count'=>4);
-		$this->assertEquals(array($obj2),core::selects('SELECT * FROM pre_test',null,true,array('page'=>&$page)));
-		$this->assertEquals(array('page'=>2,'size'=>1,'count'=>4,'total'=>4),$page);
-		$page = array('page'=>2,'size'=>1,'count'=>null,'limit'=>'LIMIT 10');
-		$this->assertEquals(array($obj2),core::selects('SELECT * FROM pre_test LIMIT 10',null,true,array('page'=>&$page)));
-		$this->assertEquals(array('page'=>2,'size'=>1,'count'=>3,'limit'=>'LIMIT 10','total'=>3),$page);
-
-		core::connect(array('debug_enable'=>true));
-		ob_start();
-		core::selects('SELECT ?,?',array(1,'a'),true);
-		$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): SELECT ?,?'.PHP_EOL.'#0: int(1)'.PHP_EOL.'#1: string(1) a'.PHP_EOL,ob_get_clean());
-		core::connect(array('debug_enable'=>''));
-
-		core::execute("DROP TABLE pre1_test");
-		core::connect(false);
 	
 	}
 	
@@ -1643,134 +1251,50 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		
 		require_once 'test.php';
 		
-		// 1. 【基础功能】插入对象数据。
-		$arr = require 'config_mysql.php';
-		$arr['prefix_search'] = 'pre_';
-		$arr['prefix_replace'] = 'pre1_';
-		core::connect($arr);
-		core::execute("DROP TABLE IF EXISTS pre1_test");
-		core::execute("CREATE TABLE pre1_test(id int auto_increment primary key,name varchar(20))");
-		$obj1 = new core;
-		$obj1->id = 1;
-		$obj1->name = 'core';
-		$obj2 = new core;
-		$obj2->id = 2;
-		$obj2->name = 'test';
-		$obj3 = new core;
-		$obj3->id = 3;
-		$obj3->name = 'test';
-		$this->assertSame(1,core::inserts('pre_test',array('id'=>1,'name'=>'core')));
-		$this->assertSame(2,core::inserts('pre_test',array('name'),array(array('name'=>'test'),array('name'=>'test'))));
-		$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,'pre_test'));
-		core::execute("TRUNCATE pre1_test");
-
-		if(function_exists('get_called_class')){
-			$this->assertSame(1,test::inserts(null,array('id'=>1,'name'=>'core')));
-			$this->assertSame(2,test::inserts(null,array('name'),array(array('name'=>'test'),array('name'=>'test'))));
+		// 1. 【基础功能】【扩展功能】插入对象数据。
+		foreach ( $this->db_arr as $provider=>$db_arr ) {
+			list($arr,$con,$cls) = $db_arr;
+			$arr['prefix_search'] = 'pre_';
+			$arr['prefix_replace'] = 'pre1_';
+			core::connect($arr);
+			core::execute("DROP TABLE IF EXISTS pre1_test");
+			core::execute("CREATE TABLE pre1_test(id int auto_increment primary key,name varchar(20))");
+			$obj1 = new core;
+			$obj1->id = 1;
+			$obj1->name = 'core';
+			$obj2 = new core;
+			$obj2->id = 2;
+			$obj2->name = 'test';
+			$obj3 = new core;
+			$obj3->id = 3;
+			$obj3->name = 'test';
+			$this->assertSame(1,core::inserts('pre_test',array('id'=>1,'name'=>'core')));
+			$this->assertSame(2,core::inserts('pre_test',array('name'),array(array('name'=>'test'),array('name'=>'test'))));
 			$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,'pre_test'));
 			core::execute("TRUNCATE pre1_test");
-		}
 
-		$this->assertSame(1,core::inserts('INSERT INTO pre_test VALUES (?,?)',array(1,'core'),true));
-		$this->assertSame(2,core::inserts('INSERT INTO pre_test (name) VALUES (?),(?)',array('test','test'),true));
-		$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,'pre_test'));
-		core::execute("TRUNCATE pre1_test");
+			if(function_exists('get_called_class')){
+				$this->assertSame(1,test::inserts(null,array('id'=>1,'name'=>'core')));
+				$this->assertSame(2,test::inserts(null,array('name'),array(array('name'=>'test'),array('name'=>'test'))));
+				$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,'pre_test'));
+				core::execute("TRUNCATE pre1_test");
+			}
 
-		core::connect(array('debug_enable'=>true));
-		ob_start();
-		core::inserts('INSERT pre1_test(id,name) VALUES(?,?)',array(1,'a'),true);
-		$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): INSERT pre1_test(id,name) VALUES(?,?)'.PHP_EOL.'#0: int(1)'.PHP_EOL.'#1: string(1) a'.PHP_EOL,ob_get_clean());
-		core::connect(array('debug_enable'=>''));
-		core::execute("TRUNCATE pre1_test");
-
-		core::execute("DROP TABLE pre1_test");
-		core::connect(false);
-		
-		// 2. 【扩展功能】插入实例数据。
-		//PDO
-		$arr = require 'config_pdo.php';
-		$arr['prefix_search'] = 'pre_';
-		$arr['prefix_replace'] = 'pre1_';
-		core::connect($arr);
-		core::execute("DROP TABLE IF EXISTS pre1_test");
-		core::execute("CREATE TABLE pre1_test(id int auto_increment primary key,name varchar(20))");
-		$obj1 = new core;
-		$obj1->id = 1;
-		$obj1->name = 'core';
-		$obj2 = new core;
-		$obj2->id = 2;
-		$obj2->name = 'test';
-		$obj3 = new core;
-		$obj3->id = 3;
-		$obj3->name = 'test';
-		$this->assertSame(1,core::inserts('pre_test',array('id'=>1,'name'=>'core')));
-		$this->assertSame(2,core::inserts('pre_test',array('name'),array(array('name'=>'test'),array('name'=>'test'))));
-		$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,'pre_test'));
-		core::execute("TRUNCATE pre1_test");
-
-		if(function_exists('get_called_class')){
-			$this->assertSame(1,test::inserts(null,array('id'=>1,'name'=>'core')));
-			$this->assertSame(2,test::inserts(null,array('name'),array(array('name'=>'test'),array('name'=>'test'))));
+			$this->assertSame(1,core::inserts('INSERT INTO pre_test VALUES (?,?)',array(1,'core'),true));
+			$this->assertSame(2,core::inserts('INSERT INTO pre_test (name) VALUES (?),(?)',array('test','test'),true));
 			$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,'pre_test'));
 			core::execute("TRUNCATE pre1_test");
-		}
 
-		$this->assertSame(1,core::inserts('INSERT INTO pre_test VALUES (?,?)',array(1,'core'),true));
-		$this->assertSame(2,core::inserts('INSERT INTO pre_test (name) VALUES (?),(?)',array('test','test'),true));
-		$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,'pre_test'));
-		core::execute("TRUNCATE pre1_test");
-
-		core::connect(array('debug_enable'=>true));
-		ob_start();
-		core::inserts('INSERT pre1_test(id,name) VALUES(?,?)',array(1,'a'),true);
-		$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): INSERT pre1_test(id,name) VALUES(?,?)'.PHP_EOL.'#0: int(1)'.PHP_EOL.'#1: string(1) a'.PHP_EOL,ob_get_clean());
-		core::connect(array('debug_enable'=>''));
-		core::execute("TRUNCATE pre1_test");
-
-		core::execute("DROP TABLE pre1_test");
-		core::connect(false);
-		//ADODB
-		$arr = require(dirname(__FILE__).'/config_adodb.php');
-		$arr['prefix_search'] = 'pre_';
-		$arr['prefix_replace'] = 'pre1_';
-		core::connect($arr);
-		core::execute("DROP TABLE IF EXISTS pre1_test");
-		core::execute("CREATE TABLE pre1_test(id int auto_increment primary key,name varchar(20))");
-		$obj1 = new core;
-		$obj1->id = 1;
-		$obj1->name = 'core';
-		$obj2 = new core;
-		$obj2->id = 2;
-		$obj2->name = 'test';
-		$obj3 = new core;
-		$obj3->id = 3;
-		$obj3->name = 'test';
-		$this->assertSame(1,core::inserts('pre_test',array('id'=>1,'name'=>'core')));
-		$this->assertSame(2,core::inserts('pre_test',array('name'),array(array('name'=>'test'),array('name'=>'test'))));
-		$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,'pre_test'));
-		core::execute("TRUNCATE pre1_test");
-
-		if(function_exists('get_called_class')){
-			$this->assertSame(1,test::inserts(null,array('id'=>1,'name'=>'core')));
-			$this->assertSame(2,test::inserts(null,array('name'),array(array('name'=>'test'),array('name'=>'test'))));
-			$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,'pre_test'));
+			core::connect(array('debug_enable'=>true));
+			ob_start();
+			core::inserts('INSERT pre1_test(id,name) VALUES(?,?)',array(1,'a'),true);
+			$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): INSERT pre1_test(id,name) VALUES(?,?)'.PHP_EOL.'#0: int(1)'.PHP_EOL.'#1: string(1) a'.PHP_EOL,ob_get_clean());
+			core::connect(array('debug_enable'=>''));
 			core::execute("TRUNCATE pre1_test");
+
+			core::execute("DROP TABLE pre1_test");
+			core::connect(false);
 		}
-
-		$this->assertSame(1,core::inserts('INSERT INTO pre_test VALUES (?,?)',array(1,'core'),true));
-		$this->assertSame(2,core::inserts('INSERT INTO pre_test (name) VALUES (?),(?)',array('test','test'),true));
-		$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,'pre_test'));
-		core::execute("TRUNCATE pre1_test");
-
-		core::connect(array('debug_enable'=>true));
-		ob_start();
-		core::inserts('INSERT pre1_test(id,name) VALUES(?,?)',array(1,'a'),true);
-		$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): INSERT pre1_test(id,name) VALUES(?,?)'.PHP_EOL.'#0: int(1)'.PHP_EOL.'#1: string(1) a'.PHP_EOL,ob_get_clean());
-		core::connect(array('debug_enable'=>''));
-		core::execute("TRUNCATE pre1_test");
-
-		core::execute("DROP TABLE pre1_test");
-		core::connect(false);
 	
 	}
 	
@@ -1781,147 +1305,55 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		
 		require_once 'test.php';
 		
-		// 1. 【基础功能】修改对象数据。
-		$arr = require 'config_mysql.php';
-		$arr['prefix_search'] = 'pre_';
-		$arr['prefix_replace'] = 'pre1_';
-		core::connect($arr);
-		core::execute("DROP TABLE IF EXISTS pre1_test");
-		core::execute("CREATE TABLE pre1_test(id int auto_increment primary key,name varchar(20))");
-		core::execute("INSERT INTO pre1_test(id,name) VALUES (1,'core'),(2,'test'),(3,'test')");
-		$obj1 = new core;
-		$obj1->id = 1;
-		$obj1->name = 'core1';
-		$obj2 = new core;
-		$obj2->id = 2;
-		$obj2->name = 'test1';
-		$obj3 = new core;
-		$obj3->id = 3;
-		$obj3->name = 'test1';
-		$this->assertSame(1,core::updates('pre_test',array('name'=>'core1'),array('id'=>1)));
-		$this->assertSame(2,core::updates('pre_test',array('name'=>'test1'),array('id'=>array(2,3))));
-		$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,'pre_test'));
-		core::execute("TRUNCATE pre1_test");
-
-		if(function_exists('get_called_class')){
+		// 1. 【基础功能】【扩展功能】修改对象数据。
+		foreach ( $this->db_arr as $provider=>$db_arr ) {
+			list($arr,$con,$cls) = $db_arr;
+			$arr['prefix_search'] = 'pre_';
+			$arr['prefix_replace'] = 'pre1_';
+			core::connect($arr);
+			core::execute("DROP TABLE IF EXISTS pre1_test");
+			core::execute("CREATE TABLE pre1_test(id int auto_increment primary key,name varchar(20))");
 			core::execute("INSERT INTO pre1_test(id,name) VALUES (1,'core'),(2,'test'),(3,'test')");
-			$this->assertSame(1,test::updates(null,array('name'=>'core1'),array('id'=>1)));
-			$this->assertSame(2,test::updates(null,array('name'=>'test1'),array('id'=>array(2,3))));
+			$obj1 = new core;
+			$obj1->id = 1;
+			$obj1->name = 'core1';
+			$obj2 = new core;
+			$obj2->id = 2;
+			$obj2->name = 'test1';
+			$obj3 = new core;
+			$obj3->id = 3;
+			$obj3->name = 'test1';
+			$this->assertSame(1,core::updates('pre_test',array('name'=>'core1'),array('id'=>1)));
+			$this->assertSame(2,core::updates('pre_test',array('name'=>'test1'),array('id'=>array(2,3))));
 			$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,'pre_test'));
 			core::execute("TRUNCATE pre1_test");
-		}
 
-		core::execute("INSERT INTO pre1_test(id,name) VALUES (1,'core'),(2,'test'),(3,'test')");
-		$this->assertSame(1,core::updates('UPDATE pre_test SET name=? WHERE id=?',array('core1',1),true));
-		$this->assertSame(2,core::updates('UPDATE pre_test SET name=? WHERE id IN (?,?)',array('test1',2,3),true));
-		$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,'pre_test'));
-		core::execute("TRUNCATE pre1_test");
+			if(function_exists('get_called_class')){
+				core::execute("INSERT INTO pre1_test(id,name) VALUES (1,'core'),(2,'test'),(3,'test')");
+				$this->assertSame(1,test::updates(null,array('name'=>'core1'),array('id'=>1)));
+				$this->assertSame(2,test::updates(null,array('name'=>'test1'),array('id'=>array(2,3))));
+				$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,'pre_test'));
+				core::execute("TRUNCATE pre1_test");
+			}
 
-		core::execute("INSERT INTO pre1_test(id,name) VALUES (1,'core')");
-		core::connect(array('debug_enable'=>true));
-		ob_start();
-		core::updates('UPDATE pre1_test SET id=?,name=?',array(1,'a'),true);
-		$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): UPDATE pre1_test SET id=?,name=?'.PHP_EOL.'#0: int(1)'.PHP_EOL.'#1: string(1) a'.PHP_EOL,ob_get_clean());
-		core::connect(array('debug_enable'=>''));
-		core::execute("TRUNCATE pre1_test");
-
-
-		core::execute("DROP TABLE pre1_test");
-		core::connect(false);
-		
-		// 2. 【扩展功能】修改实例数据。
-		//PDO
-		$arr = require 'config_pdo.php';
-		$arr['prefix_search'] = 'pre_';
-		$arr['prefix_replace'] = 'pre1_';
-		core::connect($arr);
-		core::execute("DROP TABLE IF EXISTS pre1_test");
-		core::execute("CREATE TABLE pre1_test(id int auto_increment primary key,name varchar(20))");
-		core::execute("INSERT INTO pre1_test(id,name) VALUES (1,'core'),(2,'test'),(3,'test')");
-		$obj1 = new core;
-		$obj1->id = 1;
-		$obj1->name = 'core1';
-		$obj2 = new core;
-		$obj2->id = 2;
-		$obj2->name = 'test1';
-		$obj3 = new core;
-		$obj3->id = 3;
-		$obj3->name = 'test1';
-		$this->assertSame(1,core::updates('pre_test',array('name'=>'core1'),array('id'=>1)));
-		$this->assertSame(2,core::updates('pre_test',array('name'=>'test1'),array('id'=>array(2,3))));
-		$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,'pre_test'));
-		core::execute("TRUNCATE pre1_test");
-
-		if(function_exists('get_called_class')){
 			core::execute("INSERT INTO pre1_test(id,name) VALUES (1,'core'),(2,'test'),(3,'test')");
-			$this->assertSame(1,test::updates(null,array('name'=>'core1'),array('id'=>1)));
-			$this->assertSame(2,test::updates(null,array('name'=>'test1'),array('id'=>array(2,3))));
+			$this->assertSame(1,core::updates('UPDATE pre_test SET name=? WHERE id=?',array('core1',1),true));
+			$this->assertSame(2,core::updates('UPDATE pre_test SET name=? WHERE id IN (?,?)',array('test1',2,3),true));
 			$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,'pre_test'));
 			core::execute("TRUNCATE pre1_test");
-		}
 
-		core::execute("INSERT INTO pre1_test(id,name) VALUES (1,'core'),(2,'test'),(3,'test')");
-		$this->assertSame(1,core::updates('UPDATE pre_test SET name=? WHERE id=?',array('core1',1),true));
-		$this->assertSame(2,core::updates('UPDATE pre_test SET name=? WHERE id IN (?,?)',array('test1',2,3),true));
-		$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,'pre_test'));
-		core::execute("TRUNCATE pre1_test");
-
-		core::execute("INSERT INTO pre1_test(id,name) VALUES (1,'core')");
-		core::connect(array('debug_enable'=>true));
-		ob_start();
-		core::updates('UPDATE pre1_test SET id=?,name=?',array(1,'a'),true);
-		$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): UPDATE pre1_test SET id=?,name=?'.PHP_EOL.'#0: int(1)'.PHP_EOL.'#1: string(1) a'.PHP_EOL,ob_get_clean());
-		core::connect(array('debug_enable'=>''));
-		core::execute("TRUNCATE pre1_test");
-
-		core::execute("DROP TABLE pre1_test");
-		core::connect(false);
-		//ADODB
-		$arr = require(dirname(__FILE__).'/config_adodb.php');
-		$arr['prefix_search'] = 'pre_';
-		$arr['prefix_replace'] = 'pre1_';
-		core::connect($arr);
-		core::execute("DROP TABLE IF EXISTS pre1_test");
-		core::execute("CREATE TABLE pre1_test(id int auto_increment primary key,name varchar(20))");
-		core::execute("INSERT INTO pre1_test(id,name) VALUES (1,'core'),(2,'test'),(3,'test')");
-		$obj1 = new core;
-		$obj1->id = 1;
-		$obj1->name = 'core1';
-		$obj2 = new core;
-		$obj2->id = 2;
-		$obj2->name = 'test1';
-		$obj3 = new core;
-		$obj3->id = 3;
-		$obj3->name = 'test1';
-		$this->assertSame(1,core::updates('pre_test',array('name'=>'core1'),array('id'=>1)));
-		$this->assertSame(2,core::updates('pre_test',array('name'=>'test1'),array('id'=>array(2,3))));
-		$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,'pre_test'));
-		core::execute("TRUNCATE pre1_test");
-
-		if(function_exists('get_called_class')){
-			core::execute("INSERT INTO pre1_test(id,name) VALUES (1,'core'),(2,'test'),(3,'test')");
-			$this->assertSame(1,test::updates(null,array('name'=>'core1'),array('id'=>1)));
-			$this->assertSame(2,test::updates(null,array('name'=>'test1'),array('id'=>array(2,3))));
-			$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,'pre_test'));
+			core::execute("INSERT INTO pre1_test(id,name) VALUES (1,'core')");
+			core::connect(array('debug_enable'=>true));
+			ob_start();
+			core::updates('UPDATE pre1_test SET id=?,name=?',array(1,'a'),true);
+			$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): UPDATE pre1_test SET id=?,name=?'.PHP_EOL.'#0: int(1)'.PHP_EOL.'#1: string(1) a'.PHP_EOL,ob_get_clean());
+			core::connect(array('debug_enable'=>''));
 			core::execute("TRUNCATE pre1_test");
+
+
+			core::execute("DROP TABLE pre1_test");
+			core::connect(false);
 		}
-
-		core::execute("INSERT INTO pre1_test(id,name) VALUES (1,'core'),(2,'test'),(3,'test')");
-		$this->assertSame(1,core::updates('UPDATE pre_test SET name=? WHERE id=?',array('core1',1),true));
-		$this->assertSame(2,core::updates('UPDATE pre_test SET name=? WHERE id IN (?,?)',array('test1',2,3),true));
-		$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,'pre_test'));
-		core::execute("TRUNCATE pre1_test");
-
-		core::execute("INSERT INTO pre1_test(id,name) VALUES (1,'core')");
-		core::connect(array('debug_enable'=>true));
-		ob_start();
-		core::updates('UPDATE pre1_test SET id=?,name=?',array(1,'a'),true);
-		$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): UPDATE pre1_test SET id=?,name=?'.PHP_EOL.'#0: int(1)'.PHP_EOL.'#1: string(1) a'.PHP_EOL,ob_get_clean());
-		core::connect(array('debug_enable'=>''));
-		core::execute("TRUNCATE pre1_test");
-
-		core::execute("DROP TABLE pre1_test");
-		core::connect(false);
 	
 	}
 	
@@ -1932,155 +1364,57 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		
 		require_once 'test.php';
 		
-		// 1. 【基础功能】删除对象数据。
-		$arr = require 'config_mysql.php';
-		$arr['prefix_search'] = 'pre_';
-		$arr['prefix_replace'] = 'pre1_';
-		core::connect($arr);
-		core::execute("DROP TABLE IF EXISTS pre1_test");
-		core::execute("CREATE TABLE pre1_test(id int auto_increment primary key,name varchar(20))");
-		core::execute("INSERT INTO pre1_test(id,name) VALUES (1,'core'),(2,'test'),(3,'test')");
-		$obj1 = new core;
-		$obj1->id = 1;
-		$obj1->name = 'core';
-		$obj2 = new core;
-		$obj2->id = 2;
-		$obj2->name = 'test';
-		$obj3 = new core;
-		$obj3->id = 3;
-		$obj3->name = 'test';
-		$this->assertSame(1,core::deletes(null,'pre_test',array('id'=>1)));
-		$this->assertEquals(array($obj2,$obj3),core::selects(null,'pre_test'));
-		$this->assertSame(2,core::deletes(null,'pre_test',array('id'=>array(2,3))));
-		$this->assertEquals(array(),core::selects(null,'pre_test'));
-		core::execute("TRUNCATE pre1_test");
-
-		if(function_exists('get_called_class')){
+		// 1. 【基础功能】【扩展功能】删除对象数据。
+		foreach ( $this->db_arr as $provider=>$db_arr ) {
+			list($arr,$con,$cls) = $db_arr;
+			$arr['prefix_search'] = 'pre_';
+			$arr['prefix_replace'] = 'pre1_';
+			core::connect($arr);
+			core::execute("DROP TABLE IF EXISTS pre1_test");
+			core::execute("CREATE TABLE pre1_test(id int auto_increment primary key,name varchar(20))");
 			core::execute("INSERT INTO pre1_test(id,name) VALUES (1,'core'),(2,'test'),(3,'test')");
-			$this->assertSame(1,test::deletes(null,null,array('id'=>1)));
+			$obj1 = new core;
+			$obj1->id = 1;
+			$obj1->name = 'core';
+			$obj2 = new core;
+			$obj2->id = 2;
+			$obj2->name = 'test';
+			$obj3 = new core;
+			$obj3->id = 3;
+			$obj3->name = 'test';
+			$this->assertSame(1,core::deletes(null,'pre_test',array('id'=>1)));
 			$this->assertEquals(array($obj2,$obj3),core::selects(null,'pre_test'));
-			$this->assertSame(2,test::deletes(null,null,array('id'=>array(2,3))));
+			$this->assertSame(2,core::deletes(null,'pre_test',array('id'=>array(2,3))));
 			$this->assertEquals(array(),core::selects(null,'pre_test'));
 			core::execute("TRUNCATE pre1_test");
-		}
 
-		core::execute("INSERT INTO pre1_test(id,name) VALUES (1,'core'),(2,'test'),(3,'test')");
-		$this->assertSame(1,core::deletes('DELETE FROM pre_test WHERE id=?',array(1),true));
-		$this->assertEquals(array($obj2,$obj3),core::selects(null,'pre_test'));
-		$this->assertSame(2,core::deletes('DELETE FROM pre_test WHERE id IN (?,?)',array(2,3),true));
-		$this->assertEquals(array(),core::selects(null,'pre_test'));
-		core::execute("TRUNCATE pre1_test");
+			if(function_exists('get_called_class')){
+				core::execute("INSERT INTO pre1_test(id,name) VALUES (1,'core'),(2,'test'),(3,'test')");
+				$this->assertSame(1,test::deletes(null,null,array('id'=>1)));
+				$this->assertEquals(array($obj2,$obj3),core::selects(null,'pre_test'));
+				$this->assertSame(2,test::deletes(null,null,array('id'=>array(2,3))));
+				$this->assertEquals(array(),core::selects(null,'pre_test'));
+				core::execute("TRUNCATE pre1_test");
+			}
 
-		core::execute("INSERT INTO pre1_test(id,name) VALUES (1,'core')");
-		core::connect(array('debug_enable'=>true));
-		ob_start();
-		core::deletes('DELETE FROM pre1_test WHERE id=? OR name=?',array(1,'a'),true);
-		$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): DELETE FROM pre1_test WHERE id=? OR name=?'.PHP_EOL.'#0: int(1)'.PHP_EOL.'#1: string(1) a'.PHP_EOL,ob_get_clean());
-		core::connect(array('debug_enable'=>''));
-		core::execute("TRUNCATE pre1_test");
-
-		core::execute("DROP TABLE pre1_test");
-		core::connect(false);
-		
-		// 2. 【扩展功能】删除实例数据。
-		//PDO
-		$arr = require 'config_pdo.php';
-		$arr['prefix_search'] = 'pre_';
-		$arr['prefix_replace'] = 'pre1_';
-		core::connect($arr);
-		core::execute("DROP TABLE IF EXISTS pre1_test");
-		core::execute("CREATE TABLE pre1_test(id int auto_increment primary key,name varchar(20))");
-		core::execute("INSERT INTO pre1_test(id,name) VALUES (1,'core'),(2,'test'),(3,'test')");
-		$obj1 = new core;
-		$obj1->id = 1;
-		$obj1->name = 'core';
-		$obj2 = new core;
-		$obj2->id = 2;
-		$obj2->name = 'test';
-		$obj3 = new core;
-		$obj3->id = 3;
-		$obj3->name = 'test';
-		$this->assertSame(1,core::deletes(null,'pre_test',array('id'=>1)));
-		$this->assertEquals(array($obj2,$obj3),core::selects(null,'pre_test'));
-		$this->assertSame(2,core::deletes(null,'pre_test',array('id'=>array(2,3))));
-		$this->assertEquals(array(),core::selects(null,'pre_test'));
-		core::execute("TRUNCATE pre1_test");
-
-		if(function_exists('get_called_class')){
 			core::execute("INSERT INTO pre1_test(id,name) VALUES (1,'core'),(2,'test'),(3,'test')");
-			$this->assertSame(1,test::deletes(null,null,array('id'=>1)));
+			$this->assertSame(1,core::deletes('DELETE FROM pre_test WHERE id=?',array(1),true));
 			$this->assertEquals(array($obj2,$obj3),core::selects(null,'pre_test'));
-			$this->assertSame(2,test::deletes(null,null,array('id'=>array(2,3))));
+			$this->assertSame(2,core::deletes('DELETE FROM pre_test WHERE id IN (?,?)',array(2,3),true));
 			$this->assertEquals(array(),core::selects(null,'pre_test'));
 			core::execute("TRUNCATE pre1_test");
-		}
 
-		core::execute("INSERT INTO pre1_test(id,name) VALUES (1,'core'),(2,'test'),(3,'test')");
-		$this->assertSame(1,core::deletes('DELETE FROM pre_test WHERE id=?',array(1),true));
-		$this->assertEquals(array($obj2,$obj3),core::selects(null,'pre_test'));
-		$this->assertSame(2,core::deletes('DELETE FROM pre_test WHERE id IN (?,?)',array(2,3),true));
-		$this->assertEquals(array(),core::selects(null,'pre_test'));
-		core::execute("TRUNCATE pre1_test");
-
-		core::execute("INSERT INTO pre1_test(id,name) VALUES (1,'core')");
-		core::connect(array('debug_enable'=>true));
-		ob_start();
-		core::deletes('DELETE FROM pre1_test WHERE id=? OR name=?',array(1,'a'),true);
-		$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): DELETE FROM pre1_test WHERE id=? OR name=?'.PHP_EOL.'#0: int(1)'.PHP_EOL.'#1: string(1) a'.PHP_EOL,ob_get_clean());
-		core::connect(array('debug_enable'=>''));
-		core::execute("TRUNCATE pre1_test");
-
-		core::execute("DROP TABLE pre1_test");
-		core::connect(false);
-		//ADODB
-		$arr = require(dirname(__FILE__).'/config_adodb.php');
-		$arr['prefix_search'] = 'pre_';
-		$arr['prefix_replace'] = 'pre1_';
-		core::connect($arr);
-		core::execute("DROP TABLE IF EXISTS pre1_test");
-		core::execute("CREATE TABLE pre1_test(id int auto_increment primary key,name varchar(20))");
-		core::execute("INSERT INTO pre1_test(id,name) VALUES (1,'core'),(2,'test'),(3,'test')");
-		$obj1 = new core;
-		$obj1->id = 1;
-		$obj1->name = 'core';
-		$obj2 = new core;
-		$obj2->id = 2;
-		$obj2->name = 'test';
-		$obj3 = new core;
-		$obj3->id = 3;
-		$obj3->name = 'test';
-		$this->assertSame(1,core::deletes(null,'pre_test',array('id'=>1)));
-		$this->assertEquals(array($obj2,$obj3),core::selects(null,'pre_test'));
-		$this->assertSame(2,core::deletes(null,'pre_test',array('id'=>array(2,3))));
-		$this->assertEquals(array(),core::selects(null,'pre_test'));
-		core::execute("TRUNCATE pre1_test");
-
-		if(function_exists('get_called_class')){
-			core::execute("INSERT INTO pre1_test(id,name) VALUES (1,'core'),(2,'test'),(3,'test')");
-			$this->assertSame(1,test::deletes(null,null,array('id'=>1)));
-			$this->assertEquals(array($obj2,$obj3),core::selects(null,'pre_test'));
-			$this->assertSame(2,test::deletes(null,null,array('id'=>array(2,3))));
-			$this->assertEquals(array(),core::selects(null,'pre_test'));
+			core::execute("INSERT INTO pre1_test(id,name) VALUES (1,'core')");
+			core::connect(array('debug_enable'=>true));
+			ob_start();
+			core::deletes('DELETE FROM pre1_test WHERE id=? OR name=?',array(1,'a'),true);
+			$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): DELETE FROM pre1_test WHERE id=? OR name=?'.PHP_EOL.'#0: int(1)'.PHP_EOL.'#1: string(1) a'.PHP_EOL,ob_get_clean());
+			core::connect(array('debug_enable'=>''));
 			core::execute("TRUNCATE pre1_test");
+
+			core::execute("DROP TABLE pre1_test");
+			core::connect(false);
 		}
-
-		core::execute("INSERT INTO pre1_test(id,name) VALUES (1,'core'),(2,'test'),(3,'test')");
-		$this->assertSame(1,core::deletes('DELETE FROM pre_test WHERE id=?',array(1),true));
-		$this->assertEquals(array($obj2,$obj3),core::selects(null,'pre_test'));
-		$this->assertSame(2,core::deletes('DELETE FROM pre_test WHERE id IN (?,?)',array(2,3),true));
-		$this->assertEquals(array(),core::selects(null,'pre_test'));
-		core::execute("TRUNCATE pre1_test");
-
-		core::execute("INSERT INTO pre1_test(id,name) VALUES (1,'core')");
-		core::connect(array('debug_enable'=>true));
-		ob_start();
-		core::deletes('DELETE FROM pre1_test WHERE id=? OR name=?',array(1,'a'),true);
-		$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): DELETE FROM pre1_test WHERE id=? OR name=?'.PHP_EOL.'#0: int(1)'.PHP_EOL.'#1: string(1) a'.PHP_EOL,ob_get_clean());
-		core::connect(array('debug_enable'=>''));
-		core::execute("TRUNCATE pre1_test");
-
-		core::execute("DROP TABLE pre1_test");
-		core::connect(false);
 	
 	}
 	/**
@@ -2090,155 +1424,57 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		
 		require_once 'test.php';
 		
-		// 1. 【基础功能】插入对象数据。
-		$arr = require 'config_mysql.php';
-		$arr['prefix_search'] = 'pre_';
-		$arr['prefix_replace'] = 'pre1_';
-		core::connect($arr);
-		core::execute("DROP TABLE IF EXISTS pre1_test");
-		core::execute("CREATE TABLE pre1_test(id int auto_increment primary key,name varchar(20))");
-		$obj1 = new core;
-		$obj1->id = 1;
-		$obj1->name = 'core';
-		$obj2 = new core;
-		$obj2->id = 2;
-		$obj2->name = 'test';
-		$obj3 = new core;
-		$obj3->id = 3;
-		$obj3->name = 'test';
-		$this->assertSame(1,core::replaces('pre_test',array('id'=>1,'name'=>'core')));
-		$this->assertSame(2,core::replaces('pre_test',array('id'=>1,'name'=>'core')));
-		$this->assertSame(2,core::replaces('pre_test',array('name'),array(array('name'=>'test'),array('name'=>'test'))));
-		$this->assertSame(4,core::replaces('pre_test',array('id','name'),array(array('id'=>2,'name'=>'test'),array('id'=>3,'name'=>'test'))));
-		$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,'pre_test'));
-		core::execute("TRUNCATE pre1_test");
-
-		if(function_exists('get_called_class')){
-			$this->assertSame(1,test::replaces(null,array('id'=>1,'name'=>'core')));
-			$this->assertSame(2,test::replaces(null,array('id'=>1,'name'=>'core')));
-			$this->assertSame(2,test::replaces(null,array('name'),array(array('name'=>'test'),array('name'=>'test'))));
-			$this->assertSame(4,test::replaces(null,array('id','name'),array(array('id'=>2,'name'=>'test'),array('id'=>3,'name'=>'test'))));
+		// 1. 【基础功能】【扩展功能】插入对象数据。
+		foreach ( $this->db_arr as $provider=>$db_arr ) {
+			list($arr,$con,$cls) = $db_arr;
+			$arr['prefix_search'] = 'pre_';
+			$arr['prefix_replace'] = 'pre1_';
+			core::connect($arr);
+			core::execute("DROP TABLE IF EXISTS pre1_test");
+			core::execute("CREATE TABLE pre1_test(id int auto_increment primary key,name varchar(20))");
+			$obj1 = new core;
+			$obj1->id = 1;
+			$obj1->name = 'core';
+			$obj2 = new core;
+			$obj2->id = 2;
+			$obj2->name = 'test';
+			$obj3 = new core;
+			$obj3->id = 3;
+			$obj3->name = 'test';
+			$this->assertSame(1,core::replaces('pre_test',array('id'=>1,'name'=>'core')));
+			$this->assertSame(2,core::replaces('pre_test',array('id'=>1,'name'=>'core')));
+			$this->assertSame(2,core::replaces('pre_test',array('name'),array(array('name'=>'test'),array('name'=>'test'))));
+			$this->assertSame(4,core::replaces('pre_test',array('id','name'),array(array('id'=>2,'name'=>'test'),array('id'=>3,'name'=>'test'))));
 			$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,'pre_test'));
 			core::execute("TRUNCATE pre1_test");
-		}
 
-		$this->assertSame(1,core::replaces('REPLACE INTO pre_test VALUES (?,?)',array(1,'core'),true));
-		$this->assertSame(2,core::replaces('REPLACE INTO pre_test VALUES (?,?)',array(1,'core'),true));
-		$this->assertSame(2,core::replaces('REPLACE INTO pre_test (name) VALUES (?),(?)',array('test','test'),true));
-		$this->assertSame(4,core::replaces('REPLACE INTO pre_test (id,name) VALUES (2,?),(3,?)',array('test','test'),true));
-		$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,'pre_test'));
-		core::execute("TRUNCATE pre1_test");
+			if(function_exists('get_called_class')){
+				$this->assertSame(1,test::replaces(null,array('id'=>1,'name'=>'core')));
+				$this->assertSame(2,test::replaces(null,array('id'=>1,'name'=>'core')));
+				$this->assertSame(2,test::replaces(null,array('name'),array(array('name'=>'test'),array('name'=>'test'))));
+				$this->assertSame(4,test::replaces(null,array('id','name'),array(array('id'=>2,'name'=>'test'),array('id'=>3,'name'=>'test'))));
+				$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,'pre_test'));
+				core::execute("TRUNCATE pre1_test");
+			}
 
-		core::execute("INSERT INTO pre1_test(id,name) VALUES (1,'core')");
-		core::connect(array('debug_enable'=>true));
-		ob_start();
-		core::replaces('REPLACE INTO pre1_test VALUES (?,?)',array(1,'a'),true);
-		$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): REPLACE INTO pre1_test VALUES (?,?)'.PHP_EOL.'#0: int(1)'.PHP_EOL.'#1: string(1) a'.PHP_EOL,ob_get_clean());
-		core::connect(array('debug_enable'=>''));
-		core::execute("TRUNCATE pre1_test");
-
-		core::execute("DROP TABLE pre1_test");
-		core::connect(false);
-		
-		// 2. 【扩展功能】插入实例数据。
-		//PDO
-		$arr = require 'config_pdo.php';
-		$arr['prefix_search'] = 'pre_';
-		$arr['prefix_replace'] = 'pre1_';
-		core::connect($arr);
-		core::execute("DROP TABLE IF EXISTS pre1_test");
-		core::execute("CREATE TABLE pre1_test(id int auto_increment primary key,name varchar(20))");
-		$obj1 = new core;
-		$obj1->id = 1;
-		$obj1->name = 'core';
-		$obj2 = new core;
-		$obj2->id = 2;
-		$obj2->name = 'test';
-		$obj3 = new core;
-		$obj3->id = 3;
-		$obj3->name = 'test';
-		$this->assertSame(1,core::replaces('pre_test',array('id'=>1,'name'=>'core')));
-		$this->assertSame(2,core::replaces('pre_test',array('id'=>1,'name'=>'core')));
-		$this->assertSame(2,core::replaces('pre_test',array('name'),array(array('name'=>'test'),array('name'=>'test'))));
-		$this->assertSame(4,core::replaces('pre_test',array('id','name'),array(array('id'=>2,'name'=>'test'),array('id'=>3,'name'=>'test'))));
-		$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,'pre_test'));
-		core::execute("TRUNCATE pre1_test");
-
-		if(function_exists('get_called_class')){
-			$this->assertSame(1,test::replaces(null,array('id'=>1,'name'=>'core')));
-			$this->assertSame(2,test::replaces(null,array('id'=>1,'name'=>'core')));
-			$this->assertSame(2,test::replaces(null,array('name'),array(array('name'=>'test'),array('name'=>'test'))));
-			$this->assertSame(4,test::replaces(null,array('id','name'),array(array('id'=>2,'name'=>'test'),array('id'=>3,'name'=>'test'))));
+			$this->assertSame(1,core::replaces('REPLACE INTO pre_test VALUES (?,?)',array(1,'core'),true));
+			$this->assertSame(2,core::replaces('REPLACE INTO pre_test VALUES (?,?)',array(1,'core'),true));
+			$this->assertSame(2,core::replaces('REPLACE INTO pre_test (name) VALUES (?),(?)',array('test','test'),true));
+			$this->assertSame(4,core::replaces('REPLACE INTO pre_test (id,name) VALUES (2,?),(3,?)',array('test','test'),true));
 			$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,'pre_test'));
 			core::execute("TRUNCATE pre1_test");
-		}
 
-		$this->assertSame(1,core::replaces('REPLACE INTO pre_test VALUES (?,?)',array(1,'core'),true));
-		$this->assertSame(2,core::replaces('REPLACE INTO pre_test VALUES (?,?)',array(1,'core'),true));
-		$this->assertSame(2,core::replaces('REPLACE INTO pre_test (name) VALUES (?),(?)',array('test','test'),true));
-		$this->assertSame(4,core::replaces('REPLACE INTO pre_test (id,name) VALUES (2,?),(3,?)',array('test','test'),true));
-		$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,'pre_test'));
-		core::execute("TRUNCATE pre1_test");
-
-		core::execute("INSERT INTO pre1_test(id,name) VALUES (1,'core')");
-		core::connect(array('debug_enable'=>true));
-		ob_start();
-		core::replaces('REPLACE INTO pre1_test VALUES (?,?)',array(1,'a'),true);
-		$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): REPLACE INTO pre1_test VALUES (?,?)'.PHP_EOL.'#0: int(1)'.PHP_EOL.'#1: string(1) a'.PHP_EOL,ob_get_clean());
-		core::connect(array('debug_enable'=>''));
-		core::execute("TRUNCATE pre1_test");
-
-		core::execute("DROP TABLE pre1_test");
-		core::connect(false);
-		//ADODB
-		$arr = require(dirname(__FILE__).'/config_adodb.php');
-		$arr['prefix_search'] = 'pre_';
-		$arr['prefix_replace'] = 'pre1_';
-		core::connect($arr);
-		core::execute("DROP TABLE IF EXISTS pre1_test");
-		core::execute("CREATE TABLE pre1_test(id int auto_increment primary key,name varchar(20))");
-		$obj1 = new core;
-		$obj1->id = 1;
-		$obj1->name = 'core';
-		$obj2 = new core;
-		$obj2->id = 2;
-		$obj2->name = 'test';
-		$obj3 = new core;
-		$obj3->id = 3;
-		$obj3->name = 'test';
-		$this->assertSame(1,core::replaces('pre_test',array('id'=>1,'name'=>'core')));
-		$this->assertSame(2,core::replaces('pre_test',array('id'=>1,'name'=>'core')));
-		$this->assertSame(2,core::replaces('pre_test',array('name'),array(array('name'=>'test'),array('name'=>'test'))));
-		$this->assertSame(4,core::replaces('pre_test',array('id','name'),array(array('id'=>2,'name'=>'test'),array('id'=>3,'name'=>'test'))));
-		$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,'pre_test'));
-		core::execute("TRUNCATE pre1_test");
-
-		if(function_exists('get_called_class')){
-			$this->assertSame(1,test::replaces(null,array('id'=>1,'name'=>'core')));
-			$this->assertSame(2,test::replaces(null,array('id'=>1,'name'=>'core')));
-			$this->assertSame(2,test::replaces(null,array('name'),array(array('name'=>'test'),array('name'=>'test'))));
-			$this->assertSame(4,test::replaces(null,array('id','name'),array(array('id'=>2,'name'=>'test'),array('id'=>3,'name'=>'test'))));
-			$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,'pre_test'));
+			core::execute("INSERT INTO pre1_test(id,name) VALUES (1,'core')");
+			core::connect(array('debug_enable'=>true));
+			ob_start();
+			core::replaces('REPLACE INTO pre1_test VALUES (?,?)',array(1,'a'),true);
+			$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): REPLACE INTO pre1_test VALUES (?,?)'.PHP_EOL.'#0: int(1)'.PHP_EOL.'#1: string(1) a'.PHP_EOL,ob_get_clean());
+			core::connect(array('debug_enable'=>''));
 			core::execute("TRUNCATE pre1_test");
+
+			core::execute("DROP TABLE pre1_test");
+			core::connect(false);
 		}
-
-		$this->assertSame(1,core::replaces('REPLACE INTO pre_test VALUES (?,?)',array(1,'core'),true));
-		$this->assertSame(2,core::replaces('REPLACE INTO pre_test VALUES (?,?)',array(1,'core'),true));
-		$this->assertSame(2,core::replaces('REPLACE INTO pre_test (name) VALUES (?),(?)',array('test','test'),true));
-		$this->assertSame(4,core::replaces('REPLACE INTO pre_test (id,name) VALUES (2,?),(3,?)',array('test','test'),true));
-		$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,'pre_test'));
-		core::execute("TRUNCATE pre1_test");
-
-		core::execute("INSERT INTO pre1_test(id,name) VALUES (1,'core')");
-		core::connect(array('debug_enable'=>true));
-		ob_start();
-		core::replaces('REPLACE INTO pre1_test VALUES (?,?)',array(1,'a'),true);
-		$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): REPLACE INTO pre1_test VALUES (?,?)'.PHP_EOL.'#0: int(1)'.PHP_EOL.'#1: string(1) a'.PHP_EOL,ob_get_clean());
-		core::connect(array('debug_enable'=>''));
-		core::execute("TRUNCATE pre1_test");
-
-		core::execute("DROP TABLE pre1_test");
-		core::connect(false);
 	
 	}
 	
@@ -2286,95 +1522,37 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		
 		require_once 'test.php';
 		
-		// 1. 【基础功能】选择实例数据。
-		$arr = require 'config_mysql.php';
-		$arr['prefix_search'] = 'pre_';
-		$arr['prefix_replace'] = 'pre1_';
-		core::connect($arr);
-		core::execute("DROP TABLE IF EXISTS pre1_test");
-		core::execute("CREATE TABLE pre1_test(id int auto_increment primary key,name varchar(20))");
-		core::execute("INSERT INTO pre1_test(id,name) VALUES (1,'a'),(2,'b')");
-		$obj = new core;
-		$obj->id = 2;
-		$this->assertTrue($obj->select('pre_test'));
-		$this->assertSame('b', $obj->name);
-		$obj->id = 3;
-		$this->assertFalse($obj->select('pre_test'));
-		$test = new test;
-		$test->id = 2;
-		$this->assertTrue($test->select());
-		$test->id = 3;
-		$this->assertFalse($test->select());
+		// 1. 【基础功能】【扩展功能】选择实例数据。
+		foreach ( $this->db_arr as $provider=>$db_arr ) {
+			list($arr,$con,$cls) = $db_arr;
+			$arr['prefix_search'] = 'pre_';
+			$arr['prefix_replace'] = 'pre1_';
+			core::connect($arr);
+			core::execute("DROP TABLE IF EXISTS pre1_test");
+			core::execute("CREATE TABLE pre1_test(id int auto_increment primary key,name varchar(20))");
+			core::execute("INSERT INTO pre1_test(id,name) VALUES (1,'a'),(2,'b')");
+			$obj = new core;
+			$obj->id = 2;
+			$this->assertTrue($obj->select('pre_test'));
+			$this->assertSame('b', $obj->name);
+			$obj->id = 3;
+			$this->assertFalse($obj->select('pre_test'));
+			$test = new test;
+			$test->id = 2;
+			$this->assertTrue($test->select());
+			$test->id = 3;
+			$this->assertFalse($test->select());
 
-		core::connect(array('debug_enable'=>true));
-		ob_start();
-		$obj->id = 1;
-		$obj->select('pre_test');
-		$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): SELECT * FROM pre1_test WHERE id=? LIMIT 1'.PHP_EOL.'#0: int(1)'.PHP_EOL,ob_get_clean());
-		core::connect(array('debug_enable'=>''));
+			core::connect(array('debug_enable'=>true));
+			ob_start();
+			$obj->id = 1;
+			$obj->select('pre_test');
+			$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): SELECT * FROM pre1_test WHERE id=? LIMIT 1'.PHP_EOL.'#0: int(1)'.PHP_EOL,ob_get_clean());
+			core::connect(array('debug_enable'=>''));
 
-		core::execute("DROP TABLE pre1_test");
-		core::connect(false);
-		
-		// 2. 【扩展功能】选择实例数据。
-		//PDO
-		$arr = require 'config_pdo.php';
-		$arr['prefix_search'] = 'pre_';
-		$arr['prefix_replace'] = 'pre1_';
-		core::connect($arr);
-		core::execute("DROP TABLE IF EXISTS pre1_test");
-		core::execute("CREATE TABLE pre1_test(id int auto_increment primary key,name varchar(20))");
-		core::execute("INSERT INTO pre1_test(id,name) VALUES (1,'a'),(2,'b')");
-		$obj = new core;
-		$obj->id = 2;
-		$this->assertTrue($obj->select('pre_test'));
-		$this->assertSame('b', $obj->name);
-		$obj->id = 3;
-		$this->assertFalse($obj->select('pre_test'));
-		$test = new test;
-		$test->id = 2;
-		$this->assertTrue($test->select());
-		$test->id = 3;
-		$this->assertFalse($test->select());
-
-		core::connect(array('debug_enable'=>true));
-		ob_start();
-		$obj->id = 1;
-		$obj->select('pre_test');
-		$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): SELECT * FROM pre1_test WHERE id=? LIMIT 1'.PHP_EOL.'#0: int(1)'.PHP_EOL,ob_get_clean());
-		core::connect(array('debug_enable'=>''));
-
-		core::execute("DROP TABLE pre1_test");
-		core::connect(false);
-		//ADODB
-		$arr = require(dirname(__FILE__).'/config_adodb.php');
-		$arr['prefix_search'] = 'pre_';
-		$arr['prefix_replace'] = 'pre1_';
-		core::connect($arr);
-		core::execute("DROP TABLE IF EXISTS pre1_test");
-		core::execute("CREATE TABLE pre1_test(id int auto_increment primary key,name varchar(20))");
-		core::execute("INSERT INTO pre1_test(id,name) VALUES (1,'a'),(2,'b')");
-		$obj = new core;
-		$obj->id = 2;
-		$this->assertTrue($obj->select('pre_test'));
-		$this->assertSame('b', $obj->name);
-		$obj->id = 3;
-		$this->assertFalse($obj->select('pre_test'));
-		$test = new test;
-		$test->id = 2;
-		$this->assertTrue($test->select());
-		$test->id = 3;
-		$this->assertFalse($test->select());
-
-		core::connect(array('debug_enable'=>true));
-		ob_start();
-		$obj->id = 1;
-		$obj->select('pre_test');
-		$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): SELECT * FROM pre1_test WHERE id=? LIMIT 1'.PHP_EOL.'#0: int(1)'.PHP_EOL,ob_get_clean());
-		core::connect(array('debug_enable'=>''));
-
-		core::execute("DROP TABLE pre1_test");
-		core::connect(false);
+			core::execute("DROP TABLE pre1_test");
+			core::connect(false);
+		}
 		
 	}
 	
@@ -2385,110 +1563,42 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		
 		require_once 'test.php';
 		
-		// 1. 【基础功能】插入实例数据。
-		$arr = require 'config_mysql.php';
-		$arr['prefix_search'] = 'pre_';
-		$arr['prefix_replace'] = 'pre1_';
-		core::connect($arr);
-		core::execute("DROP TABLE IF EXISTS pre1_test");
-		core::execute("CREATE TABLE pre1_test(id int auto_increment primary key,name varchar(20))");
-		$obj = new core;
-		$obj->id = null;
-		$obj->name = 'a';
-		$this->assertTrue($obj->insert('pre_test'));
-		$this->assertSame('1',$obj->id);
-		$this->assertTrue($obj->insert('pre_test'));
-		$this->assertSame('2',$obj->id);
-		$this->assertFalse($obj->insert('pre_test',-1));
-		$test = new test;
-		$test->id = null;
-		$test->name = 'd';
-		$this->assertTrue($test->insert());
-		$this->assertSame('3',$test->id);
-		$this->assertTrue($test->insert());
-		$this->assertSame('4',$test->id);
-		$this->assertFalse($test->insert('',-1));
+		// 1. 【基础功能】【扩展功能】插入实例数据。
+		foreach ( $this->db_arr as $provider=>$db_arr ) {
+			list($arr,$con,$cls) = $db_arr;
+			$arr['prefix_search'] = 'pre_';
+			$arr['prefix_replace'] = 'pre1_';
+			core::connect($arr);
+			core::execute("DROP TABLE IF EXISTS pre1_test");
+			core::execute("CREATE TABLE pre1_test(id int auto_increment primary key,name varchar(20))");
+			$obj = new core;
+			$obj->id = null;
+			$obj->name = 'a';
+			$this->assertTrue($obj->insert('pre_test'));
+			$this->assertSame('1',$obj->id);
+			$this->assertTrue($obj->insert('pre_test'));
+			$this->assertSame('2',$obj->id);
+			$this->assertFalse($obj->insert('pre_test',-1));
+			$test = new test;
+			$test->id = null;
+			$test->name = 'd';
+			$this->assertTrue($test->insert());
+			$this->assertSame('3',$test->id);
+			$this->assertTrue($test->insert());
+			$this->assertSame('4',$test->id);
+			$this->assertFalse($test->insert('',-1));
 
-		core::connect(array('debug_enable'=>true));
-		ob_start();
-		$obj->id = null;
-		$obj->name = 'a';
-		$obj->insert('pre_test');
-		$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): INSERT INTO pre1_test (name) VALUES (?)'.PHP_EOL.'#0: string(1) a'.PHP_EOL,ob_get_clean());
-		core::connect(array('debug_enable'=>''));
+			core::connect(array('debug_enable'=>true));
+			ob_start();
+			$obj->id = null;
+			$obj->name = 'a';
+			$obj->insert('pre_test');
+			$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): INSERT INTO pre1_test (name) VALUES (?)'.PHP_EOL.'#0: string(1) a'.PHP_EOL,ob_get_clean());
+			core::connect(array('debug_enable'=>''));
 
-		core::execute("DROP TABLE pre1_test");
-		core::connect(false);
-		
-		// 2. 【扩展功能】插入实例数据。
-		//PDO
-		$arr = require 'config_pdo.php';
-		$arr['prefix_search'] = 'pre_';
-		$arr['prefix_replace'] = 'pre1_';
-		core::connect($arr);
-		core::execute("DROP TABLE IF EXISTS pre1_test");
-		core::execute("CREATE TABLE pre1_test(id int auto_increment primary key,name varchar(20))");
-		$obj = new core;
-		$obj->id = null;
-		$obj->name = 'a';
-		$this->assertTrue($obj->insert('pre_test'));
-		$this->assertSame('1',$obj->id);
-		$this->assertTrue($obj->insert('pre_test'));
-		$this->assertSame('2',$obj->id);
-		$this->assertFalse($obj->insert('pre_test',-1));
-		$test = new test;
-		$test->id = null;
-		$test->name = 'd';
-		$this->assertTrue($test->insert());
-		$this->assertSame('3',$test->id);
-		$this->assertTrue($test->insert());
-		$this->assertSame('4',$test->id);
-		$this->assertFalse($test->insert('',-1));
-
-		core::connect(array('debug_enable'=>true));
-		ob_start();
-		$obj->id = null;
-		$obj->name = 'a';
-		$obj->insert('pre_test');
-		$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): INSERT INTO pre1_test (name) VALUES (?)'.PHP_EOL.'#0: string(1) a'.PHP_EOL,ob_get_clean());
-		core::connect(array('debug_enable'=>''));
-
-		core::execute("DROP TABLE pre1_test");
-		core::connect(false);
-		//ADODB
-		$arr = require 'config_adodb.php';
-		$arr['prefix_search'] = 'pre_';
-		$arr['prefix_replace'] = 'pre1_';
-		core::connect($arr);
-		core::execute("DROP TABLE IF EXISTS pre1_test");
-		core::execute("CREATE TABLE pre1_test(id int auto_increment primary key,name varchar(20))");
-		$obj = new core;
-		$obj->id = null;
-		$obj->name = 'a';
-		$this->assertTrue($obj->insert('pre_test'));
-		$this->assertSame('1',$obj->id);
-		$this->assertTrue($obj->insert('pre_test'));
-		$this->assertSame('2',$obj->id);
-		$this->assertFalse($obj->insert('pre_test',-1));
-		$test = new test;
-		$test->id = null;
-		$test->name = 'd';
-		$this->assertTrue($test->insert());
-		$this->assertSame('3',$test->id);
-		$this->assertTrue($test->insert());
-		$this->assertSame('4',$test->id);
-		$this->assertFalse($test->insert('',-1));
-
-		core::connect(array('debug_enable'=>true));
-		ob_start();
-		$obj->id = null;
-		$obj->name = 'a';
-		$obj->insert('pre_test');
-		$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): INSERT INTO pre1_test (name) VALUES (?)'.PHP_EOL.'#0: string(1) a'.PHP_EOL,ob_get_clean());
-		core::connect(array('debug_enable'=>''));
-
-		core::execute("DROP TABLE pre1_test");
-		core::connect(false);
+			core::execute("DROP TABLE pre1_test");
+			core::connect(false);
+		}
 	}
 	
 	/**
@@ -2498,125 +1608,47 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		
 		require_once 'test.php';
 		
-		// 1. 【基础功能】修改实例数据。
-		$arr = require 'config_mysql.php';
-		$arr['prefix_search'] = 'pre_';
-		$arr['prefix_replace'] = 'pre1_';
-		core::connect($arr);
-		core::execute("DROP TABLE IF EXISTS pre1_test");
-		core::execute("CREATE TABLE pre1_test(id int auto_increment primary key,name varchar(20))");
-		core::execute("INSERT INTO pre1_test(id,name) VALUES (2,'b')");
-		$obj = new core;
-		$obj->id = 2;
-		$obj->name = 'c';
-		$this->assertTrue($obj->update('pre_test'));
-		$obj->name = 'c2';
-		$this->assertTrue($obj->update('pre_test',0));
-		$obj->name = 'c3';
-		$this->assertTrue($obj->update('pre_test','id'));
-		$obj->name = 'd';
-		$this->assertTrue($obj->update('pre_test',-1));
-		$obj->id = 3;
-		$this->assertFalse($obj->update('pre_test'));
-		$test = new test;
-		$test->id = 2;
-		$test->name = 'e';
-		$this->assertTrue($test->update());
-		$test->name = 'f';
-		$this->assertTrue($test->update('',-1));
-		$test->id = 3;
-		$this->assertFalse($test->update());
+		// 1. 【基础功能】【扩展功能】修改实例数据。
+		foreach ( $this->db_arr as $provider=>$db_arr ) {
+			list($arr,$con,$cls) = $db_arr;
+			$arr['prefix_search'] = 'pre_';
+			$arr['prefix_replace'] = 'pre1_';
+			core::connect($arr);
+			core::execute("DROP TABLE IF EXISTS pre1_test");
+			core::execute("CREATE TABLE pre1_test(id int auto_increment primary key,name varchar(20))");
+			core::execute("INSERT INTO pre1_test(id,name) VALUES (2,'b')");
+			$obj = new core;
+			$obj->id = 2;
+			$obj->name = 'c';
+			$this->assertTrue($obj->update('pre_test'));
+			$obj->name = 'c2';
+			$this->assertTrue($obj->update('pre_test',0));
+			$obj->name = 'c3';
+			$this->assertTrue($obj->update('pre_test','id'));
+			$obj->name = 'd';
+			$this->assertTrue($obj->update('pre_test',-1));
+			$obj->id = 3;
+			$this->assertFalse($obj->update('pre_test'));
+			$test = new test;
+			$test->id = 2;
+			$test->name = 'e';
+			$this->assertTrue($test->update());
+			$test->name = 'f';
+			$this->assertTrue($test->update('',-1));
+			$test->id = 3;
+			$this->assertFalse($test->update());
 
-		core::connect(array('debug_enable'=>true));
-		ob_start();
-		$obj->id = 1;
-		$obj->name = 'a';
-		$obj->update('pre_test');
-		$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): UPDATE pre1_test SET name=? WHERE id=? LIMIT 1'.PHP_EOL.'#0: string(1) a'.PHP_EOL.'#1: int(1)'.PHP_EOL,ob_get_clean());
-		core::connect(array('debug_enable'=>''));
+			core::connect(array('debug_enable'=>true));
+			ob_start();
+			$obj->id = 1;
+			$obj->name = 'a';
+			$obj->update('pre_test');
+			$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): UPDATE pre1_test SET name=? WHERE id=? LIMIT 1'.PHP_EOL.'#0: string(1) a'.PHP_EOL.'#1: int(1)'.PHP_EOL,ob_get_clean());
+			core::connect(array('debug_enable'=>''));
 
-		core::execute("DROP TABLE pre1_test");
-		core::connect(false);
-		
-		// 2. 【扩展功能】修改实例数据。
-		//PDO
-		$arr = require 'config_pdo.php';
-		$arr['prefix_search'] = 'pre_';
-		$arr['prefix_replace'] = 'pre1_';
-		core::connect($arr);
-		core::execute("DROP TABLE IF EXISTS pre1_test");
-		core::execute("CREATE TABLE pre1_test(id int auto_increment primary key,name varchar(20))");
-		core::execute("INSERT INTO pre1_test(id,name) VALUES (2,'b')");
-		$obj = new core;
-		$obj->id = 2;
-		$obj->name = 'c';
-		$this->assertTrue($obj->update('pre_test'));
-		$obj->name = 'c2';
-		$this->assertTrue($obj->update('pre_test',0));
-		$obj->name = 'c3';
-		$this->assertTrue($obj->update('pre_test','id'));
-		$obj->name = 'd';
-		$this->assertTrue($obj->update('pre_test',-1));
-		$obj->id = 3;
-		$this->assertFalse($obj->update('pre_test'));
-		$test = new test;
-		$test->id = 2;
-		$test->name = 'e';
-		$this->assertTrue($test->update());
-		$test->name = 'f';
-		$this->assertTrue($test->update('',-1));
-		$test->id = 3;
-		$this->assertFalse($test->update());
-
-		core::connect(array('debug_enable'=>true));
-		ob_start();
-		$obj->id = 1;
-		$obj->name = 'a';
-		$obj->update('pre_test');
-		$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): UPDATE pre1_test SET name=? WHERE id=? LIMIT 1'.PHP_EOL.'#0: string(1) a'.PHP_EOL.'#1: int(1)'.PHP_EOL,ob_get_clean());
-		core::connect(array('debug_enable'=>''));
-
-		core::execute("DROP TABLE pre1_test");
-		core::connect(false);
-		//ADODB
-		$arr = require 'config_adodb.php';
-		$arr['prefix_search'] = 'pre_';
-		$arr['prefix_replace'] = 'pre1_';
-		core::connect($arr);
-		core::execute("DROP TABLE IF EXISTS pre1_test");
-		core::execute("CREATE TABLE pre1_test(id int auto_increment primary key,name varchar(20))");
-		core::execute("INSERT INTO pre1_test(id,name) VALUES (2,'b')");
-		$obj = new core;
-		$obj->id = 2;
-		$obj->name = 'c';
-		$this->assertTrue($obj->update('pre_test'));
-		$obj->name = 'c2';
-		$this->assertTrue($obj->update('pre_test',0));
-		$obj->name = 'c3';
-		$this->assertTrue($obj->update('pre_test','id'));
-		$obj->name = 'd';
-		$this->assertTrue($obj->update('pre_test',-1));
-		$obj->id = 3;
-		$this->assertFalse($obj->update('pre_test'));
-		$test = new test;
-		$test->id = 2;
-		$test->name = 'e';
-		$this->assertTrue($test->update());
-		$test->name = 'f';
-		$this->assertTrue($test->update('',-1));
-		$test->id = 3;
-		$this->assertFalse($test->update());
-
-		core::connect(array('debug_enable'=>true));
-		ob_start();
-		$obj->id = 1;
-		$obj->name = 'a';
-		$obj->update('pre_test');
-		$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): UPDATE pre1_test SET name=? WHERE id=? LIMIT 1'.PHP_EOL.'#0: string(1) a'.PHP_EOL.'#1: int(1)'.PHP_EOL,ob_get_clean());
-		core::connect(array('debug_enable'=>''));
-
-		core::execute("DROP TABLE pre1_test");
-		core::connect(false);
+			core::execute("DROP TABLE pre1_test");
+			core::connect(false);
+		}
 		
 	}
 
@@ -2627,116 +1659,44 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		
 		require_once 'test.php';
 		
-		// 1. 【基础功能】删除实例数据。
-		$arr = require 'config_mysql.php';
-		$arr['prefix_search'] = 'pre_';
-		$arr['prefix_replace'] = 'pre1_';
-		core::connect($arr);
-		core::execute("DROP TABLE IF EXISTS pre1_test");
-		core::execute("CREATE TABLE pre1_test(id int auto_increment primary key,name varchar(20))");
-		core::execute("INSERT INTO pre1_test(id,name) VALUES (2,'b')");
-		$obj = new core;
-		$obj->id = 3;
-		$this->assertFalse($obj->delete('pre_test'));
-		$obj->id = 2;
-		$this->assertTrue($obj->delete('pre_test'));
-		$this->assertFalse($obj->delete('pre_test'));
-		core::execute("INSERT INTO pre1_test(id,name) VALUES (2,'b')");
-		$this->assertTrue($obj->delete('pre_test',-1));
-		$this->assertFalse($obj->delete('pre_test',-1));
-		core::execute("INSERT INTO pre1_test(id,name) VALUES (2,'b')");
-		$test = new test;
-		$test->id = 3;
-		$this->assertFalse($test->delete());
-		$test->id = 2;
-		$this->assertTrue($test->delete());
-		$this->assertFalse($test->delete());
+		// 1. 【基础功能】【扩展功能】删除实例数据。
+		foreach ( $this->db_arr as $provider=>$db_arr ) {
+			list($arr,$con,$cls) = $db_arr;
+			$arr['prefix_search'] = 'pre_';
+			$arr['prefix_replace'] = 'pre1_';
+			core::connect($arr);
+			core::execute("DROP TABLE IF EXISTS pre1_test");
+			core::execute("CREATE TABLE pre1_test(id int auto_increment primary key,name varchar(20))");
+			core::execute("INSERT INTO pre1_test(id,name) VALUES (2,'b')");
+			$obj = new core;
+			$obj->id = 3;
+			$this->assertFalse($obj->delete('pre_test'));
+			$obj->id = 2;
+			$this->assertTrue($obj->delete('pre_test'));
+			$this->assertFalse($obj->delete('pre_test'));
+			core::execute("INSERT INTO pre1_test(id,name) VALUES (2,'b')");
+			$this->assertTrue($obj->delete('pre_test',-1));
+			$this->assertFalse($obj->delete('pre_test',-1));
+			core::execute("INSERT INTO pre1_test(id,name) VALUES (2,'b')");
+			$test = new test;
+			$test->id = 3;
+			$this->assertFalse($test->delete());
+			$test->id = 2;
+			$this->assertTrue($test->delete());
+			$this->assertFalse($test->delete());
 
-		core::execute("INSERT INTO pre1_test(id,name) VALUES (1,'b')");
-		core::connect(array('debug_enable'=>true));
-		ob_start();
-		$obj->id = 1;
-		$obj->name = 'a';
-		$obj->delete('pre_test');
-		$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): DELETE FROM pre1_test WHERE id=? LIMIT 1'.PHP_EOL.'#0: int(1)'.PHP_EOL,ob_get_clean());
-		core::connect(array('debug_enable'=>''));
+			core::execute("INSERT INTO pre1_test(id,name) VALUES (1,'b')");
+			core::connect(array('debug_enable'=>true));
+			ob_start();
+			$obj->id = 1;
+			$obj->name = 'a';
+			$obj->delete('pre_test');
+			$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): DELETE FROM pre1_test WHERE id=? LIMIT 1'.PHP_EOL.'#0: int(1)'.PHP_EOL,ob_get_clean());
+			core::connect(array('debug_enable'=>''));
 
-		core::execute("DROP TABLE pre1_test");
-		core::connect(false);
-		
-		// 2. 【扩展功能】删除实例数据。
-		//PDO
-		$arr = require 'config_pdo.php';
-		$arr['prefix_search'] = 'pre_';
-		$arr['prefix_replace'] = 'pre1_';
-		core::connect($arr);
-		core::execute("DROP TABLE IF EXISTS pre1_test");
-		core::execute("CREATE TABLE pre1_test(id int auto_increment primary key,name varchar(20))");
-		core::execute("INSERT INTO pre1_test(id,name) VALUES (2,'b')");
-		$obj = new core;
-		$obj->id = 3;
-		$this->assertFalse($obj->delete('pre_test'));
-		$obj->id = 2;
-		$this->assertTrue($obj->delete('pre_test'));
-		$this->assertFalse($obj->delete('pre_test'));
-		core::execute("INSERT INTO pre1_test(id,name) VALUES (2,'b')");
-		$this->assertTrue($obj->delete('pre_test',-1));
-		$this->assertFalse($obj->delete('pre_test',-1));
-		core::execute("INSERT INTO pre1_test(id,name) VALUES (2,'b')");
-		$test = new test;
-		$test->id = 3;
-		$this->assertFalse($test->delete());
-		$test->id = 2;
-		$this->assertTrue($test->delete());
-		$this->assertFalse($test->delete());
-
-		core::execute("INSERT INTO pre1_test(id,name) VALUES (1,'b')");
-		core::connect(array('debug_enable'=>true));
-		ob_start();
-		$obj->id = 1;
-		$obj->name = 'a';
-		$obj->delete('pre_test');
-		$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): DELETE FROM pre1_test WHERE id=? LIMIT 1'.PHP_EOL.'#0: int(1)'.PHP_EOL,ob_get_clean());
-		core::connect(array('debug_enable'=>''));
-
-		core::execute("DROP TABLE pre1_test");
-		core::connect(false);
-		//ADODB
-		$arr = require 'config_adodb.php';
-		$arr['prefix_search'] = 'pre_';
-		$arr['prefix_replace'] = 'pre1_';
-		core::connect($arr);
-		core::execute("DROP TABLE IF EXISTS pre1_test");
-		core::execute("CREATE TABLE pre1_test(id int auto_increment primary key,name varchar(20))");
-		core::execute("INSERT INTO pre1_test(id,name) VALUES (2,'b')");
-		$obj = new core;
-		$obj->id = 3;
-		$this->assertFalse($obj->delete('pre_test'));
-		$obj->id = 2;
-		$this->assertTrue($obj->delete('pre_test'));
-		$this->assertFalse($obj->delete('pre_test'));
-		core::execute("INSERT INTO pre1_test(id,name) VALUES (2,'b')");
-		$this->assertTrue($obj->delete('pre_test',-1));
-		$this->assertFalse($obj->delete('pre_test',-1));
-		core::execute("INSERT INTO pre1_test(id,name) VALUES (2,'b')");
-		$test = new test;
-		$test->id = 3;
-		$this->assertFalse($test->delete());
-		$test->id = 2;
-		$this->assertTrue($test->delete());
-		$this->assertFalse($test->delete());
-
-		core::execute("INSERT INTO pre1_test(id,name) VALUES (1,'b')");
-		core::connect(array('debug_enable'=>true));
-		ob_start();
-		$obj->id = 1;
-		$obj->name = 'a';
-		$obj->delete('pre_test');
-		$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): DELETE FROM pre1_test WHERE id=? LIMIT 1'.PHP_EOL.'#0: int(1)'.PHP_EOL,ob_get_clean());
-		core::connect(array('debug_enable'=>''));
-
-		core::execute("DROP TABLE pre1_test");
-		core::connect(false);
+			core::execute("DROP TABLE pre1_test");
+			core::connect(false);
+		}
 		
 	}
 
@@ -2747,90 +1707,36 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		
 		require_once 'test.php';
 		
-		// 1. 【基础功能】更新实例数据。
-		$arr = require 'config_mysql.php';
-		$arr['prefix_search'] = 'pre_';
-		$arr['prefix_replace'] = 'pre1_';
-		core::connect($arr);
-		core::execute("DROP TABLE IF EXISTS pre1_test");
-		core::execute("CREATE TABLE pre1_test(id int auto_increment primary key,name varchar(20))");
-		core::execute("INSERT INTO pre1_test(id,name) VALUES (2,'b')");
-		$obj = new core;
-		$obj->id = null;
-		$obj->name = 'c';
-		$this->assertTrue($obj->replace('pre_test'));
-		$this->assertSame('3',$obj->id);
-		$obj->id = 3;
-		$obj->name = 'd';
-		$this->assertTrue($obj->replace('pre_test'));
+		// 1. 【基础功能】【扩展功能】更新实例数据。
+		foreach ( $this->db_arr as $provider=>$db_arr ) {
+			list($arr,$con,$cls) = $db_arr;
+			$arr['prefix_search'] = 'pre_';
+			$arr['prefix_replace'] = 'pre1_';
+			core::connect($arr);
+			core::execute("DROP TABLE IF EXISTS pre1_test");
+			core::execute("CREATE TABLE pre1_test(id int auto_increment primary key,name varchar(20))");
+			core::execute("INSERT INTO pre1_test(id,name) VALUES (2,'b')");
+			$obj = new core;
+			$obj->id = null;
+			$obj->name = 'c';
+			$this->assertTrue($obj->replace('pre_test'));
+			$this->assertSame('3',$obj->id);
+			$obj->id = 3;
+			$obj->name = 'd';
+			$this->assertTrue($obj->replace('pre_test'));
 
-		core::connect(array('debug_enable'=>true));
-		ob_start();
-		$obj->id = 1;
-		$obj->name = 'a';
-		$obj->replace('pre_test');
-		$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): REPLACE INTO pre1_test (id,name) VALUES (?,?)'.PHP_EOL.'#0: int(1)'.PHP_EOL.'#1: string(1) a'.PHP_EOL,ob_get_clean());
-		core::connect(array('debug_enable'=>''));
+			core::connect(array('debug_enable'=>true));
+			ob_start();
+			$obj->id = 1;
+			$obj->name = 'a';
+			$obj->replace('pre_test');
+			$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): REPLACE INTO pre1_test (id,name) VALUES (?,?)'.PHP_EOL.'#0: int(1)'.PHP_EOL.'#1: string(1) a'.PHP_EOL,ob_get_clean());
+			core::connect(array('debug_enable'=>''));
 
-		core::execute("DROP TABLE pre1_test");
-		core::connect(false);
+			core::execute("DROP TABLE pre1_test");
+			core::connect(false);
+		}
 		
-		// 2. 【扩展功能】更新实例数据。
-		//PDO
-		$arr = require 'config_pdo.php';
-		$arr['prefix_search'] = 'pre_';
-		$arr['prefix_replace'] = 'pre1_';
-		core::connect($arr);
-		core::execute("DROP TABLE IF EXISTS pre1_test");
-		core::execute("CREATE TABLE pre1_test(id int auto_increment primary key,name varchar(20))");
-		core::execute("INSERT INTO pre1_test(id,name) VALUES (2,'b')");
-		$obj = new core;
-		$obj->id = null;
-		$obj->name = 'c';
-		$this->assertTrue($obj->replace('pre_test'));
-		$this->assertSame('3',$obj->id);
-		$obj->id = 3;
-		$obj->name = 'd';
-		$this->assertTrue($obj->replace('pre_test'));
-
-		core::connect(array('debug_enable'=>true));
-		ob_start();
-		$obj->id = 1;
-		$obj->name = 'a';
-		$obj->replace('pre_test');
-		$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): REPLACE INTO pre1_test (id,name) VALUES (?,?)'.PHP_EOL.'#0: int(1)'.PHP_EOL.'#1: string(1) a'.PHP_EOL,ob_get_clean());
-		core::connect(array('debug_enable'=>''));
-
-		core::execute("DROP TABLE pre1_test");
-		core::connect(false);
-		//ADODB
-		$arr = require 'config_adodb.php';
-		$arr['prefix_search'] = 'pre_';
-		$arr['prefix_replace'] = 'pre1_';
-		core::connect($arr);
-		core::execute("DROP TABLE IF EXISTS pre1_test");
-		core::execute("CREATE TABLE pre1_test(id int auto_increment primary key,name varchar(20))");
-		core::execute("INSERT INTO pre1_test(id,name) VALUES (2,'b')");
-		$obj = new core;
-		$obj->id = null;
-		$obj->name = 'c';
-		$this->assertTrue($obj->replace('pre_test'));
-		$this->assertSame('3',$obj->id);
-		$obj->id = 3;
-		$obj->name = 'd';
-		$this->assertTrue($obj->replace('pre_test'));
-
-		core::connect(array('debug_enable'=>true));
-		ob_start();
-		$obj->id = 1;
-		$obj->name = 'a';
-		$obj->replace('pre_test');
-		$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): REPLACE INTO pre1_test (id,name) VALUES (?,?)'.PHP_EOL.'#0: int(1)'.PHP_EOL.'#1: string(1) a'.PHP_EOL,ob_get_clean());
-		core::connect(array('debug_enable'=>''));
-
-		core::execute("DROP TABLE pre1_test");
-		core::connect(false);
-				
 	}
 	
 }
