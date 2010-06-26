@@ -2,7 +2,7 @@
 /**
  * 定义(define)
  */
-class db_adodb {
+class adodb5 {
 	
 	/**
 	 * 连接数据库
@@ -603,16 +603,9 @@ class db_adodb {
  * 执行(execute)
  */
 
-// 配置信息
-$adodb_file = ''; //adodb.inc.php所在的位置，默认使用AdodbZip
-
 // 载入类文件
 if (! class_exists ( 'ADOConnection' , false ) ) {
-	if ( $adodb_file === '' ) {
-		require_once dirname(__FILE__) . '/AdodbZip.php';
-	} else {
-		require_once $adodb_file;
-	}
+	require_once dirname(__FILE__) . '/' . basename(__FILE__,'.php') . '/adodb.inc.php';
 }
 
 ?>

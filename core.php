@@ -2,7 +2,7 @@
 /**
  * CoreMVC核心模块
  * 
- * @version 1.1.0 alpha 9
+ * @version 1.1.0 alpha 10
  * @author Z <602000@gmail.com>
  * @link http://code.google.com/p/coremvc/
  */
@@ -135,6 +135,20 @@ class core {
 	const main_framework_action = '';
 	
 	/**
+	 * 扩展类库开关
+	 *
+	 * + 作用：使用扩展类库，多个类库可用逗号分隔。
+	 * + 定义：该值范围为字符串或空串。
+	 * <code>
+	 *const path_extension_enable = ''; //默认不使用扩展类库
+	 *const path_extension_enable = true; //扩展目录加入到include_path。
+	 *const path_extension_enable = 'Zend'; //扩展目录加入到include_path，并自动执行Zend.php
+	 *const path_extension_enable = 'Zend,Symfony'; //扩展目录加入到include_path，并自动执行Zend.php和Symfony.php
+	 * </code>
+	 */
+	const path_extension_enable = '';
+	
+	/**
 	 * 扩展模块路径
 	 *
 	 * + 作用：自动载入类功能是否打开。
@@ -147,6 +161,18 @@ class core {
 	 * </code>
 	 */
 	const path_extension_path = '';
+	
+	/**
+	 * 扩展路径顺序
+	 *
+	 * + 作用：扩展路径在include_path中的顺序
+	 * + 定义：该值范围为字符串或空串。
+	 * <code>
+	 *const path_extension_prepend = ''; //默认顺序在最后面
+	 *const path_extension_prepend = true; //顺序在最前面
+	 * </code>
+	 */
+	const path_extension_prepend = '';
 	
 	/**
 	 * 视图模板路径
@@ -234,10 +260,10 @@ class core {
 	 * <code>
 	 *const db_connect_provider = ''; //默认使用"mysql"
 	 *const db_connect_provider = 'mysql'; //使用"mysql"
-	 *const db_connect_provider = 'pdo'; //使用"pdo"
-	 *const db_connect_provider = 'adodb'; //使用"adodb"
+	 *const db_connect_provider = 'pdo5'; //使用"pdo5.php"的扩展
+	 *const db_connect_provider = 'adodb5'; //使用"adodb5.php"的扩展
 	 * </code>
-	 * + 注意：adodb是扩展库，需要有model_adodb.php和AdodbZip.php支持
+	 * + 注意：pdo和adodb是扩展库，需要扩展库里“数据库类型.php”的支持
 	 */
 	const db_connect_provider = '';
 	
@@ -455,18 +481,99 @@ class core {
 					'autoload_extensions' => $static_config ['autoload_extensions'], 
 					'autoload_prepend' => $static_config ['autoload_prepend'] );
 		}
-		static $static_autoload_realpath = null;
-		if (is_array ( $autoload_enable )) {
-			$static_autoload_realpath = null;
+		$autoload_enable_is_array = is_array ( $autoload_enable );
+		if ( $autoload_enable_is_array ) {
 			foreach ( $static_config as $key => $value ) {
 				isset ( $autoload_enable [$key] ) and $static_config [$key] = $autoload_enable [$key];
 			}
+		}
+		if ( !$autoload_enable_is_array ) {
+			isset ( $autoload_enable ) and $static_config ['autoload_enable'] = $autoload_enable;
+			isset ( $autoload_path ) and $static_config ['autoload_path'] = $autoload_path;
+			isset ( $autoload_extensions ) and $static_config ['autoload_extensions'] = $autoload_extensions;
+			isset ( $autoload_prepend ) and $static_config ['autoload_prepend'] = $autoload_prepend;
+		}
+		
+		// 【基础功能】自动载入功能
+		static $static_autoload_enable = '';
+		static $static_autoload_path = '';
+		static $static_autoload_extensions = '';
+		static $static_autoload_prepend = '';
+		if ( $static_config ['autoload_enable'] !== $static_autoload_enable ||
+			$static_config ['autoload_path'] !== $static_autoload_path ||
+			$static_config ['autoload_extensions'] !== $static_autoload_extensions ||
+			$static_config ['autoload_prepend'] !== $static_autoload_prepend ) {
+			if ($static_config ['autoload_path'] !== $static_autoload_path ||
+				$static_config ['autoload_prepend'] !== $static_autoload_prepend ) {
+				static $autoload_path_old = '';
+				static $include_path_old = '';
+				if (empty($autoload_path_old)) {
+					$include_path_old = get_include_path ();
+				}
+				if (empty($static_config ['autoload_path'])) {
+					set_include_path ( $include_path_old );
+				} else {
+					$autoload_realpath = self::path ( $static_config ['autoload_path'] );
+					if (empty($static_config ['autoload_prepend'])) {
+						set_include_path ( $include_path_old . PATH_SEPARATOR . $autoload_realpath );
+					} else {
+						set_include_path ( $autoload_realpath . PATH_SEPARATOR . $include_path_old );
+					}
+				}
+				$autoload_path_old = $static_config ['autoload_path'];
+			}
+			if ($static_config ['autoload_extensions'] !== $static_autoload_extensions ) {
+				static $autoload_extensions_old = '';
+				static $spl_autoload_extensions_old = '';
+				if (empty($autoload_extensions_old)) {
+					$spl_autoload_extensions_old = spl_autoload_extensions ();
+				}
+				if (empty($static_config ['autoload_extensions'])) {
+					spl_autoload_extensions ( $spl_autoload_extensions_old );
+				} else {
+					spl_autoload_extensions ( $static_config ['autoload_extensions'] );
+				}
+				$autoload_extensions_old = $static_config ['autoload_extensions'];
+			}
+			if ($static_config ['autoload_enable'] !== $static_autoload_enable ||
+				$static_config ['autoload_prepend'] !== $static_autoload_prepend ) {
+				static $autoload_enable_old = '';
+				static $spl_autoload_functions_old = '';
+				static $autoload_realname_old = '';
+				if (empty($autoload_enable_old)) {
+					$spl_autoload_functions_old = spl_autoload_functions ();
+				}
+				if (empty($static_config ['autoload_enable'])) {
+					if ( !in_array($autoload_realname_old,(array)$spl_autoload_functions_old) ) {
+						spl_autoload_unregister ( $autoload_realname_old );
+					}
+				} else {
+					if ($static_config ['autoload_enable']===true) {
+						$autoload_realname_old = 'spl_autoload';
+					} else {
+						$autoload_realname_old = $static_config ['autoload_enable'];
+					}
+					if ( version_compare(PHP_VERSION,'5.3.0','>=') ) {
+						if (empty($static_config ['autoload_prepend'])) {
+							spl_autoload_register ( $autoload_realname_old, true, false );
+						} else {
+							spl_autoload_register ( $autoload_realname_old, true, true );
+						}
+					} else {
+						spl_autoload_register ( $autoload_realname_old );
+					}
+				}
+				$autoload_enable_old = $static_config ['autoload_enable'];
+			}
+			$static_autoload_enable = $static_config ['autoload_enable'];
+			$static_autoload_path = $static_config ['autoload_path'];
+			$static_autoload_extensions = $static_config ['autoload_extensions'];
+			$static_autoload_prepend = $static_config ['autoload_prepend'];
+		}
+		
+		if ( $autoload_enable_is_array ) {
 			return $static_config;
 		}
-		isset ( $autoload_enable ) and $static_config ['autoload_enable'] = $autoload_enable;
-		isset ( $autoload_path ) and $static_config ['autoload_path'] = $autoload_path;
-		isset ( $autoload_extensions ) and $static_config ['autoload_extensions'] = $autoload_extensions;
-		isset ( $autoload_prepend ) and $static_config ['autoload_prepend'] = $autoload_prepend;
 		
 		// 【基础功能】判断访问或者引用
 		foreach ( debug_backtrace ( false ) as $row ) {
@@ -476,28 +583,6 @@ class core {
 				case 'include_once' :
 				case 'require_once' :
 					return false;
-			}
-		}
-		
-		// 【基础功能】自动载入功能
-		if ($autoload_enable || $static_config ['autoload_enable'] && $static_autoload_realpath === null) {
-			$static_autoload_realpath = self::path ( $static_config ['autoload_path'] );
-			if ($static_autoload_realpath != '') {
-				if ( $static_config ['autoload_prepend'] === true ) {
-					set_include_path ( $static_autoload_realpath . PATH_SEPARATOR . get_include_path () );
-				} else {
-					set_include_path ( get_include_path () . PATH_SEPARATOR . $static_autoload_realpath );
-				}
-			}
-			if ($static_config ['autoload_extensions'] != '') {
-				spl_autoload_extensions ( $static_config ['autoload_extensions'] );
-			} else {
-				spl_autoload_extensions ( '.inc,.php' );
-			}
-			if ( $static_config ['autoload_prepend'] === true ) {
-				spl_autoload_register ( 'spl_autoload', true, true );
-			} else {
-				spl_autoload_register ();
 			}
 		}
 		
@@ -842,10 +927,12 @@ class core {
 	/**
 	 * 路径函数
 	 *
-	 * + 作用：1.设置路径参数；2.返回转换路径；3.返回扩展路径；4.返回视图路径。
+	 * + 作用：1.设置路径参数；2.返回转换路径；3.返回扩展路径；4.使用扩展类库；5.返回视图路径。
 	 * + 示例：
 	 * <code>
 	 *sample::main (array('extension_path'=>'@ext','template_path'=>'@tpl')); //设置路径参数
+	 *sample::main (array('extension_enable'=>true,'extension_path'=>'@ext','extension_prepend'=>true)); //将扩展类库目录加入到include_path最前面
+	 *sample::main (array('extension_enable'=>'Zend,Misc','extension_path'=>'@ext')); //将扩展类库目录加入到include_path，并包含扩展文件Zend.php和Misc.php
 	 *require_once core::path('sample.php','extension');
 	 *require core::path('@sample.tpl','template');
 	 * </code>
@@ -859,11 +946,20 @@ class core {
 		static $static_config = null;
 		if ($static_config === null) {
 			$static_config = self::init ( - 3 );
-			$static_config = array ('extension_path' => $static_config ['extension_path'], 'template_path' => $static_config ['template_path'] );
+			$static_config = array ('extension_enable' => $static_config ['extension_enable'], 
+				'extension_path' => $static_config ['extension_path'], 
+				'extension_prepend' => $static_config ['extension_prepend'], 
+				'template_path' => $static_config ['template_path'] );
 		}
 		static $static_extension_realpath = null;
 		static $static_template_realpath = null;
+		static $static_extension_enable = null;
+		static $static_extension_path = null;
+		static $static_extension_prepend = null;
 		$filename_is_array = is_array ( $filename );
+		if ($filename_is_array && isset ( $filename ['extension_enable'] ) ) {
+			$static_config ['extension_enable'] = $filename ['extension_enable'];
+		}
 		if ($filename_is_array && isset ( $filename ['extension_path'] ) || $static_extension_realpath === null) {
 			$filename_is_array && isset ( $filename ['extension_path'] ) and $static_config ['extension_path'] = $filename ['extension_path'];
 			if ($static_config ['extension_path'] === '') {
@@ -874,6 +970,9 @@ class core {
 				$static_extension_realpath = $static_config ['extension_path'] . DIRECTORY_SEPARATOR;
 			}
 		}
+		if ($filename_is_array && isset ( $filename ['extension_prepend'] ) ) {
+			$static_config ['extension_prepend'] = $filename ['extension_prepend'];
+		}
 		if ($filename_is_array && isset ( $filename ['template_path'] ) || $static_template_realpath === null) {
 			$filename_is_array && isset ( $filename ['template_path'] ) and $static_config ['template_path'] = $filename ['template_path'];
 			if ($static_config ['template_path'] === '') {
@@ -883,6 +982,43 @@ class core {
 			} else {
 				$static_template_realpath = $static_config ['template_path'] . DIRECTORY_SEPARATOR;
 			}
+		}
+		if ($filename_is_array && (
+			$static_config ['extension_enable'] !== $static_extension_enable || 
+			$static_config ['extension_path'] !== $static_extension_path || 
+			$static_config ['extension_prepend'] !== $static_extension_prepend ) ) {
+			if ( isset ( $static_config ['extension_enable'] ) && $static_config ['extension_enable'] ) {
+				$extension_enable = $static_config ['extension_enable'];
+				$extension_path = rtrim($static_extension_realpath,'/\\');
+				$extension_prepend = $static_config['extension_prepend'];
+				$include_path_array = explode( PATH_SEPARATOR, get_include_path () );
+				if ( is_bool ( $extension_prepend ) ) {
+					if ( in_array ( $extension_path, $include_path_array ) ) {
+						$include_path_array = array_values(array_diff($include_path_array, array($extension_path)));
+					}
+					if ($extension_prepend === true) {
+						array_unshift($include_path_array, $extension_path);
+					} else {
+						array_push($include_path_array, $extension_path);
+					}
+					set_include_path ( implode( PATH_SEPARATOR , $include_path_array ) );
+				} elseif ( !in_array ( $extension_path, $include_path_array ) ) {
+					array_push($include_path_array, $extension_path);
+					set_include_path ( implode( PATH_SEPARATOR , $include_path_array ) );
+				}
+				if ( $extension_enable !== true ) {
+					$extension_array = explode(',',$extension_enable);
+					foreach ($extension_array as $extension) {
+						$extension_file = self::path ( trim($extension) . '.php', 'extension' );
+						if (is_file ( $extension_file )) {
+							require_once $extension_file;
+						}
+					}
+				}
+			}
+			$static_extension_enable = $static_config ['extension_enable'];
+			$static_extension_path = $static_config ['extension_path'];
+			$static_extension_prepend = $static_config ['extension_prepend'];
 		}
 		if ($filename_is_array) {
 			return $static_config;
@@ -954,12 +1090,15 @@ class core {
 				$config_array = array ();
 				break;
 			}
-			static $static_config1 = array ('autoload_enable' => '', 'autoload_path' => '', 'autoload_extensions' => '', 'autoload_prepend' => '', 'framework_enable' => '', 
-					'framework_require' => '', 'framework_module' => '', 'framework_action' => '', 'extension_path' => '', 'template_path' => '', 
-					'template_search' => '', 'template_replace' => '', 'template_type' => '', 'template_show' => '', 'connect_provider' => '', 
-					'connect_dsn' => '', 'connect_type' => '', 'connect_server' => '', 'connect_username' => '', 'connect_password' => '', 
-					'connect_new_link' => '', 'connect_client_flags' => '', 'connect_dbname' => '', 'connect_charset' => '', 'connect_port' => '', 
-					'connect_socket' => '', 'connect_driver_options' => '', 'prefix_search' => '', 'prefix_replace' => '', 'debug_enable' => '', 'debug_file' => '' );
+			static $static_config1 = array ('autoload_enable' => '', 'autoload_path' => '', 'autoload_extensions' => '', 
+					'autoload_prepend' => '', 'framework_enable' => '', 'framework_require' => '', 'framework_module' => '', 
+					'framework_action' => '', 'extension_enable' => '', 'extension_path' => '', 'extension_prepend' => '', 
+					'template_path' => '', 'template_search' => '', 'template_replace' => '', 'template_type' => '', 
+					'template_show' => '', 'connect_provider' => '', 'connect_dsn' => '', 'connect_type' => '', 
+					'connect_server' => '', 'connect_username' => '', 'connect_password' => '', 'connect_new_link' => '', 
+					'connect_client_flags' => '', 'connect_dbname' => '', 'connect_charset' => '', 'connect_port' => '', 
+					'connect_socket' => '', 'connect_driver_options' => '', 'prefix_search' => '', 'prefix_replace' => '', 
+					'debug_enable' => '', 'debug_file' => '' );
 			if ($config === 1) {
 				$config_array = $static_config1;
 				break;
@@ -967,16 +1106,19 @@ class core {
 				return $static_config1;
 			}
 			static $static_config2 = array ('autoload_enable' => self::stub_autoload_enable, 'autoload_path' => self::stub_autoload_path, 
-					'autoload_extensions' => self::stub_autoload_extensions, 'autoload_prepend' => self::stub_autoload_prepend, 'framework_enable' => self::main_framework_enable, 
-					'framework_require' => self::main_framework_require, 'framework_module' => self::main_framework_module, 
-					'framework_action' => self::main_framework_action, 'extension_path' => self::path_extension_path, 
-					'template_path' => self::path_template_path, 'template_search' => self::view_template_search, 
-					'template_replace' => self::view_template_replace, 'template_type' => self::view_template_type, 
-					'template_show' => self::view_template_show, 'connect_provider' => self::db_connect_provider, 'connect_dsn' => self::db_connect_dsn, 
-					'connect_type' => self::db_connect_type, 'connect_server' => self::db_connect_server, 'connect_username' => self::db_connect_username, 
-					'connect_password' => self::db_connect_password, 'connect_new_link' => self::db_connect_new_link, 
-					'connect_client_flags' => self::db_connect_client_flags, 'connect_dbname' => self::db_connect_dbname, 
-					'connect_charset' => self::db_connect_charset, 'connect_port' => self::db_connect_port, 'connect_socket' => self::db_connect_socket, 
+					'autoload_extensions' => self::stub_autoload_extensions, 'autoload_prepend' => self::stub_autoload_prepend, 
+					'framework_enable' => self::main_framework_enable, 'framework_require' => self::main_framework_require, 
+					'framework_module' => self::main_framework_module, 'framework_action' => self::main_framework_action, 
+					'extension_enable' => self::path_extension_enable, 'extension_path' => self::path_extension_path, 
+					'extension_prepend' => self::path_extension_prepend, 'template_path' => self::path_template_path, 
+					'template_search' => self::view_template_search, 'template_replace' => self::view_template_replace, 
+					'template_type' => self::view_template_type, 'template_show' => self::view_template_show, 
+					'connect_provider' => self::db_connect_provider, 'connect_dsn' => self::db_connect_dsn, 
+					'connect_type' => self::db_connect_type, 'connect_server' => self::db_connect_server, 
+					'connect_username' => self::db_connect_username, 'connect_password' => self::db_connect_password, 
+					'connect_new_link' => self::db_connect_new_link, 'connect_client_flags' => self::db_connect_client_flags, 
+					'connect_dbname' => self::db_connect_dbname, 'connect_charset' => self::db_connect_charset, 
+					'connect_port' => self::db_connect_port, 'connect_socket' => self::db_connect_socket, 
 					'connect_driver_options' => '', 'prefix_search' => self::db_prefix_search, 'prefix_replace' => self::db_prefix_replace, 
 					'debug_enable' => self::db_debug_enable, 'debug_file' => self::db_debug_file );
 			if ($config === 2) {
@@ -1126,7 +1268,7 @@ class core {
 				extract ( $_view_vars2 );
 				static $_static_extension = array ();
 				if (! isset ( $_static_extension [$_view_type2] )) {
-					$_static_extension [$_view_type2] = self::path ( 'view_' . $_view_type2 . '.php', 'extension' );
+					$_static_extension [$_view_type2] = self::path ( $_view_type2 . '.php', 'extension' );
 					if (! is_file ( $_static_extension [$_view_type2] )) {
 						$_static_extension [$_view_type2] = false;
 					}
@@ -1149,7 +1291,7 @@ class core {
 	 * <code>
 	 * //设置数据库参数，使用扩展方式。
 	 *$args = array(
-	 *	'provider' => 'pdo'
+	 *	'provider' => 'pdo5'
 	 *	'dsn' => 'mysql:host=localhost;dbname=test',
 	 *	'username' => 'root',
 	 *	'password' => '',
@@ -1247,7 +1389,7 @@ class core {
 					$provider = $ref ['connect_provider'];
 					static $static_extension = array ();
 					if (! isset ( $static_extension [$provider] )) {
-						$static_extension [$provider] = self::path ( 'db_' . $provider . '.php', 'extension' );
+						$static_extension [$provider] = self::path ( $provider . '.php', 'extension' );
 						if (is_file ( $static_extension [$provider] )) {
 							require_once $static_extension [$provider];
 						} else {
@@ -1257,7 +1399,7 @@ class core {
 					if ($static_extension [$provider] === false) {
 						$return = false;
 					} else {
-						$return = call_user_func ( array ('db_' . $provider, 'disconnect' ), $dbh, $ref );
+						$return = call_user_func ( array ( $provider, 'disconnect' ), $dbh, $ref );
 					}
 					break;
 			
@@ -1300,7 +1442,7 @@ class core {
 				$provider = $ref ['connect_provider'];
 				static $static_extension = array ();
 				if (! isset ( $static_extension [$provider] )) {
-					$static_extension [$provider] = self::path ( 'db_' . $provider . '.php', 'extension' );
+					$static_extension [$provider] = self::path ( $provider . '.php', 'extension' );
 					if (is_file ( $static_extension [$provider] )) {
 						require_once $static_extension [$provider];
 					} else {
@@ -1310,7 +1452,7 @@ class core {
 				if ($static_extension [$provider] === false) {
 					$dbh = null;
 				} else {
-					$dbh = call_user_func ( array ('db_' . $provider, 'connect' ), $ref );
+					$dbh = call_user_func ( array ( $provider, 'connect' ), $ref );
 				}
 				break;
 		
@@ -1423,9 +1565,9 @@ class core {
 			default :
 				$provider = $args ['connect_provider'];
 				if ($ref_flag) {
-					$result = call_user_func_array ( array ('db_' . $provider, 'execute' ), array ($dbh, $args, __CLASS__, $sql, $param, &$ref ) );
+					$result = call_user_func_array ( array ($provider, 'execute' ), array ($dbh, $args, __CLASS__, $sql, $param, &$ref ) );
 				} else {
-					$result = call_user_func_array ( array ('db_' . $provider, 'execute' ), array ($dbh, $args, __CLASS__, $sql, $param ) );
+					$result = call_user_func_array ( array ($provider, 'execute' ), array ($dbh, $args, __CLASS__, $sql, $param ) );
 				}
 				break;
 		
@@ -1988,7 +2130,7 @@ class core {
 					if ($args ['prefix_search'] !== '' && $args ['prefix_search'] !== $args ['prefix_replace']) {
 						$sql = str_replace ( $args ['prefix_search'], $args ['prefix_replace'], $sql );
 					}
-					$return = call_user_func ( array ('db_' . $provider, 'prepare' ), $dbh, $args, __CLASS__, $sql, $param, $format );
+					$return = call_user_func ( array ($provider, 'prepare' ), $dbh, $args, __CLASS__, $sql, $param, $format );
 					
 					break;
 				default :
@@ -2131,7 +2273,7 @@ class core {
 			// 【扩展功能】生成自增序列
 			default :
 				$provider = $args ['connect_provider'];
-				$return = call_user_func ( array ('db_' . $provider, 'sequence' ), $dbh, $args, __CLASS__, $tablename, $start_index );
+				$return = call_user_func ( array ($provider, 'sequence' ), $dbh, $args, __CLASS__, $tablename, $start_index );
 				break;
 		
 		}
@@ -2664,7 +2806,7 @@ class core {
 					$sql = str_replace ( $args ['prefix_search'], $args ['prefix_replace'], $sql );
 				}
 				$ref = array ('page' => &$page, 'class_arr' => $class_arr, 'classkey' => $classkey, 'classkey_arr' => $classkey_arr, 'classname' => $classname, 'calledclass' => $calledclass );
-				list ( $data_arr, $data_all ) = call_user_func ( array ('db_' . $provider, 'selects' ), $dbh, $args, __CLASS__, $sql, $param, $ref );
+				list ( $data_arr, $data_all ) = call_user_func ( array ($provider, 'selects' ), $dbh, $args, __CLASS__, $sql, $param, $ref );
 		
 		}
 		// 整理
@@ -2786,7 +2928,7 @@ class core {
 				if ($args ['prefix_search'] !== '' && $args ['prefix_search'] !== $args ['prefix_replace']) {
 					$sql = str_replace ( $args ['prefix_search'], $args ['prefix_replace'], $sql );
 				}
-				return call_user_func ( array ('db_' . $provider, 'inserts' ), $dbh, $args, __CLASS__, $sql, $param );
+				return call_user_func ( array ($provider, 'inserts' ), $dbh, $args, __CLASS__, $sql, $param );
 		
 		}
 	
@@ -2862,7 +3004,7 @@ class core {
 				if ($args ['prefix_search'] !== '' && $args ['prefix_search'] !== $args ['prefix_replace']) {
 					$sql = str_replace ( $args ['prefix_search'], $args ['prefix_replace'], $sql );
 				}
-				return call_user_func ( array ('db_' . $provider, 'updates' ), $dbh, $args, __CLASS__, $sql, $param );
+				return call_user_func ( array ($provider, 'updates' ), $dbh, $args, __CLASS__, $sql, $param );
 		
 		}
 	
@@ -2938,7 +3080,7 @@ class core {
 				if ($args ['prefix_search'] !== '' && $args ['prefix_search'] !== $args ['prefix_replace']) {
 					$sql = str_replace ( $args ['prefix_search'], $args ['prefix_replace'], $sql );
 				}
-				return call_user_func ( array ('db_' . $provider, 'deletes' ), $dbh, $args, __CLASS__, $sql, $param );
+				return call_user_func ( array ($provider, 'deletes' ), $dbh, $args, __CLASS__, $sql, $param );
 		
 		}
 	
@@ -3029,7 +3171,7 @@ class core {
 				if ($args ['prefix_search'] !== '' && $args ['prefix_search'] !== $args ['prefix_replace']) {
 					$sql = str_replace ( $args ['prefix_search'], $args ['prefix_replace'], $sql );
 				}
-				return call_user_func ( array ('db_' . $provider, 'replaces' ), $dbh, $args, __CLASS__, $sql, $param );
+				return call_user_func ( array ($provider, 'replaces' ), $dbh, $args, __CLASS__, $sql, $param );
 		
 		}
 	
@@ -3198,7 +3340,7 @@ class core {
 			default :
 				$provider = $args ['connect_provider'];
 				$params = compact ( 'primary_name', 'primary_value', 'fieldname', 'valuename', 'paramvars' );
-				return call_user_func ( array ('db_' . $provider, 'select' ), $dbh, $args, $this, $tablename, $primary_index, $params );
+				return call_user_func ( array ($provider, 'select' ), $dbh, $args, $this, $tablename, $primary_index, $params );
 		
 		}
 	
@@ -3303,7 +3445,7 @@ class core {
 			default :
 				$provider = $args ['connect_provider'];
 				$params = compact ( 'primary_name', 'primary_value', 'fieldname', 'valuename', 'paramvars' );
-				$result = call_user_func ( array ('db_' . $provider, 'insert' ), $dbh, $args, $this, $tablename, $primary_index, $params );
+				$result = call_user_func ( array ($provider, 'insert' ), $dbh, $args, $this, $tablename, $primary_index, $params );
 				break;
 		
 		}
@@ -3411,7 +3553,7 @@ class core {
 			default :
 				$provider = $args ['connect_provider'];
 				$params = compact ( 'primary_name', 'primary_value', 'fieldname', 'valuename', 'paramvars' );
-				$result = call_user_func ( array ('db_' . $provider, 'update' ), $dbh, $args, $this, $tablename, $primary_index, $params );
+				$result = call_user_func ( array ($provider, 'update' ), $dbh, $args, $this, $tablename, $primary_index, $params );
 				break;
 		
 		}
@@ -3505,7 +3647,7 @@ class core {
 			default :
 				$provider = $args ['connect_provider'];
 				$params = compact ( 'primary_name', 'primary_value', 'fieldname', 'valuename', 'paramvars' );
-				$result = call_user_func ( array ('db_' . $provider, 'delete' ), $dbh, $args, $this, $tablename, $primary_index, $params );
+				$result = call_user_func ( array ($provider, 'delete' ), $dbh, $args, $this, $tablename, $primary_index, $params );
 				break;
 		
 		}
@@ -3605,7 +3747,7 @@ class core {
 			default :
 				$provider = $args ['connect_provider'];
 				$params = compact ( 'primary_name', 'primary_value', 'fieldname', 'valuename', 'paramvars' );
-				$result = call_user_func ( array ('db_' . $provider, 'replace' ), $dbh, $args, $this, $tablename, $primary_index, $params );
+				$result = call_user_func ( array ($provider, 'replace' ), $dbh, $args, $this, $tablename, $primary_index, $params );
 				break;
 		
 		}
