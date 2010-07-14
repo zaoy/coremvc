@@ -2,7 +2,7 @@
 
 CoreMVC是PHP的一款小巧精致的MVC框架。
 
-2010年6月26日
+2010年7月14日
 
 〖版权说明〗
 
@@ -11,7 +11,7 @@ CoreMVC遵从new BSD许可证，所以您可以在法律允许的范围以内任
 /**
  * CoreMVC核心模块
  * 
- * @version 1.1.0 alpha 10
+ * @version 1.1.0 alpha 11
  * @author Z <602000@gmail.com>
  * @link http://code.google.com/p/coremvc/
  */
@@ -160,6 +160,14 @@ core/					扩展目录，CoreMVC扩展目录，可删除。
 　│
 　├─　Zend/				类库扩展，Zend类库。
 　│
+　├─　PHPMailer.php			类库扩展，PHPMailer自动载入程序。
+　│
+　├─　PHPMailer/			类库扩展，PHPMailer类库。
+　│
+　├─　PHPCharts.php			类库扩展，PHPCharts自动载入程序。
+　│
+　├─　PHPCharts/			类库扩展，PHPCharts类库。
+　│
 　└─　.htaccess			配置文件，用于Apache服务器的访问限制。
 
 readme.txt				说明文档，CoreMVC的产品说明和简易教程，可删除。
@@ -171,17 +179,19 @@ tests/					测试目录，对核心程序进行单元测试的目录，可删除
 
 模型扩展
 pdo5		需开启相关的pdo扩展
-adodb5		需自行下载相关类库到adodb5文件夹
+adodb5		需自行下载相关类库到扩展目录的adodb5目录
 adodb5zip
 
 视图扩展
-smarty2		需自行下载相关类库(libs)到smarty2文件夹
+smarty2		需自行下载相关类库(libs目录下)到扩展目录的smarty2目录
 smarty2zip
-smarty3		需自行下载相关类库(libs)到smarty3文件夹
+smarty3		需自行下载相关类库(libs目录下)到扩展目录的smarty3目录
 
 类库扩展（其他扩展还在测试）
-Zend		需自行下载相关类库(library/Zend)到Zend文件夹
-PHPExcel	需自行下载相关类库(Classes)到当前文件夹
+Zend		需自行下载相关类库(library目录下)到扩展目录
+PHPExcel	需自行下载相关类库(Classes目录下)到扩展目录
+PHPMailler	需自行下载相关类库(3个类文件)到扩展目录的PHPMailer目录
+PHPCharts	需自行下载相关类库(class目录下和整个font目录)到扩展目录的PHPCharts目录
 
 
 〖框架结构〗

@@ -40,6 +40,8 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		$this->lib_arr = array(
 			//'Zend' => array('Zend_Acl'),
 			//'PHPExcel' =>  array('PHPExcel_Reader_Excel2007'),
+			//'PHPMailer' =>  array('PHPMailer','SMTP','POP3'),
+			//'PHPCharts' =>  array('Axis','GridChart'),
 		);
 		$this->log_file = 'tmp.log';
 	
@@ -296,10 +298,10 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		$this->assertSame(dirname(__FILE__).'/main_2_2.php',core::main('require','@tests/main_2_2.php'));
 		$this->assertFalse(core::main('require','@tests/main_2_2_a.php'));
 		$this->assertSame('main_2_2',core::main('module','@tests/main_2_2.php','main_2_2'));
-		$this->assertFalse(core::main('module','@tests/main_2_2_a.php'));
+		$this->assertFalse(core::main('module','@tests/main_2_2_a.php','xxx'));
 		$this->assertFalse(core::main('module','@tests/main_2_2.php','main_2_2_a'));
 		$this->assertSame('test_2_2',core::main('action','@tests/main_2_2.php','main_2_2','test_2_2'));
-		$this->assertFalse(core::main('action','@tests/main_2_2_a.php'));
+		$this->assertFalse(core::main('action','@tests/main_2_2_a.php','xxx'));
 		$this->assertFalse(core::main('action','@tests/main_2_2.php','main_2_2_a'));
 		$this->assertFalse(core::main('action','@tests/main_2_2.php','main_2_2','test_2_2_a'));
 		$this->assertEquals(array('main_2_2','test_2_2'),core::main('module,action','@tests/main_2_2.php','main_2_2','test_2_2'));
@@ -312,6 +314,19 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		ob_start();
 		$this->assertTrue(core::main('manual','@tests/main_2_2.php','main_2_2','test_2_2'));
 		$this->assertSame('main_2_2_a', ob_get_clean());
+		ob_start();
+		$this->assertTrue(core::main('manual','@tests/main_2_2.php','main_2_2','[do]|test_2_2'));
+		$this->assertSame('main_2_2_a', ob_get_clean());
+		ob_start();
+		$this->assertTrue(core::main('manual','@tests/main_2_2.php','[go]|main_2_2','[do]|test_2_2'));
+		$this->assertSame('main_2_2_a', ob_get_clean());
+		ob_start();
+		$this->assertTrue(core::main('manual','@tests/[go].php|@tests/[go].php','[go]|main_2_2','[do]|test_2_2'));
+		$this->assertSame('main_2_2_a', ob_get_clean());
+		$this->assertFalse(core::main('module,action','@tests/main_2_2.php','main_2_2',''));
+		$this->assertSame('main',core::main('action','@tests/main_2_5.php','main_2_5',''));
+		$this->assertSame('updates',core::main('action','@tests/main_2_5.php','main_2_5','updates'));
+		$this->assertFalse(core::main('action','@tests/main_2_5.php','main_2_5','updates^{self}'));
 		//恢复原来值
 		core::main(array(
 			'framework_enable'=>'',
@@ -502,8 +517,7 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			}
 			core::path(array('extension_enable'=>$provider));
 			for($i=0;$i<count($lib_arr);$i++){
-				new $lib_arr[$i];
-				$this->assertTrue(class_exists($lib_arr[$i],false));
+				$this->assertTrue(class_exists($lib_arr[$i]));
 			}
 			core::path(array('extension_enable'=>''));
 		}

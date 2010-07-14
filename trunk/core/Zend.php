@@ -14,7 +14,7 @@ function Zend_autoload ( $name ) {
 	if ( strncmp($name,'Zend_',5)!==0 ) {
 		return false;
 	}
-	$file = dirname(__FILE__) . '/'. '/'.str_replace('_', '/', $name) . '.php';
+	$file = dirname(__FILE__) . '/'. str_replace('_', '/', $name) . '.php';
 	if ( !is_file($file) ) {
 		return false;
 	}
