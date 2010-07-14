@@ -2,7 +2,7 @@
 /**
  * CoreMVC核心模块
  * 
- * @version 1.1.0 alpha 10
+ * @version 1.1.0 alpha 11
  * @author Z <602000@gmail.com>
  * @link http://code.google.com/p/coremvc/
  */
@@ -144,6 +144,7 @@ class core {
 	 *const path_extension_enable = true; //扩展目录加入到include_path。
 	 *const path_extension_enable = 'Zend'; //扩展目录加入到include_path，并自动执行Zend.php
 	 *const path_extension_enable = 'Zend,Symfony'; //扩展目录加入到include_path，并自动执行Zend.php和Symfony.php
+	 *const path_extension_enable = 'all-in-one'; //扩展目录加入到include_path，并自动执行all-in-one.php
 	 * </code>
 	 */
 	const path_extension_enable = '';
@@ -620,17 +621,17 @@ class core {
 			}
 			return $static_config;
 		}
-		isset ( $framework_enable ) and $static_config ['framework_enable'] = $framework_enable;
-		isset ( $framework_require ) and $static_config ['framework_require'] = $framework_require;
-		isset ( $framework_module ) and $static_config ['framework_module'] = $framework_module;
-		isset ( $framework_action ) and $static_config ['framework_action'] = $framework_action;
+		isset ( $framework_enable ) or $framework_enable = $static_config ['framework_enable'];
+		isset ( $framework_require ) or $framework_require = $static_config ['framework_require'];
+		isset ( $framework_module ) or $framework_module = $static_config ['framework_module'];
+		isset ( $framework_action ) or $framework_action = $static_config ['framework_action'];
 		
 		// 【基础功能】使用框架功能
-		while ( $static_config ['framework_enable'] ) {
+		while ( $framework_enable ) {
 			// 1. 默认
-			$require = $static_config ['framework_require'];
-			$module = $static_config ['framework_module'] === '' ? '{static}|[f:1]!{self}' : $static_config ['framework_module'];
-			$action = $static_config ['framework_action'] === '' ? '[do]!main' : $static_config ['framework_action'];
+			$require = $framework_require;
+			$module = $framework_module === '' ? '{static}|[f:1]!{self}' : $framework_module;
+			$action = $framework_action === '' ? '[do]|main^{self}' : $framework_action;
 			// 2. 数组
 			if (strpos ( $require, '[f:' ) !== false || strpos ( $module, '[f:' ) !== false || strpos ( $action, '[f:' ) !== false) {
 				foreach ( debug_backtrace ( false ) as $row ) {
@@ -655,7 +656,7 @@ class core {
 				}
 				array_unshift ( $path_array, null );
 			}
-			$return_false = in_array ( $static_config ['framework_enable'], array ('require', 'module', 'action', 'module,action', 'manual', 'return' ), true );
+			$return_false = in_array ( $framework_enable, array ('require', 'module', 'action', 'module,action' , 'manual', 'return' ), true );
 			// 3. 引用
 			if ($require != '') {
 				$result = '';
@@ -679,48 +680,71 @@ class core {
 						if (isset ( $file_array [$sub] )) {
 							$str = $file_array [$sub];
 						} else {
-							if ($return_false) {
-								return false;
-							}
-							break 2;
+							$str = '';
 						}
 					} elseif (strncmp ( $tok, 'p:', 2 ) == 0) {
 						$sub = substr ( $tok, 2 );
 						if (isset ( $path_array [$sub] )) {
-							$str = $path_array [$str];
+							$str = $path_array [$sub];
 						} else {
-							if ($return_false) {
-								return false;
-							}
-							break 2;
+							$str = '';
 						}
 					} else {
 						$sub = $tok;
 						if (isset ( $_GET [$sub] )) {
 							$str = $_GET [$sub];
 						} else {
-							if ($return_false) {
-								return false;
-							}
-							break 2;
+							$str = '';
 						}
 					}
-					if (preg_match ( '/^[a-zA-Z0-9_\x7f-\xff]+$/', $str ) === false)
-						break 2;
+					if (preg_match ( '/^[a-zA-Z0-9_\x7f-\xff]+$/', $str ) === false) {
+						$str = '';
+					}
 					$result .= $str;
 				}
-				$result = self::path ( $result );
-				if (! is_file ( $result )) {
-					if ($return_false) {
-						return false;
-					}
-					break;
-				} else {
-					if ($static_config ['framework_enable'] === 'require') {
-						return $result;
+				if (strpos ( $result, '{self}' ) !== false) {
+					$result = str_replace ( '{self}', __CLASS__, $result );
+				}
+				if (strpos ( $result, '{static}' ) !== false) {
+					if (function_exists ( 'get_called_class' )) {
+						$result = str_replace ( '{static}', get_called_class (), $result );
+					} else {
+						$result = str_replace ( '{static}', '', $result );
 					}
 				}
-				require_once $result;
+				$require_not = explode ( '!', $result );
+				$require_arr = explode ( '|', array_shift ( $require_not ) );
+				$require_now = '';
+				foreach ( $require_arr as $require_name ) {
+					if ($require_name === '') {
+						continue;
+					}
+					if (in_array ( $require_name, $require_not )) {
+						continue;
+					}
+					$require_name = self::path ( $require_name );
+					if (is_file ( $require_name )) {
+						$require_now = $require_name;
+						break;
+					}
+				}
+				if ($framework_enable === 'require') {
+					if ($require_now === '') {
+						return false;
+					} else {
+						return $require_now;
+					}
+				}
+				if ($require_now === '') {
+					$require_now = false;
+				} else {
+					require_once $require_name;
+				}
+			} else {
+				if ($framework_enable === 'require') {
+					return false;
+				}
+				$require_now = false;
 			}
 			// 4. 模块
 			$result = '';
@@ -744,34 +768,26 @@ class core {
 					if (isset ( $file_array [$sub] )) {
 						$str = $file_array [$sub];
 					} else {
-						if ($return_false) {
-							return false;
-						}
-						break 2;
+						$str = '';
 					}
 				} elseif (strncmp ( $tok, 'p:', 2 ) == 0) {
 					$sub = substr ( $tok, 2 );
 					if (isset ( $path_array [$sub] )) {
-						$str = $path_array [$str];
+						$str = $path_array [$sub];
 					} else {
-						if ($return_false) {
-							return false;
-						}
-						break 2;
+						$str = '';
 					}
 				} else {
 					$sub = $tok;
 					if (isset ( $_GET [$sub] )) {
 						$str = $_GET [$sub];
 					} else {
-						if ($return_false) {
-							return false;
-						}
-						break 2;
+						$str = '';
 					}
 				}
-				if (preg_match ( '/^[a-zA-Z0-9_\x7f-\xff]+$/', $str ) === false)
-					break 2;
+				if (preg_match ( '/^[a-zA-Z0-9_\x7f-\xff]+$/', $str ) === false) {
+					$str = '';
+				}
 				$result .= $str;
 			}
 			if (strpos ( $result, '{self}' ) !== false) {
@@ -788,6 +804,9 @@ class core {
 			$module_arr = explode ( '|', array_shift ( $module_not ) );
 			$module_now = '';
 			foreach ( $module_arr as $module_name ) {
+				if ($module_name === '') {
+					continue;
+				}
 				if (in_array ( $module_name, $module_not )) {
 					continue;
 				}
@@ -814,7 +833,7 @@ class core {
 				}
 				break;
 			} else {
-				if ($static_config ['framework_enable'] === 'module') {
+				if ($framework_enable === 'module') {
 					return $module_now;
 				}
 			}
@@ -840,44 +859,47 @@ class core {
 					if (isset ( $file_array [$sub] )) {
 						$str = $file_array [$sub];
 					} else {
-						if ($return_false) {
-							return false;
-						}
-						break 2;
+						$str = '';
 					}
 				} elseif (strncmp ( $tok, 'p:', 2 ) == 0) {
 					$sub = substr ( $tok, 2 );
 					if (isset ( $path_array [$sub] )) {
-						$str = $path_array [$str];
+						$str = $path_array [$sub];
 					} else {
-						if ($return_false) {
-							return false;
-						}
-						break 2;
+						$str = '';
 					}
 				} else {
 					$sub = $tok;
 					if (isset ( $_GET [$sub] )) {
 						$str = $_GET [$sub];
 					} else {
-						if ($return_false) {
-							return false;
-						}
-						break 2;
+						$str = '';
 					}
 				}
 				if (preg_match ( '/^[a-zA-Z0-9_\x7f-\xff]+$/', $str ) === false) {
-					if ($return_false) {
-						return false;
-					}
-					break 2;
+					$str = '';
 				}
 				$result .= $str;
 			}
-			$action_not = explode ( '!', $result );
+			if (strpos ( $result, '{self}' ) !== false) {
+				$result = str_replace ( '{self}', __CLASS__, $result );
+			}
+			if (strpos ( $result, '{static}' ) !== false) {
+				if (function_exists ( 'get_called_class' )) {
+					$result = str_replace ( '{static}', get_called_class (), $result );
+				} else {
+					$result = str_replace ( '{static}', '', $result );
+				}
+			}
+			$module_not = explode ( '^', $result );
+			$module_arr = explode ( '&', array_shift ( $module_not ) );
+			$action_not = explode ( '!', array_shift ( $module_arr ) );
 			$action_arr = explode ( '|', array_shift ( $action_not ) );
 			$action_now = '';
 			foreach ( $action_arr as $action_name ) {
+				if ($action_name === '') {
+					continue;
+				}
 				if (in_array ( $action_name, $action_not )) {
 					continue;
 				}
@@ -885,10 +907,21 @@ class core {
 					continue;
 				}
 				$method = new ReflectionMethod ( $module_now, $action_name );
-				if ($method->isStatic () && $method->isPublic ()) {
-					$action_now = $action_name;
-					break;
+				if (! $method->isStatic () ) {
+					continue;
 				}
+				if (! $method->isPublic () ) {
+					continue;
+				}
+				$classname = $method->getDeclaringClass()->getName();
+				if ($module_arr && !in_array($classname,$module_arr) ) {
+					continue;
+				}
+				if ($module_not && in_array($classname,$module_not) ) {
+					continue;
+				}
+				$action_now = $action_name;
+				break;
 			}
 			if ($action_now === '') {
 				if ($return_false) {
@@ -896,14 +929,14 @@ class core {
 				}
 				break;
 			} else {
-				if ($static_config ['framework_enable'] === 'action') {
+				if ($framework_enable === 'action') {
 					return $action_now;
-				} elseif ($static_config ['framework_enable'] === 'module,action') {
+				} elseif ($framework_enable === 'module,action') {
 					return array ($module_now, $action_now );
 				}
 			}
 			// 6. 执行
-			if ($static_config ['framework_enable'] === 'return') {
+			if ($framework_enable === 'return') {
 				return call_user_func ( array ($module_now, $action_now ) );
 			} else {
 				call_user_func ( array ($module_now, $action_now ) );
@@ -912,7 +945,7 @@ class core {
 		}
 		
 		// 【基础功能】模拟文件隐藏效果
-		if ($static_config ['framework_enable'] !== 'manual') {
+		if ($framework_enable !== 'manual') {
 			if (PHP_SAPI == 'cli') {
 				echo ('Could not open input file: ' . basename ( $_SERVER ['SCRIPT_FILENAME'] ) . PHP_EOL);
 			} else {
