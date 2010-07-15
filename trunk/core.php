@@ -2,7 +2,7 @@
 /**
  * CoreMVC核心模块
  * 
- * @version 1.1.0 alpha 11
+ * @version 1.1.0 alpha 12
  * @author Z <602000@gmail.com>
  * @link http://code.google.com/p/coremvc/
  */
@@ -76,9 +76,9 @@ class core {
 	const stub_autoload_prepend = '';
 	
 	/**
-	 * 使用框架开关
+	 * 框架控制开关
 	 *
-	 * + 作用：使用框架功能是否打开。
+	 * + 作用：框架控制功能是否打开。
 	 * + 定义：该值范围为逻辑值或空串。
 	 * <code>
 	 *const main_framework_enable = ''; //默认关闭
@@ -94,45 +94,57 @@ class core {
 	const main_framework_enable = '';
 	
 	/**
-	 *  使用框架的包含文件
+	 *  框架控制的包含文件
 	 *
-	 * + 作用：设置使用框架的包含文件。
+	 * + 作用：设置框架控制的包含文件。
 	 * + 定义：该值范围为字符串或空串。
 	 * <code>
 	 *const main_framework_require = ''; //默认不包含文件，注意包含文件里不能有“|”和“!”
 	 *const main_framework_require = '@module/[go].php'; //包含相对核心文件路径的module/[go].php参数文件名
 	 *const main_framework_require = '[go]/[to].php'; //包含相对路径的[go]/[to].php文件名
-	 *const main_framework_require = '/module/[p:2]/[p:1].php'; //包含绝对路径的/module/[p:2]/[p:1].php文件
+	 *const main_framework_require = '/module/[path:1]/[path:2].php'; //包含绝对路径的/module/[path:1]/[path:2].php文件
 	 * </code>
 	 */
 	const main_framework_require = '';
 	
 	/**
-	 * 使用框架的模块参数
+	 * 框架控制的模块参数
 	 *
-	 * + 作用：设置使用框架的模块参数。
+	 * + 作用：设置框架控制的模块参数。
 	 * + 定义：该值范围为字符串或空串。
 	 * <code>
-	 *const main_framework_module = ''; //默认为'{static}|[f:1]!{self}'，'{static}'仅PHP5.3支持，[f:n]表示调用main的程序文件从右数起第n个名称
-	 *const main_framework_module = '[go]!{self}'; //[go]表示GET参数，当前类被排除在外
+	 *const main_framework_module = ''; //默认为'(static)|[file:1]!(self)'，'(static)'仅PHP5.3支持，[file:n]表示调用main的程序文件从右数起第n个名称
+	 *const main_framework_module = '[go]!(self)'; //[go]表示GET参数，当前类被排除在外
 	 *const main_framework_module = 'project\[go]|project\index'; //project命名空间加首字母大写的go参数为模块类，未找到则用project\index类，
-	 *const main_framework_module = '[p:3]\[p:2]|project\index'; //PATH_INFO前两位为模块类，未找到则用project\index类，
+	 *const main_framework_module = '[path:1]\[path:2]|project\index'; //PATH_INFO前两位为模块类，未找到则用project\index类，
 	 * </code>
 	 */
 	const main_framework_module = '';
 	
 	/**
-	 * 使用框架的行为参数
+	 * 框架控制的动作参数
 	 *
-	 * + 作用：设置使用框架的行为参数。
+	 * + 作用：设置框架控制的动作参数。
 	 * + 定义：该值范围为字符串或空串。
 	 * <code>
-	 *const main_framework_action = ''; //默认为'[do]!main'
-	 *const main_framework_action = '[do]|default'; //do参数为行为方法，未找到则用default，注意行为只能是静态方法
-	 *const main_framework_action = '[p:1]|default!main![p:2]'; //PATH_INFO右边第一个为行为方法，未找到则用default，main和[p:2]方法排除在外
+	 *const main_framework_action = ''; //默认为'[get:1]|index^(self)',[get:n]表示第n个$_GET值，&表示所属模块只能在此列的，^表示所属模块不能在此列的。
+	 *const main_framework_action = '[do]|default'; //do参数为行为方法，未找到则用default，默认时是静态方法
+	 *const main_framework_action = '[path:1]|default!main![path:2]'; //PATH_INFO左边第一个为动作方法，未找到则用default，main和[path:2]方法排除在外
 	 * </code>
 	 */
 	const main_framework_action = '';
+	
+	/**
+	 * 框架控制的传参参数
+	 *
+	 * + 作用：设置框架控制的传参参数。
+	 * + 定义：该值范围为字符串或空串。
+	 * <code>
+	 *const main_framework_parameter = ''; //默认为空，即不传参数
+	 *const main_framework_parameter = '[id]|0'; //id参数传入，默认为0
+	 * </code>
+	 */
+	const main_framework_parameter = '';
 	
 	/**
 	 * 扩展类库开关
@@ -583,6 +595,7 @@ class core {
 				case 'require' :
 				case 'include_once' :
 				case 'require_once' :
+				case 'spl_autoload_call' :
 					return false;
 			}
 		}
@@ -604,16 +617,20 @@ class core {
 	 * @param string $framework_require
 	 * @param string $framework_mdoule
 	 * @param string $framework_action
+	 * @param string $framework_parameter
 	 * @return bool
 	 */
-	static public function main($framework_enable = null, $framework_require = null, $framework_module = null, $framework_action = null) {
+	static public function main($framework_enable = null, $framework_require = null, $framework_module = null, $framework_action = null, $framework_parameter = null) {
 		
 		// 【基础功能】设置入口参数
 		static $static_config = null;
 		if ($static_config === null) {
 			$static_config = self::init ( - 3 );
-			$static_config = array ('framework_enable' => $static_config ['framework_enable'], 'framework_require' => $static_config ['framework_require'], 
-					'framework_module' => $static_config ['framework_module'], 'framework_action' => $static_config ['framework_action'] );
+			$static_config = array ('framework_enable' => $static_config ['framework_enable'], 
+					'framework_require' => $static_config ['framework_require'], 
+					'framework_module' => $static_config ['framework_module'], 
+					'framework_action' => $static_config ['framework_action'], 
+					'framework_parameter' => $static_config ['framework_parameter'] );
 		}
 		if (is_array ( $framework_enable )) {
 			foreach ( $static_config as $key => $value ) {
@@ -625,76 +642,127 @@ class core {
 		isset ( $framework_require ) or $framework_require = $static_config ['framework_require'];
 		isset ( $framework_module ) or $framework_module = $static_config ['framework_module'];
 		isset ( $framework_action ) or $framework_action = $static_config ['framework_action'];
+		isset ( $framework_parameter ) or $framework_parameter = $static_config ['framework_parameter'];
+		$return_array = is_bool($framework_enable)||$framework_enable===''?array ():explode (',',$framework_enable);
 		
 		// 【基础功能】使用框架功能
 		while ( $framework_enable ) {
 			// 1. 默认
 			$require = $framework_require;
-			$module = $framework_module === '' ? '{static}|[f:1]!{self}' : $framework_module;
-			$action = $framework_action === '' ? '[do]|main^{self}' : $framework_action;
+			$module = $framework_module === '' ? '(static)|[file:1]!(self)' : $framework_module;
+			$action = $framework_action === '' ? '[get:1]|index^(self)' : $framework_action;
+			$parameter = $framework_parameter;
+			$string = $require . ' ' . $module . ' ' . $action . ' ';
+			$string.= is_array($parameter)?implode(' ',$parameter):$parameter;
 			// 2. 数组
-			if (strpos ( $require, '[f:' ) !== false || strpos ( $module, '[f:' ) !== false || strpos ( $action, '[f:' ) !== false) {
+			if (stripos ( $string, '[get:' ) !== false) {
+				$get_array = array_values($_GET);
+				array_unshift ( $get_array, null);
+			}
+			if (stripos ( $string, '[post:' ) !== false) {
+				$post_array = array_values($_POST);
+				array_unshift ( $post_array, null);
+			}
+			if (stripos ( $string, '[query:' ) !== false) {
+				$query_array = array ();
+				if (isset ( $_SERVER ['QUERY_STRING'] )) {
+					$query_string = $_SERVER['QUERY_STRING'];
+					$query_array = explode('&',$query_string);
+					array_unshift ( $query_array, $query_string );
+				}
+			}
+			if (stripos ( $string, '[path:' ) !== false) {
+				$path_array = array ();
+				if (isset ( $_SERVER ['PATH_INFO'] )) {
+					$path_info = trim($_SERVER ['PATH_INFO'],'/');
+					$path_array [] = $path_info;
+					$tok = strtok ( $path_info, '/' );
+					while ( $tok !== false ) {
+						$path_array [] = $tok;
+						$tok = strtok ( '/' );
+					}
+				}
+			}
+			if (stripos ( $string, '[file:' ) !== false) {
+				$file_array = array ();
 				foreach ( debug_backtrace ( false ) as $row ) {
-					$file_array = array ();
 					strtok ( $row ['file'], '/\\' );
 					while ( ($tok = strtok ( '/\\' )) !== false ) {
 						array_unshift ( $file_array, $tok );
 					}
 					$file_array [0] = strtok ( $file_array [0], '.' );
+					array_unshift ( $file_array, strtok ( '.' ) );
 					break;
 				}
-				array_unshift ( $file_array, null );
 			}
-			if (strpos ( $require, '[p:' ) !== false || strpos ( $module, '[p:' ) !== false || strpos ( $action, '[p:' ) !== false) {
-				$path_array = array ();
-				if (isset ( $_SERVER ['PATH_INFO'] )) {
-					$tok = strtok ( $_SERVER ['PATH_INFO'], '/\\' );
-					while ( $tok !== false ) {
-						array_unshift ( $path_array, $tok );
-						$tok = strtok ( '/\\' );
-					}
-				}
-				array_unshift ( $path_array, null );
-			}
-			$return_false = in_array ( $framework_enable, array ('require', 'module', 'action', 'module,action' , 'manual', 'return' ), true );
 			// 3. 引用
 			if ($require != '') {
+				$reason = $require;
 				$result = '';
 				$pos1 = 0;
 				while ( true ) {
-					$pos2 = strpos ( $require, '[', $pos1 );
+					$pos2 = strpos ( $reason, '[', $pos1 );
 					if ($pos2 === false) {
-						$result .= substr ( $require, $pos1 );
+						$result .= substr ( $reason, $pos1 );
 						break;
 					}
-					$result .= substr ( $require, $pos1, $pos2 - $pos1 );
+					$result .= substr ( $reason, $pos1, $pos2 - $pos1 );
 					$pos1 = $pos2 + 1;
-					$pos2 = strpos ( $require, ']', $pos1 );
+					$pos2 = strpos ( $reason, ']', $pos1 );
 					if ($pos2 === false) {
 						break;
 					}
-					$tok = substr ( $require, $pos1, $pos2 - $pos1 );
+					$tok = substr ( $reason, $pos1, $pos2 - $pos1 );
 					$pos1 = $pos2 + 1;
-					if (strncmp ( $tok, 'f:', 2 ) == 0) {
-						$sub = substr ( $tok, 2 );
-						if (isset ( $file_array [$sub] )) {
-							$str = $file_array [$sub];
-						} else {
-							$str = '';
-						}
-					} elseif (strncmp ( $tok, 'p:', 2 ) == 0) {
-						$sub = substr ( $tok, 2 );
-						if (isset ( $path_array [$sub] )) {
-							$str = $path_array [$sub];
-						} else {
-							$str = '';
-						}
+					if (strpos ( $tok, ':' ) === false) {
+						$str = isset ( $_GET [$tok] ) ? $_GET [$tok] : '';
 					} else {
-						$sub = $tok;
-						if (isset ( $_GET [$sub] )) {
-							$str = $_GET [$sub];
-						} else {
-							$str = '';
+						list ( $key, $sub ) = explode ( ':', $tok );
+						$key_lower = strtolower($key);
+						$key_upper = strtoupper($key);
+						$key_ucfirst = ucfirst($key_lower);
+						$key_lcfirst = $key_upper;
+						if ( strlen($key_lcfirst) > 0 ) {
+							$key_lcfirst[0] = strtolower($key_lcfirst[0]);
+						}
+						switch ($key_lower){
+							case 'get':
+								$str = isset ( $get_array [$sub] ) ? $get_array [$sub] : '';
+								break;
+							case 'post':
+								$str = isset ( $post_array [$sub] ) ? $post_array [$sub] : '';
+								break;
+							case 'query':
+								$str = isset ( $query_array [$sub] ) ? $query_array [$sub] : '';
+								break;
+							case 'path':
+								$str = isset ( $path_array [$sub] ) ? $path_array [$sub] : '';
+								break;
+							case 'file':
+								$str = isset ( $file_array [$sub] ) ? $file_array [$sub] : '';
+								break;
+							default:
+								$str = '';
+								break;
+						}
+						switch ($key) {
+							case $key_lower:
+								break;
+							case $key_upper:
+								$str = strtoupper($str);
+								break;
+							case $key_ucfirst:
+								$str = ucfirst(strtolower($str));
+								break;
+							case $key_lcfirst:
+								$str = strtoupper($str);
+								if ( strlen($str) > 0 ) {
+									$str[0] = strtolower($str[0]);
+								}
+								break;
+							default:
+								$str = strtolower($str);
+								break;
 						}
 					}
 					if (preg_match ( '/^[a-zA-Z0-9_\x7f-\xff]+$/', $str ) === false) {
@@ -702,14 +770,42 @@ class core {
 					}
 					$result .= $str;
 				}
-				if (strpos ( $result, '{self}' ) !== false) {
-					$result = str_replace ( '{self}', __CLASS__, $result );
-				}
-				if (strpos ( $result, '{static}' ) !== false) {
-					if (function_exists ( 'get_called_class' )) {
-						$result = str_replace ( '{static}', get_called_class (), $result );
+				$reason = $result;
+				$result = '';
+				$pos1 = 0;
+				while ( true ) {
+					$pos2 = strpos ( $reason, '{', $pos1 );
+					if ($pos2 === false) {
+						$result .= substr ( $reason, $pos1 );
+						break;
+					}
+					$result .= substr ( $reason, $pos1, $pos2 - $pos1 );
+					$pos1 = $pos2 + 1;
+					$pos2 = strpos ( $reason, '}', $pos1 );
+					if ($pos2 === false) {
+						break;
+					}
+					$tok = substr ( $reason, $pos1, $pos2 - $pos1 );
+					$pos1 = $pos2 + 1;
+					$sub = $tok;
+					if (isset ( $_POST [$sub] )) {
+						$str = $_POST [$sub];
 					} else {
-						$result = str_replace ( '{static}', '', $result );
+						$str = '';
+					}
+					if (preg_match ( '/^[a-zA-Z0-9_\x7f-\xff]+$/', $str ) === false) {
+						$str = '';
+					}
+					$result .= $str;
+				}
+				if (strpos ( $result, '(self)' ) !== false) {
+					$result = str_replace ( '(self)', __CLASS__, $result );
+				}
+				if (strpos ( $result, '(static)' ) !== false) {
+					if (function_exists ( 'get_called_class' )) {
+						$result = str_replace ( '(static)', get_called_class (), $result );
+					} else {
+						$result = str_replace ( '(static)', '', $result );
 					}
 				}
 				$require_not = explode ( '!', $result );
@@ -728,61 +824,91 @@ class core {
 						break;
 					}
 				}
-				if ($framework_enable === 'require') {
-					if ($require_now === '') {
-						return false;
-					} else {
-						return $require_now;
-					}
-				}
 				if ($require_now === '') {
-					$require_now = false;
+					return false;
 				} else {
+					if ( in_array( 'require', $return_array ) ) {
+						if (! in_array( 'module', $return_array ) && ! in_array( 'action', $return_array ) ) {
+							return $require_now;
+						}
+					}
 					require_once $require_name;
 				}
 			} else {
-				if ($framework_enable === 'require') {
-					return false;
+				if ( in_array( 'require', $return_array ) ) {
+					if (! in_array( 'module', $return_array ) && ! in_array( 'action', $return_array ) ) {
+						return '';
+					}
 				}
-				$require_now = false;
+				$require_now = '';
 			}
 			// 4. 模块
+			$reason = $module;
 			$result = '';
 			$pos1 = 0;
 			while ( true ) {
-				$pos2 = strpos ( $module, '[', $pos1 );
+				$pos2 = strpos ( $reason, '[', $pos1 );
 				if ($pos2 === false) {
-					$result .= substr ( $module, $pos1 );
+					$result .= substr ( $reason, $pos1 );
 					break;
 				}
-				$result .= substr ( $module, $pos1, $pos2 - $pos1 );
+				$result .= substr ( $reason, $pos1, $pos2 - $pos1 );
 				$pos1 = $pos2 + 1;
-				$pos2 = strpos ( $module, ']', $pos1 );
+				$pos2 = strpos ( $reason, ']', $pos1 );
 				if ($pos2 === false) {
 					break;
 				}
-				$tok = substr ( $module, $pos1, $pos2 - $pos1 );
+				$tok = substr ( $reason, $pos1, $pos2 - $pos1 );
 				$pos1 = $pos2 + 1;
-				if (strncmp ( $tok, 'f:', 2 ) == 0) {
-					$sub = substr ( $tok, 2 );
-					if (isset ( $file_array [$sub] )) {
-						$str = $file_array [$sub];
-					} else {
-						$str = '';
-					}
-				} elseif (strncmp ( $tok, 'p:', 2 ) == 0) {
-					$sub = substr ( $tok, 2 );
-					if (isset ( $path_array [$sub] )) {
-						$str = $path_array [$sub];
-					} else {
-						$str = '';
-					}
+				if (strpos ( $tok, ':' ) === false) {
+					$str = isset ( $_GET [$tok] ) ? $_GET [$tok] : '';
 				} else {
-					$sub = $tok;
-					if (isset ( $_GET [$sub] )) {
-						$str = $_GET [$sub];
-					} else {
-						$str = '';
+					list ( $key, $sub ) = explode ( ':', $tok );
+					$key_lower = strtolower($key);
+					$key_upper = strtoupper($key);
+					$key_ucfirst = ucfirst($key_lower);
+					$key_lcfirst = $key_upper;
+					if ( strlen($key_lcfirst) > 0 ) {
+						$key_lcfirst[0] = strtolower($key_lcfirst[0]);
+					}
+					switch ($key_lower){
+						case 'get':
+							$str = isset ( $get_array [$sub] ) ? $get_array [$sub] : '';
+							break;
+						case 'post':
+							$str = isset ( $post_array [$sub] ) ? $post_array [$sub] : '';
+							break;
+						case 'query':
+							$str = isset ( $query_array [$sub] ) ? $query_array [$sub] : '';
+							break;
+						case 'path':
+							$str = isset ( $path_array [$sub] ) ? $path_array [$sub] : '';
+							break;
+						case 'file':
+							$str = isset ( $file_array [$sub] ) ? $file_array [$sub] : '';
+							break;
+						default:
+							$str = '';
+							break;
+					}
+					switch ($key) {
+						case $key_lower:
+							break;
+						case $key_upper:
+							$str = strtoupper($str);
+							break;
+						case $key_ucfirst:
+							$str = ucfirst(strtolower($str));
+							break;
+						case $key_lcfirst:
+							$str = strtoupper($str);
+							if ( strlen($str) > 0 ) {
+								$str[0] = strtolower($str[0]);
+							}
+							break;
+						default:
+							$str = strtolower($str);
+							break;
 					}
 				}
 				if (preg_match ( '/^[a-zA-Z0-9_\x7f-\xff]+$/', $str ) === false) {
@@ -790,14 +916,42 @@ class core {
 				}
 				$result .= $str;
 			}
-			if (strpos ( $result, '{self}' ) !== false) {
-				$result = str_replace ( '{self}', __CLASS__, $result );
-			}
-			if (strpos ( $result, '{static}' ) !== false) {
-				if (function_exists ( 'get_called_class' )) {
-					$result = str_replace ( '{static}', get_called_class (), $result );
+			$reason = $result;
+			$result = '';
+			$pos1 = 0;
+			while ( true ) {
+				$pos2 = strpos ( $reason, '{', $pos1 );
+				if ($pos2 === false) {
+					$result .= substr ( $reason, $pos1 );
+					break;
+				}
+				$result .= substr ( $reason, $pos1, $pos2 - $pos1 );
+				$pos1 = $pos2 + 1;
+				$pos2 = strpos ( $reason, '}', $pos1 );
+				if ($pos2 === false) {
+					break;
+				}
+				$tok = substr ( $reason, $pos1, $pos2 - $pos1 );
+				$pos1 = $pos2 + 1;
+				$sub = $tok;
+				if (isset ( $_POST [$sub] )) {
+					$str = $_POST [$sub];
 				} else {
-					$result = str_replace ( '{static}', '', $result );
+					$str = '';
+				}
+				if (preg_match ( '/^[a-zA-Z0-9_\x7f-\xff]+$/', $str ) === false) {
+					$str = '';
+				}
+				$result .= $str;
+			}
+			if (strpos ( $result, '(self)' ) !== false) {
+				$result = str_replace ( '(self)', __CLASS__, $result );
+			}
+			if (strpos ( $result, '(static)' ) !== false) {
+				if (function_exists ( 'get_called_class' )) {
+					$result = str_replace ( '(static)', get_called_class (), $result );
+				} else {
+					$result = str_replace ( '(static)', '', $result );
 				}
 			}
 			$module_not = explode ( '!', $result );
@@ -822,58 +976,95 @@ class core {
 					continue;
 				}
 				$class = new ReflectionClass ( $module_name );
-				if ($class->isUserDefined ()) {
-					$module_now = $module_name;
-					break;
+				if ( $class->isInternal () || $class->isAbstract () || $class->isInterface () ) {
+					continue;
 				}
+				$module_now = $module_name;
+				break;
 			}
 			if ($module_now === '') {
-				if ($return_false) {
+				if ( $return_array !== array() ) {
 					return false;
 				}
 				break;
 			} else {
-				if ($framework_enable === 'module') {
-					return $module_now;
+				if ( in_array( 'module', $return_array ) ) {
+					if (! in_array( 'action', $return_array ) ) {
+						if ( in_array( 'require', $return_array ) ) {
+							return array ($require_now, $module_now );
+						} else {
+							return $module_now;
+						}
+					}
 				}
 			}
 			// 5. 动作
+			$reason = $action;
 			$result = '';
 			$pos1 = 0;
 			while ( true ) {
-				$pos2 = strpos ( $action, '[', $pos1 );
+				$pos2 = strpos ( $reason, '[', $pos1 );
 				if ($pos2 === false) {
-					$result .= substr ( $action, $pos1 );
+					$result .= substr ( $reason, $pos1 );
 					break;
 				}
-				$result .= substr ( $action, $pos1, $pos2 - $pos1 );
+				$result .= substr ( $reason, $pos1, $pos2 - $pos1 );
 				$pos1 = $pos2 + 1;
-				$pos2 = strpos ( $action, ']', $pos1 );
+				$pos2 = strpos ( $reason, ']', $pos1 );
 				if ($pos2 === false) {
 					break;
 				}
-				$tok = substr ( $action, $pos1, $pos2 - $pos1 );
+				$tok = substr ( $reason, $pos1, $pos2 - $pos1 );
 				$pos1 = $pos2 + 1;
-				if (strncmp ( $tok, 'f:', 2 ) == 0) {
-					$sub = substr ( $tok, 2 );
-					if (isset ( $file_array [$sub] )) {
-						$str = $file_array [$sub];
-					} else {
-						$str = '';
-					}
-				} elseif (strncmp ( $tok, 'p:', 2 ) == 0) {
-					$sub = substr ( $tok, 2 );
-					if (isset ( $path_array [$sub] )) {
-						$str = $path_array [$sub];
-					} else {
-						$str = '';
-					}
+				if (strpos ( $tok, ':' ) === false) {
+					$str = isset ( $_GET [$tok] ) ? $_GET [$tok] : '';
 				} else {
-					$sub = $tok;
-					if (isset ( $_GET [$sub] )) {
-						$str = $_GET [$sub];
-					} else {
-						$str = '';
+					list ( $key, $sub ) = explode ( ':', $tok );
+					$key_lower = strtolower($key);
+					$key_upper = strtoupper($key);
+					$key_ucfirst = ucfirst($key_lower);
+					$key_lcfirst = $key_upper;
+					if ( strlen($key_lcfirst) > 0 ) {
+						$key_lcfirst[0] = strtolower($key_lcfirst[0]);
+					}
+					switch ($key_lower){
+						case 'get':
+							$str = isset ( $get_array [$sub] ) ? $get_array [$sub] : '';
+							break;
+						case 'post':
+							$str = isset ( $post_array [$sub] ) ? $post_array [$sub] : '';
+							break;
+						case 'query':
+							$str = isset ( $query_array [$sub] ) ? $query_array [$sub] : '';
+							break;
+						case 'path':
+							$str = isset ( $path_array [$sub] ) ? $path_array [$sub] : '';
+							break;
+						case 'file':
+							$str = isset ( $file_array [$sub] ) ? $file_array [$sub] : '';
+							break;
+						default:
+							$str = '';
+							break;
+					}
+					switch ($key) {
+						case $key_lower:
+							break;
+						case $key_upper:
+							$str = strtoupper($str);
+							break;
+						case $key_ucfirst:
+							$str = ucfirst(strtolower($str));
+							break;
+						case $key_lcfirst:
+							$str = strtoupper($str);
+							if ( strlen($str) > 0 ) {
+								$str[0] = strtolower($str[0]);
+							}
+							break;
+						default:
+							$str = strtolower($str);
+							break;
 					}
 				}
 				if (preg_match ( '/^[a-zA-Z0-9_\x7f-\xff]+$/', $str ) === false) {
@@ -881,14 +1072,42 @@ class core {
 				}
 				$result .= $str;
 			}
-			if (strpos ( $result, '{self}' ) !== false) {
-				$result = str_replace ( '{self}', __CLASS__, $result );
-			}
-			if (strpos ( $result, '{static}' ) !== false) {
-				if (function_exists ( 'get_called_class' )) {
-					$result = str_replace ( '{static}', get_called_class (), $result );
+			$reason = $result;
+			$result = '';
+			$pos1 = 0;
+			while ( true ) {
+				$pos2 = strpos ( $reason, '{', $pos1 );
+				if ($pos2 === false) {
+					$result .= substr ( $reason, $pos1 );
+					break;
+				}
+				$result .= substr ( $reason, $pos1, $pos2 - $pos1 );
+				$pos1 = $pos2 + 1;
+				$pos2 = strpos ( $reason, '}', $pos1 );
+				if ($pos2 === false) {
+					break;
+				}
+				$tok = substr ( $reason, $pos1, $pos2 - $pos1 );
+				$pos1 = $pos2 + 1;
+				$sub = $tok;
+				if (isset ( $_POST [$sub] )) {
+					$str = $_POST [$sub];
 				} else {
-					$result = str_replace ( '{static}', '', $result );
+					$str = '';
+				}
+				if (preg_match ( '/^[a-zA-Z0-9_\x7f-\xff]+$/', $str ) === false) {
+					$str = '';
+				}
+				$result .= $str;
+			}
+			if (strpos ( $result, '(self)' ) !== false) {
+				$result = str_replace ( '(self)', __CLASS__, $result );
+			}
+			if (strpos ( $result, '(static)' ) !== false) {
+				if (function_exists ( 'get_called_class' )) {
+					$result = str_replace ( '(static)', get_called_class (), $result );
+				} else {
+					$result = str_replace ( '(static)', '', $result );
 				}
 			}
 			$module_not = explode ( '^', $result );
@@ -896,6 +1115,7 @@ class core {
 			$action_not = explode ( '!', array_shift ( $module_arr ) );
 			$action_arr = explode ( '|', array_shift ( $action_not ) );
 			$action_now = '';
+			$number_of_parameters = 0;
 			foreach ( $action_arr as $action_name ) {
 				if ($action_name === '') {
 					continue;
@@ -907,11 +1127,17 @@ class core {
 					continue;
 				}
 				$method = new ReflectionMethod ( $module_now, $action_name );
-				if (! $method->isStatic () ) {
+				if (! $method->isPublic () || $method->isConstructor () || $method->isDestructor () ) {
 					continue;
 				}
-				if (! $method->isPublic () ) {
-					continue;
+				if ( in_array( 'object', $return_array ) ) {
+					if ( $method->isStatic () ) {
+						continue;
+					}
+				} else {
+					if (! $method->isStatic () ) {
+						continue;
+					}
 				}
 				$classname = $method->getDeclaringClass()->getName();
 				if ($module_arr && !in_array($classname,$module_arr) ) {
@@ -920,32 +1146,206 @@ class core {
 				if ($module_not && in_array($classname,$module_not) ) {
 					continue;
 				}
+				$number_of_parameters = $method->getNumberOfParameters();
 				$action_now = $action_name;
 				break;
 			}
 			if ($action_now === '') {
-				if ($return_false) {
+				if ( $return_array !== array() ) {
 					return false;
 				}
 				break;
 			} else {
-				if ($framework_enable === 'action') {
-					return $action_now;
-				} elseif ($framework_enable === 'module,action') {
-					return array ($module_now, $action_now );
+				if ( in_array( 'action', $return_array ) ) {
+					if (! in_array( 'parameter', $return_array ) ) {
+						if ( in_array( 'module', $return_array ) ) {
+							if ( in_array( 'require', $return_array ) ) {
+								return array ($require_now, $module_now, $action_now );
+							} else {
+								return array ($module_now, $action_now );
+							}
+						} else {
+							return $action_now;
+						}
+					}
 				}
 			}
-			// 6. 执行
-			if ($framework_enable === 'return') {
-				return call_user_func ( array ($module_now, $action_now ) );
-			} else {
-				call_user_func ( array ($module_now, $action_now ) );
+			// 6. 参数
+			$parameter_array = array();
+			if ($parameter != '') {
+				if (!is_array($parameter)) {
+					$parameter = array($parameter);
+				}
+				foreach ($parameter as $param) {
+					$reason = $param;
+					$result = '';
+					$pos1 = 0;
+					while ( true ) {
+						$pos2 = strpos ( $reason, '[', $pos1 );
+						if ($pos2 === false) {
+							$result .= substr ( $reason, $pos1 );
+							break;
+						}
+						$result .= substr ( $reason, $pos1, $pos2 - $pos1 );
+						$pos1 = $pos2 + 1;
+						$pos2 = strpos ( $reason, ']', $pos1 );
+						if ($pos2 === false) {
+							break;
+						}
+						$tok = substr ( $reason, $pos1, $pos2 - $pos1 );
+						$pos1 = $pos2 + 1;
+						if (strpos ( $tok, ':' ) === false) {
+							$str = isset ( $_GET [$tok] ) ? $_GET [$tok] : '';
+						} else {
+							list ( $key, $sub ) = explode ( ':', $tok );
+							$key_lower = strtolower($key);
+							$key_upper = strtoupper($key);
+							$key_ucfirst = ucfirst($key_lower);
+							$key_lcfirst = $key_upper;
+							if ( strlen($key_lcfirst) > 0 ) {
+								$key_lcfirst[0] = strtolower($key_lcfirst[0]);
+							}
+							switch ($key_lower){
+								case 'get':
+									$str = isset ( $get_array [$sub] ) ? $get_array [$sub] : '';
+									break;
+								case 'post':
+									$str = isset ( $post_array [$sub] ) ? $post_array [$sub] : '';
+									break;
+								case 'query':
+									$str = isset ( $query_array [$sub] ) ? $query_array [$sub] : '';
+									break;
+								case 'path':
+									$str = isset ( $path_array [$sub] ) ? $path_array [$sub] : '';
+									break;
+								case 'file':
+									$str = isset ( $file_array [$sub] ) ? $file_array [$sub] : '';
+									break;
+								default:
+									$str = '';
+									break;
+							}
+							switch ($key) {
+								case $key_lower:
+									break;
+								case $key_upper:
+									$str = strtoupper($str);
+									break;
+								case $key_ucfirst:
+									$str = ucfirst(strtolower($str));
+									break;
+								case $key_lcfirst:
+									$str = strtoupper($str);
+									if ( strlen($str) > 0 ) {
+										$str[0] = strtolower($str[0]);
+									}
+									break;
+								default:
+									$str = strtolower($str);
+									break;
+							}
+						}
+						if (preg_match ( '/^[a-zA-Z0-9_\x7f-\xff]+$/', $str ) === false) {
+							$str = '';
+						}
+						$result .= $str;
+					}
+					$reason = $result;
+					$result = '';
+					$pos1 = 0;
+					while ( true ) {
+						$pos2 = strpos ( $reason, '{', $pos1 );
+						if ($pos2 === false) {
+							$result .= substr ( $reason, $pos1 );
+							break;
+						}
+						$result .= substr ( $reason, $pos1, $pos2 - $pos1 );
+						$pos1 = $pos2 + 1;
+						$pos2 = strpos ( $reason, '}', $pos1 );
+						if ($pos2 === false) {
+							break;
+						}
+						$tok = substr ( $reason, $pos1, $pos2 - $pos1 );
+						$pos1 = $pos2 + 1;
+						$sub = $tok;
+						if (isset ( $_POST [$sub] )) {
+							$str = $_POST [$sub];
+						} else {
+							$str = '';
+						}
+						if (preg_match ( '/^[a-zA-Z0-9_\x7f-\xff]+$/', $str ) === false) {
+							$str = '';
+						}
+						$result .= $str;
+					}
+					if (strpos ( $result, '(self)' ) !== false) {
+						$result = str_replace ( '(self)', __CLASS__, $result );
+					}
+					if (strpos ( $result, '(static)' ) !== false) {
+						if (function_exists ( 'get_called_class' )) {
+							$result = str_replace ( '(static)', get_called_class (), $result );
+						} else {
+							$result = str_replace ( '(static)', '', $result );
+						}
+					}
+					$action_not = explode ( '^', $result );
+					$action_arr = explode ( '&', array_shift ( $action_not ) );
+					$param_not = explode ( '!', array_shift ( $action_arr ) );
+					$param_arr = explode ( '|', array_shift ( $param_not ) );
+					$param_now = '';
+					foreach ( $param_arr as $param_name ) {
+						if ($param_name === '') {
+							continue;
+						}
+						if (in_array ( $param_name, $param_not )) {
+							continue;
+						}
+						if ($action_arr && !in_array($action_now,$action_arr) ) {
+							continue;
+						}
+						if ($action_not && in_array($action_now,$action_not) ) {
+							continue;
+						}
+						$param_now = $param_name;
+						break;
+					}
+					if($param_now==''){
+						$parameter_array [] = null;
+					} else {
+						$parameter_array [] = $param_now;
+					}
+				}
 			}
-			return true;
+			if ( in_array( 'parameter', $return_array ) ) {
+				if ( in_array( 'action', $return_array ) ) {
+					if ( in_array( 'module', $return_array ) ) {
+						if ( in_array( 'require', $return_array ) ) {
+							return array ($require_now, $module_now, $action_now, $parameter_array );
+						} else {
+							return array ($module_now, $action_now, $parameter_array );
+						}
+					} else {
+						return array ($action_now, $parameter_array );
+					}
+				} else {
+					return $parameter_array;
+				}
+			}
+			// 7. 执行
+			if ( in_array( 'object', $return_array ) ) {
+				$module_now = new $module_now;
+			}
+			$parameter_array = array_slice($parameter_array, 0, $number_of_parameters);
+			$return = call_user_func_array ( array ($module_now, $action_now ) , $parameter_array );
+			if ( in_array( 'return', $return_array ) ) {
+				return $return;
+			} else {
+				return true;
+			}
 		}
 		
 		// 【基础功能】模拟文件隐藏效果
-		if ($framework_enable !== 'manual') {
+		if (! in_array( 'manual', $return_array ) ) {
 			if (PHP_SAPI == 'cli') {
 				echo ('Could not open input file: ' . basename ( $_SERVER ['SCRIPT_FILENAME'] ) . PHP_EOL);
 			} else {
@@ -1125,13 +1525,13 @@ class core {
 			}
 			static $static_config1 = array ('autoload_enable' => '', 'autoload_path' => '', 'autoload_extensions' => '', 
 					'autoload_prepend' => '', 'framework_enable' => '', 'framework_require' => '', 'framework_module' => '', 
-					'framework_action' => '', 'extension_enable' => '', 'extension_path' => '', 'extension_prepend' => '', 
-					'template_path' => '', 'template_search' => '', 'template_replace' => '', 'template_type' => '', 
-					'template_show' => '', 'connect_provider' => '', 'connect_dsn' => '', 'connect_type' => '', 
-					'connect_server' => '', 'connect_username' => '', 'connect_password' => '', 'connect_new_link' => '', 
-					'connect_client_flags' => '', 'connect_dbname' => '', 'connect_charset' => '', 'connect_port' => '', 
-					'connect_socket' => '', 'connect_driver_options' => '', 'prefix_search' => '', 'prefix_replace' => '', 
-					'debug_enable' => '', 'debug_file' => '' );
+					'framework_action' => '', 'framework_parameter' => '', 'extension_enable' => '', 'extension_path' => '', 
+					'extension_prepend' => '', 'template_path' => '', 'template_search' => '', 'template_replace' => '', 
+					'template_type' => '', 'template_show' => '', 'connect_provider' => '', 'connect_dsn' => '', 
+					'connect_type' => '', 'connect_server' => '', 'connect_username' => '', 'connect_password' => '', 
+					'connect_new_link' => '', 'connect_client_flags' => '', 'connect_dbname' => '', 'connect_charset' => '', 
+					'connect_port' => '', 'connect_socket' => '', 'connect_driver_options' => '', 'prefix_search' => '', 
+					'prefix_replace' => '', 'debug_enable' => '', 'debug_file' => '' );
 			if ($config === 1) {
 				$config_array = $static_config1;
 				break;
@@ -1142,17 +1542,18 @@ class core {
 					'autoload_extensions' => self::stub_autoload_extensions, 'autoload_prepend' => self::stub_autoload_prepend, 
 					'framework_enable' => self::main_framework_enable, 'framework_require' => self::main_framework_require, 
 					'framework_module' => self::main_framework_module, 'framework_action' => self::main_framework_action, 
-					'extension_enable' => self::path_extension_enable, 'extension_path' => self::path_extension_path, 
-					'extension_prepend' => self::path_extension_prepend, 'template_path' => self::path_template_path, 
-					'template_search' => self::view_template_search, 'template_replace' => self::view_template_replace, 
-					'template_type' => self::view_template_type, 'template_show' => self::view_template_show, 
-					'connect_provider' => self::db_connect_provider, 'connect_dsn' => self::db_connect_dsn, 
-					'connect_type' => self::db_connect_type, 'connect_server' => self::db_connect_server, 
-					'connect_username' => self::db_connect_username, 'connect_password' => self::db_connect_password, 
-					'connect_new_link' => self::db_connect_new_link, 'connect_client_flags' => self::db_connect_client_flags, 
-					'connect_dbname' => self::db_connect_dbname, 'connect_charset' => self::db_connect_charset, 
-					'connect_port' => self::db_connect_port, 'connect_socket' => self::db_connect_socket, 
-					'connect_driver_options' => '', 'prefix_search' => self::db_prefix_search, 'prefix_replace' => self::db_prefix_replace, 
+					'framework_parameter' => self::main_framework_parameter, 'extension_enable' => self::path_extension_enable, 
+					'extension_path' => self::path_extension_path, 'extension_prepend' => self::path_extension_prepend, 
+					'template_path' => self::path_template_path, 'template_search' => self::view_template_search, 
+					'template_replace' => self::view_template_replace, 'template_type' => self::view_template_type, 
+					'template_show' => self::view_template_show, 'connect_provider' => self::db_connect_provider, 
+					'connect_dsn' => self::db_connect_dsn, 'connect_type' => self::db_connect_type, 
+					'connect_server' => self::db_connect_server, 'connect_username' => self::db_connect_username, 
+					'connect_password' => self::db_connect_password, 'connect_new_link' => self::db_connect_new_link, 
+					'connect_client_flags' => self::db_connect_client_flags, 'connect_dbname' => self::db_connect_dbname, 
+					'connect_charset' => self::db_connect_charset, 'connect_port' => self::db_connect_port, 
+					'connect_socket' => self::db_connect_socket, 'connect_driver_options' => '', 
+					'prefix_search' => self::db_prefix_search, 'prefix_replace' => self::db_prefix_replace, 
 					'debug_enable' => self::db_debug_enable, 'debug_file' => self::db_debug_file );
 			if ($config === 2) {
 				$config_array = $static_config2;
@@ -2236,7 +2637,7 @@ class core {
 				if ( !empty($echo2) ) {
 					$echo .= str_replace ( PHP_EOL, '<br />'.PHP_EOL, htmlentities ($echo2) );
 				}
-				$echo = '<hr />' . PHP_EOL;
+				$echo .= '<hr />' . PHP_EOL;
 				if ( !empty($extra['errno']) ) {
 					$echo .= $extra['errno'] . ": " . htmlentities ( $extra['error'] ) . '<br />' . PHP_EOL;
 				}
