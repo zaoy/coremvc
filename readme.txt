@@ -11,7 +11,7 @@ CoreMVC遵从new BSD许可证，所以您可以在法律允许的范围以内任
 /**
  * CoreMVC核心模块
  * 
- * @version 1.1.0 alpha 11
+ * @version 1.1.0 alpha 12
  * @author Z <602000@gmail.com>
  * @link http://code.google.com/p/coremvc/
  */
@@ -39,7 +39,7 @@ CoreMVC遵从new BSD许可证，所以您可以在法律允许的范围以内任
 
 9. 数据库连接自动化，可使用多个连接。
 
-10. 整个核心文件只有：1个类、35项设置、21个方法。
+10. 整个核心文件只有：1个类、36项设置、21个方法。
 
 
 ●　版本更新说明
@@ -48,7 +48,7 @@ CoreMVC 1.1.0 相对于 CoreMVC 1.0.0版本的改进
 --------------------------------------------
 1. 增加了模板路径替换的参数设置。
 
-2. 扩展了使用框架开关的参数设置。
+2. 扩展了框架控制开关的参数设置。
 
 3. 增加了core::init取单个参数的功能。
 
@@ -571,13 +571,15 @@ class core {
 
 	const stub_autoload_prepend = ''; // 自动载入顺序
 
-	const main_framework_enable = ''; // 使用框架开关
+	const main_framework_enable = ''; // 框架控制开关
 
-	const main_framework_require = ''; // 使用框架的包含文件
+	const main_framework_require = ''; // 框架控制的包含文件
 
-	const main_framework_module = ''; // 使用框架的模块参数
+	const main_framework_module = ''; // 框架控制的模块参数
 
-	const main_framework_action = ''; // 使用框架的行为参数
+	const main_framework_action = ''; // 框架控制的动作参数
+
+	const main_framework_parameter = ''; // 框架控制的传参参数
 
 	const path_extension_path = ''; // 扩展模块路径
 
@@ -634,7 +636,7 @@ return array(
 	'template_path' => '@tpl',
 	'template_type' => 'smarty',
 	'connect_provider' => 'pdo',
-	'connect_dsn => 'mysql:host=localhost;dbname=test',
+	'connect_dsn' => 'mysql:host=localhost;dbname=test',
 	'connect_username' => 'root',
 	'connect_password' => '',
 	'connect_driver_options' => array(PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES \'UTF8\''),

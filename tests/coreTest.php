@@ -202,6 +202,7 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			'framework_require'=>'',
 			'framework_module'=>'',
 			'framework_action'=>'',
+			'framework_parameter'=>'',
 		),core::main(array()));
 		//设置值
 		$this->assertSame(array(
@@ -209,6 +210,7 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			'framework_require'=>'',
 			'framework_module'=>'',
 			'framework_action'=>'[do]!main',
+			'framework_parameter'=>'',
 		),core::main(array(
 			'framework_enable'=>true,
 			'framework_action'=>'[do]!main',
@@ -219,6 +221,7 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			'framework_require'=>'',
 			'framework_module'=>'',
 			'framework_action'=>'[do]!main',
+			'framework_parameter'=>'',
 		),core::main(array()));
 		//再设置
 		$this->assertSame(array(
@@ -226,6 +229,7 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			'framework_require'=>'@module',
 			'framework_module'=>'[go]',
 			'framework_action'=>'[do]!main',
+			'framework_parameter'=>'',
 		),core::main(array(
 			'framework_require'=>'@module',
 			'framework_module'=>'[go]',
@@ -236,6 +240,7 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			'framework_require'=>'@module',
 			'framework_module'=>'[go]',
 			'framework_action'=>'[do]!main',
+			'framework_parameter'=>'',
 		),core::main(array()));
 		//恢复值
 		$this->assertSame(array(
@@ -243,11 +248,13 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			'framework_require'=>'',
 			'framework_module'=>'',
 			'framework_action'=>'',
+			'framework_parameter'=>'',
 		),core::main(array(
 			'framework_enable'=>'',
 			'framework_require'=>'',
 			'framework_module'=>'',
 			'framework_action'=>'',
+			'framework_parameter'=>'',
 		)));
 		
 		// 2. 【基础功能】使用框架功能，默认关闭。
@@ -321,12 +328,39 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		$this->assertTrue(core::main('manual','@tests/main_2_2.php','[go]|main_2_2','[do]|test_2_2'));
 		$this->assertSame('main_2_2_a', ob_get_clean());
 		ob_start();
-		$this->assertTrue(core::main('manual','@tests/[go].php|@tests/[go].php','[go]|main_2_2','[do]|test_2_2'));
+		$this->assertTrue(core::main('manual','@tests/[go].php|@tests/main_2_2.php','[go]|main_2_2','[do]|test_2_2'));
 		$this->assertSame('main_2_2_a', ob_get_clean());
 		$this->assertFalse(core::main('module,action','@tests/main_2_2.php','main_2_2',''));
-		$this->assertSame('main',core::main('action','@tests/main_2_5.php','main_2_5',''));
+		$this->assertSame('index',core::main('action','@tests/main_2_5.php','main_2_5',''));
 		$this->assertSame('updates',core::main('action','@tests/main_2_5.php','main_2_5','updates'));
-		$this->assertFalse(core::main('action','@tests/main_2_5.php','main_2_5','updates^{self}'));
+		$this->assertFalse(core::main('action','@tests/main_2_5.php','main_2_5','updates^(self)'));
+		$_SERVER['QUERY_STRING']='index';
+		$this->assertSame('index',core::main('action','@tests/main_2_5.php','main_2_5','[query:0]'));
+		unset($_SERVER['QUERY_STRING']);
+		$_GET['aa']='index';
+		$this->assertSame('index',core::main('action','@tests/main_2_5.php','main_2_5',''));
+		$this->assertSame('index',core::main('action','@tests/main_2_5.php','main_2_5','[get:1]'));
+		unset($_GET['aa']);
+		$_POST['aa']='index';
+		$this->assertSame('index',core::main('action','@tests/main_2_5.php','main_2_5','[post:1]'));
+		unset($_POST['aa']);
+		$this->assertFalse(core::main('action','@tests/main_2_5.php','main_2_5','message'));
+		$this->assertSame('message',core::main('object,action','@tests/main_2_5.php','main_2_5','message'));
+		$this->assertFalse(core::main('object,action','@tests/main_2_5.php','main_2_5','index'));
+		$this->assertFalse(core::main('action','@tests/main_2_6.php','main_2_6','index'));
+		$this->assertFalse(core::main('action','@tests/main_2_7.php','main_2_7','index'));
+		$this->assertSame(array(),core::main('parameter','','main_2_5','index'));
+		$this->assertSame(array('id'),core::main('parameter','','main_2_5','index','id'));
+		$_GET['id']='1';
+		$this->assertSame(array('1'),core::main('parameter','','main_2_5','index','[id]'));
+		$this->assertSame(array('1','1'),core::main('parameter','','main_2_5','index',array('[id]','[get:1]')));
+		$this->assertSame(array('1',null),core::main('parameter','','main_2_5','index',array('[id]','[get:1]^index')));
+		$this->assertSame(array('index',array('1','1')),core::main('action,parameter','','main_2_5','index',array('[id]','[get:1]')));
+		unset($_GET['id']);
+		$this->assertSame(3,core::main('return','','main_2_5','add',array(1,2)));
+		$this->assertSame(3,core::main('return','','main_2_5','add',array(1,2,4)));
+
+
 		//恢复原来值
 		core::main(array(
 			'framework_enable'=>'',
@@ -334,6 +368,7 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			'framework_module'=>'',
 			'framework_action'=>'',
 			'framework_hidden'=>'',
+			'framework_parameter'=>'',
 		));
 		
 		// 3. 【基础功能】模拟文件隐藏效果，返回true/false(框架/隐藏)。
@@ -352,6 +387,7 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			'framework_require'=>'',
 			'framework_module'=>'',
 			'framework_action'=>'',
+			'framework_parameter'=>'',
 		));
 		
 	}
@@ -590,6 +626,7 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			'framework_require' => '',
 			'framework_module' => '',
 			'framework_action' => '',
+			'framework_parameter' => '',
 			'extension_enable'=>'',
 			'extension_path' => '',
 			'extension_prepend'=>'',
