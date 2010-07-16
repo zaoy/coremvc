@@ -654,37 +654,59 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			'debug_file' => '',
 		);
 		//返回值
+		$this->assertNull(core::init(0));
+		$this->assertSame($config,core::init(1));
+		$this->assertSame($config,core::init(2));
+		$this->assertSame($config,core::init(3));
+		$this->assertSame($config,core::init(4));
+		$this->assertSame($config,core::init(5));
+		$this->assertNull(core::init(6));
 		$this->assertSame($config,core::init());
-		$this->assertSame($config,core::init(-1));
-		$this->assertSame($config,core::init(-2));
-		$this->assertSame($config,core::init(-3));
-		$this->assertSame($config,core::init(-4));
+		$this->assertSame($config,core::init(0));
 		//设置值
 		$config1 = $config;
 		$config1['autoload_enable']=true;
 		$this->assertSame($config1,core::init(array('autoload_enable'=>true)));
-		$this->assertSame($config1,core::init());
-		$this->assertSame($config,core::init(-1));
-		$this->assertSame($config,core::init(-2));
-		$this->assertSame($config,core::init(-3));
-		$this->assertSame($config1,core::init(-4));
+		$this->assertSame($config1,core::init(0));
 		$this->assertSame($config,core::init(1));
+		$this->assertSame($config,core::init(2));
+		$this->assertSame($config,core::init(3));
+		$this->assertSame($config,core::init(4));
+		$this->assertSame($config1,core::init(5));
 		$this->assertSame($config,core::init(-1));
-		$this->assertSame($config1,core::init(4));
-		$this->assertSame($config1,core::init(-4));
+		$this->assertSame($config,core::init(0));
+		$this->assertSame($config1,core::init(-5));
+		$this->assertSame($config1,core::init(0));
 		$this->assertSame($config,core::init(array()));
-		$this->assertSame($config,core::init(-4));
+		$this->assertSame($config,core::init(0));
 		//文件
 		$config2 = $config;
 		$config2['framework_enable']=true;
 		$this->assertSame($config2,core::init('@tests/init_1_1.php'));
-		$this->assertSame($config2,core::init());
-		$this->assertSame($config,core::init(-1));
-		$this->assertSame($config,core::init(-2));
-		$this->assertSame($config,core::init(-3));
-		$this->assertSame($config2,core::init(-4));
+		$this->assertSame($config2,core::init(0));
+		$this->assertSame($config,core::init(1));
+		$this->assertSame($config,core::init(2));
+		$this->assertSame($config,core::init(3));
+		$this->assertSame($config,core::init(4));
+		$this->assertSame($config2,core::init(5));
 		$this->assertSame(true,core::init('framework_enable'));
-
+		//类名
+		require core::path('@tests/init_1_2.php');
+		$this->assertNull(core::init(0,'init_1_2'));
+		$this->assertSame(array('a'=>'b','framework_enable'=>true),core::init(null,'init_1_2'));
+		$this->assertSame(array('a'=>'b','framework_enable'=>true),core::init(0,'init_1_2'));
+		$this->assertSame(array('a'=>''),core::init(1,'init_1_2'));
+		$this->assertSame(array('a'=>'b'),core::init(2,'init_1_2'));
+		$this->assertSame(array('a'=>'b'),core::init(3,'init_1_2'));
+		$this->assertSame(array('a'=>'b','framework_enable'=>true),core::init(4,'init_1_2'));
+		$this->assertSame(array('a'=>'b','framework_enable'=>true),core::init(5,'init_1_2'));
+		$this->assertSame('b',core::init('a','init_1_2'));
+		$this->assertSame(array('a'=>''),core::init(-1,'init_1_2'));
+		$this->assertSame(array('a'=>'b'),core::init(-2,'init_1_2'));
+		$this->assertSame(array('a'=>'b','framework_enable'=>true),core::init(-5,'init_1_2'));
+		$this->assertSame(array('a'=>'b'),core::init(-3,'init_1_2'));
+		$this->assertSame(array('a'=>'b','framework_enable'=>true),core::init(-4,'init_1_2'));
+		
 		
 	}
 	

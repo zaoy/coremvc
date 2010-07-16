@@ -2,7 +2,7 @@
 /**
  * CoreMVC核心模块
  * 
- * @version 1.1.0 alpha 12
+ * @version 1.1.0 alpha 13
  * @author Z <602000@gmail.com>
  * @link http://code.google.com/p/coremvc/
  */
@@ -17,204 +17,204 @@ class core {
 	 * + 作用：载入配置文件。
 	 * + 定义：该值范围为字符串或空串。
 	 * <code>
-	 *const config = ''; //默认不使用配置文件
-	 *const config = '@config.php'; //载入相对核心文件的配置文件
-	 *const config = 'config.php'; //载入绝对路径的配置文件
-	 *const config = '/config.php'; //载入绝对路径的配置文件
+	 *const _config = ''; //默认不使用配置文件
+	 *const _config = '@config.php'; //载入相对核心文件的配置文件
+	 *const _config = 'config.php'; //载入绝对路径的配置文件
+	 *const _config = '/config.php'; //载入绝对路径的配置文件
 	 * </code>
 	 */
-	const config = '';
+	const _config = '';
 	
 	/**
-	 * 自动载入开关
+	 * 自动载入开关【stub】
 	 *
 	 * + 作用：自动载入功能是否打开。
 	 * + 定义：该值范围为逻辑值或空串。
 	 * <code>
-	 *const stub_autoload_enable = ''; //默认关闭
-	 *const stub_autoload_enable = true; //打开自动载入功能
+	 *const autoload_enable = ''; //默认关闭
+	 *const autoload_enable = true; //打开自动载入功能
 	 * </code>
 	 */
-	const stub_autoload_enable = '';
+	const autoload_enable = '';
 	
 	/**
-	 * 自动载入路径
+	 * 自动载入路径【stub】
 	 *
 	 * + 作用：自动载入的路径。
 	 * + 定义：该值范围为字符串或空串。
 	 * <code>
-	 *const stub_autoload_path = ''; //默认不添加路径到include_path
-	 *const stub_autoload_path = '@'; //添加相对核心文件路径到include_path
-	 *const stub_autoload_path = 'class'; //添加相对路径到include_path
-	 *const stub_autoload_path = '/class'; //添加绝对路径到include_path
+	 *const autoload_path = ''; //默认不添加路径到include_path
+	 *const autoload_path = '@'; //添加相对核心文件路径到include_path
+	 *const autoload_path = 'class'; //添加相对路径到include_path
+	 *const autoload_path = '/class'; //添加绝对路径到include_path
 	 * </code>
 	 */
-	const stub_autoload_path = '';
+	const autoload_path = '';
 	
 	/**
-	 * 自动载入后缀
+	 * 自动载入后缀【stub】
 	 *
 	 * + 作用：自动载入的后缀
 	 * + 定义：该值范围为字符串或空串。
 	 * <code>
-	 *const stub_autoload_extensions = ''; //默认后缀'.inc,.php'
-	 *const stub_autoload_extensions = '.php,.inc'; //改变后缀优先级
+	 *const autoload_extensions = ''; //默认后缀'.inc,.php'
+	 *const autoload_extensions = '.php,.inc'; //改变后缀优先级
 	 * </code>
 	 */
-	const stub_autoload_extensions = '';
+	const autoload_extensions = '';
 	
 	/**
-	 * 自动载入顺序
+	 * 自动载入顺序【stub】
 	 *
 	 * + 作用：自动载入的顺序，包括路径顺序
 	 * + 定义：该值范围为逻辑值或空串。
 	 * <code>
-	 *const stub_autoload_prepend = ''; //默认顺序在最后面
-	 *const stub_autoload_prepend = true; //顺序在最前面
+	 *const autoload_prepend = ''; //默认顺序在最后面
+	 *const autoload_prepend = true; //顺序在最前面
 	 * </code>
 	 */
-	const stub_autoload_prepend = '';
+	const autoload_prepend = '';
 	
 	/**
-	 * 框架控制开关
+	 * 框架控制开关【main】
 	 *
 	 * + 作用：框架控制功能是否打开。
 	 * + 定义：该值范围为逻辑值或空串。
 	 * <code>
-	 *const main_framework_enable = ''; //默认关闭
-	 *const main_framework_enable = true; //打开使用框架功能，返回true/false
-	 *const main_framework_enable = 'require'; //返回require路径或false
-	 *const main_framework_enable = 'module'; //返回module类名或false
-	 *const main_framework_enable = 'action'; //返回action方法径或false
-	 *const main_framework_enable = 'module,action'; //返回数组形式的module类名和action方法名或false
-	 *const main_framework_enable = 'manual'; //打开使用框架功能，但不自动隐藏，返回true/false
-	 *const main_framework_enable = 'return'; //打开使用框架功能，但不自动隐藏，返回方法的返回值
+	 *const framework_enable = ''; //默认关闭
+	 *const framework_enable = true; //打开使用框架功能，返回true/false
+	 *const framework_enable = 'require'; //返回require路径或false
+	 *const framework_enable = 'module'; //返回module类名或false
+	 *const framework_enable = 'action'; //返回action方法径或false
+	 *const framework_enable = 'module,action'; //返回数组形式的module类名和action方法名或false
+	 *const framework_enable = 'manual'; //打开使用框架功能，但不自动隐藏，返回true/false
+	 *const framework_enable = 'return'; //打开使用框架功能，但不自动隐藏，返回方法的返回值
 	 * </code>
 	 */
-	const main_framework_enable = '';
+	const framework_enable = '';
 	
 	/**
-	 *  框架控制的包含文件
+	 *  框架控制的包含文件【main】
 	 *
 	 * + 作用：设置框架控制的包含文件。
 	 * + 定义：该值范围为字符串或空串。
 	 * <code>
-	 *const main_framework_require = ''; //默认不包含文件，注意包含文件里不能有“|”和“!”
-	 *const main_framework_require = '@module/[go].php'; //包含相对核心文件路径的module/[go].php参数文件名
-	 *const main_framework_require = '[go]/[to].php'; //包含相对路径的[go]/[to].php文件名
-	 *const main_framework_require = '/module/[path:1]/[path:2].php'; //包含绝对路径的/module/[path:1]/[path:2].php文件
+	 *const framework_require = ''; //默认不包含文件，注意包含文件里不能有“|”和“!”
+	 *const framework_require = '@module/[go].php'; //包含相对核心文件路径的module/[go].php参数文件名
+	 *const framework_require = '[go]/[to].php'; //包含相对路径的[go]/[to].php文件名
+	 *const framework_require = '/module/[path:1]/[path:2].php'; //包含绝对路径的/module/[path:1]/[path:2].php文件
 	 * </code>
 	 */
-	const main_framework_require = '';
+	const framework_require = '';
 	
 	/**
-	 * 框架控制的模块参数
+	 * 框架控制的模块参数【main】
 	 *
 	 * + 作用：设置框架控制的模块参数。
 	 * + 定义：该值范围为字符串或空串。
 	 * <code>
-	 *const main_framework_module = ''; //默认为'(static)|[file:1]!(self)'，'(static)'仅PHP5.3支持，[file:n]表示调用main的程序文件从右数起第n个名称
-	 *const main_framework_module = '[go]!(self)'; //[go]表示GET参数，当前类被排除在外
-	 *const main_framework_module = 'project\[go]|project\index'; //project命名空间加首字母大写的go参数为模块类，未找到则用project\index类，
-	 *const main_framework_module = '[path:1]\[path:2]|project\index'; //PATH_INFO前两位为模块类，未找到则用project\index类，
+	 *const framework_module = ''; //默认为'(static)|[file:1]!(self)'，'(static)'仅PHP5.3支持，[file:n]表示调用main的程序文件从右数起第n个名称
+	 *const framework_module = '[go]!(self)'; //[go]表示GET参数，当前类被排除在外
+	 *const framework_module = 'project\[go]|project\index'; //project命名空间加首字母大写的go参数为模块类，未找到则用project\index类，
+	 *const framework_module = '[path:1]\[path:2]|project\index'; //PATH_INFO前两位为模块类，未找到则用project\index类，
 	 * </code>
 	 */
-	const main_framework_module = '';
+	const framework_module = '';
 	
 	/**
-	 * 框架控制的动作参数
+	 * 框架控制的动作参数【main】
 	 *
 	 * + 作用：设置框架控制的动作参数。
 	 * + 定义：该值范围为字符串或空串。
 	 * <code>
-	 *const main_framework_action = ''; //默认为'[get:1]|index^(self)',[get:n]表示第n个$_GET值，&表示所属模块只能在此列的，^表示所属模块不能在此列的。
-	 *const main_framework_action = '[do]|default'; //do参数为行为方法，未找到则用default，默认时是静态方法
-	 *const main_framework_action = '[path:1]|default!main![path:2]'; //PATH_INFO左边第一个为动作方法，未找到则用default，main和[path:2]方法排除在外
+	 *const framework_action = ''; //默认为'[get:1]|index^(self)',[get:n]表示第n个$_GET值，&表示所属模块只能在此列的，^表示所属模块不能在此列的。
+	 *const framework_action = '[do]|default'; //do参数为行为方法，未找到则用default，默认时是静态方法
+	 *const framework_action = '[path:1]|default!main![path:2]'; //PATH_INFO左边第一个为动作方法，未找到则用default，main和[path:2]方法排除在外
 	 * </code>
 	 */
-	const main_framework_action = '';
+	const framework_action = '';
 	
 	/**
-	 * 框架控制的传参参数
+	 * 框架控制的传参参数【main】
 	 *
 	 * + 作用：设置框架控制的传参参数。
 	 * + 定义：该值范围为字符串或空串。
 	 * <code>
-	 *const main_framework_parameter = ''; //默认为空，即不传参数
-	 *const main_framework_parameter = '[id]|0'; //id参数传入，默认为0
+	 *const framework_parameter = ''; //默认为空，即不传参数
+	 *const framework_parameter = '[id]|0'; //id参数传入，默认为0
 	 * </code>
 	 */
-	const main_framework_parameter = '';
+	const framework_parameter = '';
 	
 	/**
-	 * 扩展类库开关
+	 * 扩展类库开关【path】
 	 *
 	 * + 作用：使用扩展类库，多个类库可用逗号分隔。
 	 * + 定义：该值范围为字符串或空串。
 	 * <code>
-	 *const path_extension_enable = ''; //默认不使用扩展类库
-	 *const path_extension_enable = true; //扩展目录加入到include_path。
-	 *const path_extension_enable = 'Zend'; //扩展目录加入到include_path，并自动执行Zend.php
-	 *const path_extension_enable = 'Zend,Symfony'; //扩展目录加入到include_path，并自动执行Zend.php和Symfony.php
-	 *const path_extension_enable = 'all-in-one'; //扩展目录加入到include_path，并自动执行all-in-one.php
+	 *const extension_enable = ''; //默认不使用扩展类库
+	 *const extension_enable = true; //扩展目录加入到include_path。
+	 *const extension_enable = 'Zend'; //扩展目录加入到include_path，并自动执行Zend.php
+	 *const extension_enable = 'Zend,Symfony'; //扩展目录加入到include_path，并自动执行Zend.php和Symfony.php
+	 *const extension_enable = 'all-in-one'; //扩展目录加入到include_path，并自动执行all-in-one.php
 	 * </code>
 	 */
-	const path_extension_enable = '';
+	const extension_enable = '';
 	
 	/**
-	 * 扩展模块路径
+	 * 扩展模块路径【path】
 	 *
 	 * + 作用：自动载入类功能是否打开。
 	 * + 定义：该值范围为字符串或空串。
 	 * <code>
-	 *const path_extension_path = ''; //默认相对核心文件类名路径
-	 *const path_extension_path = '@ext'; //为当前核心文件所在的"extension"目录，“@”开头相对核心文件路径
-	 *const path_extension_path = 'ext'; //为当前目录所在的"extension"目录
-	 *const path_extension_path = '/ext'; //为根目录上的"extension"目录
+	 *const extension_path = ''; //默认相对核心文件类名路径
+	 *const extension_path = '@ext'; //为当前核心文件所在的"extension"目录，“@”开头相对核心文件路径
+	 *const extension_path = 'ext'; //为当前目录所在的"extension"目录
+	 *const extension_path = '/ext'; //为根目录上的"extension"目录
 	 * </code>
 	 */
-	const path_extension_path = '';
+	const extension_path = '';
 	
 	/**
-	 * 扩展路径顺序
+	 * 扩展路径顺序【path】
 	 *
 	 * + 作用：扩展路径在include_path中的顺序
 	 * + 定义：该值范围为字符串或空串。
 	 * <code>
-	 *const path_extension_prepend = ''; //默认顺序在最后面
-	 *const path_extension_prepend = true; //顺序在最前面
+	 *const extension_prepend = ''; //默认顺序在最后面
+	 *const extension_prepend = true; //顺序在最前面
 	 * </code>
 	 */
-	const path_extension_prepend = '';
+	const extension_prepend = '';
 	
 	/**
-	 * 视图模板路径
+	 * 视图模板路径【path】
 	 *
 	 * + 作用：自动载入类功能是否打开。
 	 * + 定义：该值范围为逻辑值或空串。
 	 * <code>
-	 *const path_template_path = ''; //默认当前目录相对路径
-	 *const path_template_path = '@tpl'; //为当前核心文件所在的"template"目录，“@”开头相对核心文件路径
-	 *const path_template_path = 'tpl'; //为当前目录所在的"template"目录
-	 *const path_template_path = '/tpl'; //为根目录上的"template"目录
+	 *const template_path = ''; //默认当前目录相对路径
+	 *const template_path = '@tpl'; //为当前核心文件所在的"template"目录，“@”开头相对核心文件路径
+	 *const template_path = 'tpl'; //为当前目录所在的"template"目录
+	 *const template_path = '/tpl'; //为根目录上的"template"目录
 	 * </code>
 	 */
-	const path_template_path = '';
+	const template_path = '';
 	
 	/**
-	 * 视图模板路径标识符
+	 * 视图模板路径标识符【view】
 	 *
 	 * + 作用：视图模板路径的标识符。
 	 * + 定义：该值范围为字符串或空串。
 	 * <code>
-	 *const view_template_search = ''; //默认为不使用模板路径标识符
-	 *const view_template_search = '.php'; //模板路径使用".php"为标识符
+	 *const template_search = ''; //默认为不使用模板路径标识符
+	 *const template_search = '.php'; //模板路径使用".php"为标识符
 	 * </code>
 	 */
-	const view_template_search = '';
+	const template_search = '';
 	
 	/**
-	 * 视图模板路径替换值
+	 * 视图模板路径替换值【view】
 	 *
 	 * + 作用：视图模板路径的标识符替换成该值。
 	 * + 定义：该值范围为字符串或空串。
@@ -223,249 +223,246 @@ class core {
 	 *const view_template_replace = '.tpl'; //如果使用模板路径标识符，则模板路径标识符替换成".tpl"
 	 * </code>
 	 */
-	const view_template_replace = '';
+	const template_replace = '';
 	
 	/**
-	 * 视图模板类型
+	 * 视图模板类型【view】
 	 *
 	 * + 作用：定义默认的视图模板类型。
 	 * + 定义：该值范围为字符串或空串，多级模板用小数点连接。
 	 * <code>
-	 *const view_template_type = ''; //默认是'include'模板，等效于include函数。
-	 *const view_template_type = 'string'; //使用字符串模板，等效于""字符串定义。
-	 *const view_template_type = 'smarty'; //使用smarty模板扩展库。
+	 *const template_type = ''; //默认是'include'模板，等效于include函数。
+	 *const template_type = 'string'; //使用字符串模板，等效于""字符串定义。
+	 *const template_type = 'smarty'; //使用smarty模板扩展库。
 	 * </code>
 	 * + 注意：include和string是内置模板，其他模板会自动在扩展库里寻找“view_模板类型.php”的程序。
 	 */
-	const view_template_type = '';
+	const template_type = '';
 	
 	/**
-	 * 视图输出方式
+	 * 视图输出方式【view】
 	 *
 	 * + 作用：视图默认是否直接显示输出结果。
 	 * + 定义：该值范围为逻辑或空串。
 	 * <code>
-	 *const view_template_show = ''; //默认为true,直接输出结果
-	 *const view_template_show = false; //不直接输出，仅返回结果
+	 *const template_show = ''; //默认为true,直接输出结果
+	 *const template_show = false; //不直接输出，仅返回结果
 	 * </code>
 	 */
-	const view_template_show = '';
+	const template_show = '';
 	
 	/**
-	 * 视图所在路径
-	 *
-	 * + 作用：定义默认的视图相对路径。
-	 * + 定义：该值范围为字符串或空串。
-	 * <code>
-	 *const view_default_dir = ''; //默认为当前路径
-	 *const view_default_dir = '@tpl'; //当前核心文件所在的"tpl"目录，'@'开头的都相对于核心文件路径
-	 *const view_default_dir = 'tpl'; //当前目录所在的"tpl"目录
-	 *const view_default_dir = '/tpl'; //根目录上的"tpl"目录
-	 * </code>
-	 */
-	const view_default_dir = '';
-	
-	/**
-	 * 数据库提供类型
+	 * 数据库提供类型【connect】
 	 *
 	 * + 作用：数据库提供类型值，目前支持mysql、pdo、adodb，其中pdo和adodb仅支持mysql数据库。
 	 * + 定义：该值范围为字符串或空串。
 	 * <code>
-	 *const db_connect_provider = ''; //默认使用"mysql"
-	 *const db_connect_provider = 'mysql'; //使用"mysql"
-	 *const db_connect_provider = 'pdo5'; //使用"pdo5.php"的扩展
-	 *const db_connect_provider = 'adodb5'; //使用"adodb5.php"的扩展
+	 *const connect_provider = ''; //默认使用"mysql"
+	 *const connect_provider = 'mysql'; //使用"mysql"
+	 *const connect_provider = 'pdo5'; //使用"pdo5.php"的扩展
+	 *const connect_provider = 'adodb5'; //使用"adodb5.php"的扩展
 	 * </code>
 	 * + 注意：pdo和adodb是扩展库，需要扩展库里“数据库类型.php”的支持
 	 */
-	const db_connect_provider = '';
+	const connect_provider = '';
 	
 	/**
-	 * 数据库连接字符串
+	 * 数据库连接字符串【connect】
 	 *
 	 * + 作用：数据库连接字符串值。（对pdo/adodb有效）
 	 * + 定义：该值范围为字符串或空串。
 	 * <code>
-	 *const db_connect_dsn = ''; //adodb下默认使用默认连接方式
-	 *const db_connect_dsn = 'mysql:dbname=testdb;host=127.0.0.1'; //标准连接方式(pdo)
-	 *const db_connect_dsn = 'mysql'; //adodb下使用mssql
-	 *const db_connect_dsn = 'mysqli'; //adodb下使用mssqli
-	 *const db_connect_dsn = 'mysqlt'; //adodb下使用mssqlt
-	 *const db_connect_dsn = 'mysqlt://user@pass:host/path?port=3307'; //使用连接字符串，请将下面的server设成空值(adodb)
+	 *const connect_dsn = ''; //adodb下默认使用默认连接方式
+	 *const connect_dsn = 'mysql:dbname=testdb;host=127.0.0.1'; //标准连接方式(pdo)
+	 *const connect_dsn = 'mysql'; //adodb下使用mssql
+	 *const connect_dsn = 'mysqli'; //adodb下使用mssqli
+	 *const connect_dsn = 'mysqlt'; //adodb下使用mssqlt
+	 *const connect_dsn = 'mysqlt://user@pass:host/path?port=3307'; //使用连接字符串，请将下面的server设成空值(adodb)
 	 * </code>
 	 */
-	const db_connect_dsn = '';
+	const connect_dsn = '';
 	
 	/**
-	 * 数据库连接类型
+	 * 数据库连接类型【connect】
 	 *
 	 * + 作用：数据库连接类型值。（对mysql/adodb有效）
 	 * + 定义：该值范围为字符串或空串。
 	 * <code>
-	 *const db_connect_type = ''; //默认不使用持久连接
-	 *const db_connect_type = 'persist'; //使用持久连接
+	 *const connect_type = ''; //默认不使用持久连接
+	 *const connect_type = 'persist'; //使用持久连接
 	 * </code>
 	 */
-	const db_connect_type = '';
+	const connect_type = '';
 	
 	/**
-	 * 数据库连接服务器
+	 * 数据库连接服务器【connect】
 	 *
 	 * + 作用：服务器值。（对mysql/adodb有效）
 	 * + 定义：该值范围为字符串或空串。
 	 * <code>
-	 *const db_connect_server = ''; //默认服务器为"localhost"
-	 *const db_connect_server = '127.0.0.1'; //服务器"127.0.0.1"
-	 *const db_connect_server = '127.0.0.1:3307'; //指定服务器和端口(mysql)
+	 *const connect_server = ''; //默认服务器为"localhost"
+	 *const connect_server = '127.0.0.1'; //服务器"127.0.0.1"
+	 *const connect_server = '127.0.0.1:3307'; //指定服务器和端口(mysql)
 	 * </code>
 	 */
-	const db_connect_server = '';
+	const connect_server = '';
 	
 	/**
-	 * 数据库连接帐号
+	 * 数据库连接帐号【connect】
 	 *
 	 * + 作用：帐号。（对mysql/pdo/adodb有效）
 	 * + 定义：该值范围为字符串或空串。
 	 * <code>
-	 *const db_connect_username = ''; //默认帐号为"ODBC"
-	 *const db_connect_username = 'root'; //帐号使用"root"
+	 *const connect_username = ''; //默认帐号为"ODBC"
+	 *const connect_username = 'root'; //帐号使用"root"
 	 * </code>
 	 */
-	const db_connect_username = '';
+	const connect_username = '';
 	
 	/**
-	 * 数据库连接密码
+	 * 数据库连接密码【connect】
 	 *
 	 * + 作用：密码。（对mysql/pdo/adodb有效）
 	 * + 定义：该值范围为字符串或空串。
 	 * <code>
-	 *const db_connect_password = ''; //默认密码为空
-	 *const db_connect_password = 'admin'; //密码使用"admin"
+	 *const connect_password = ''; //默认密码为空
+	 *const connect_password = 'admin'; //密码使用"admin"
 	 * </code>
 	 */
-	const db_connect_password = '';
+	const connect_password = '';
 	
 	/**
-	 * 数据库连接新连接参数
+	 * 数据库连接新连接参数【connect】
 	 *
 	 * + 作用：客户端值。（对mysql/adodb有效）
 	 * + 定义：该值范围为逻辑值或空串。
 	 * <code>
-	 *const db_connect_new_link = ''; //默认不使用新连接
-	 *const db_connect_new_link = true; //使用新连接
+	 *const connect_new_link = ''; //默认不使用新连接
+	 *const connect_new_link = true; //使用新连接
 	 * </code>
 	 */
-	const db_connect_new_link = '';
+	const connect_new_link = '';
 	
 	/**
-	 * 数据库连接客户端参数
+	 * 数据库连接客户端参数【connect】
 	 *
 	 * + 作用：客户端参数。（对mysql/adodb有效）
 	 * + 定义：该值范围为整数或空串。
 	 * <code>
-	 *const db_connect_client_flags = ''; //默认为0
-	 *const db_connect_client_flags = 128; //可使用LOAD DATA LOCAL语句
+	 *const connect_client_flags = ''; //默认为0
+	 *const connect_client_flags = 128; //可使用LOAD DATA LOCAL语句
 	 * </code>
 	 */
-	const db_connect_client_flags = '';
+	const connect_client_flags = '';
 	
 	/**
-	 * 数据库连接初始数据库
+	 * 数据库连接初始数据库【connect】
 	 *
 	 * + 作用：初始数据库。（对mysql/adodb有效）
 	 * + 定义：该值范围为字符串或空串。
 	 * <code>
-	 *const db_connect_dbname = ''; //默认不连接特定数据库
-	 *const db_connect_dbname = 'test'; //连接到test数据库
+	 *const connect_dbname = ''; //默认不连接特定数据库
+	 *const connect_dbname = 'test'; //连接到test数据库
 	 * </code>
 	 */
-	const db_connect_dbname = '';
+	const connect_dbname = '';
 	
 	/**
-	 * 数据库连接编码
+	 * 数据库连接编码【connect】
 	 *
 	 * + 作用：编码值。（对mysql/adodb有效）
 	 * + 定义：该值范围为字符串或空串。
 	 * <code>
-	 *const db_connect_charset = ''; //默认使用默认的编码连接
-	 *const db_connect_charset = 'GBK'; //使用"GBK"编码连接
+	 *const connect_charset = ''; //默认使用默认的编码连接
+	 *const connect_charset = 'GBK'; //使用"GBK"编码连接
 	 * </code>
 	 */
-	const db_connect_charset = '';
+	const connect_charset = '';
 	
 	/**
-	 * 数据库连接端口号
+	 * 数据库连接端口号【connect】
 	 *
 	 * + 作用：端口号。（对adodb有效）
 	 * + 定义：该值范围为整数或空串。
 	 * <code>
-	 *const db_connect_port = ''; //默认使用默认的3306端口
-	 *const db_connect_port = 3307; //设置端口为3307(adodb)
+	 *const connect_port = ''; //默认使用默认的3306端口
+	 *const connect_port = 3307; //设置端口为3307(adodb)
 	 * </code>
 	 */
-	const db_connect_port = '';
+	const connect_port = '';
 	
 	/**
-	 * 数据库连接socket值
+	 * 数据库连接socket值【connect】
 	 *
 	 * + 作用：socket值。（对adodb有效）
 	 * + 定义：该值范围为字符串或空串。
 	 * <code>
-	 *const db_connect_socket = ''; //默认不特定使用socket
-	 *const db_connect_socket = '/tmp/mysql.sock'; //设置socket为"/tmp/mysql.sock"(adodb的MySQLi)
+	 *const connect_socket = ''; //默认不特定使用socket
+	 *const connect_socket = '/tmp/mysql.sock'; //设置socket为"/tmp/mysql.sock"(adodb的MySQLi)
 	 * </code>
 	 */
-	const db_connect_socket = '';
+	const connect_socket = '';
 	
 	/**
-	 * 表名前缀标识符
+	 * 数据库连接选项值【connect】
+	 *
+	 * + 作用：选项值。（对pdo有效）
+	 * + 定义：该值范围为字符串或空串。
+	 * <code>
+	 *const connect_driver_options = ''; //该值为数组，只能通过函数方式设置。
+	 * </code>
+	 */
+	const connect_driver_options = '';
+	
+	/**
+	 * 表名前缀标识符【connect】
 	 *
 	 * + 作用：SQL语句里会将该值作为表名前缀标识符。（对mysql/pdo/adodb有效）
 	 * + 定义：该值范围为字符串或空串。
 	 * <code>
-	 *const db_prefix_search = ''; //默认为不使用表名前缀
-	 *const db_prefix_search = 'prefix_'; //表名前缀使用"prefix_"为标识符
+	 *const prefix_search = ''; //默认为不使用表名前缀
+	 *const prefix_search = 'prefix_'; //表名前缀使用"prefix_"为标识符
 	 * </code>
 	 */
-	const db_prefix_search = '';
+	const prefix_search = '';
 	
 	/**
-	 * 表名前缀替换值
+	 * 表名前缀替换值【connect】
 	 *
 	 * + 作用：SQL语句里会将表名前缀标识符替换成该值。（对mysql/pdo/adodb有效）
 	 * + 定义：该值范围为字符串或空串。
 	 * <code>
-	 *const db_prefix_replace = ''; //默认不进行表名前缀替换值为空
-	 *const db_prefix_replace = 'sample_'; //如果使用表名前缀标识符，则前缀标识符替换成"sample_"
+	 *const prefix_replace = ''; //默认不进行表名前缀替换值为空
+	 *const prefix_replace = 'sample_'; //如果使用表名前缀标识符，则前缀标识符替换成"sample_"
 	 * </code>
 	 */
-	const db_prefix_replace = '';
+	const prefix_replace = '';
 	
 	/**
-	 * 数据库调试开关
+	 * 数据库调试开关【connect】
 	 *
 	 * + 作用：数据库调试功能是否打开。
 	 * + 定义：该值范围为逻辑值或空串。
 	 * <code>
-	 *const db_debug_enable = ''; //默认关闭
-	 *const db_debug_enable = true; //打开数据库调试功能
+	 *const debug_enable = ''; //默认关闭
+	 *const debug_enable = true; //打开数据库调试功能
 	 * </code>
 	 */
-	const db_debug_enable = '';
+	const debug_enable = '';
 	
 	/**
-	 * 数据库调试文件
+	 * 数据库调试文件【connect】
 	 *
 	 * + 作用：数据库调试的记录文件。
 	 * + 定义：该值范围为字符串或空串。
 	 * <code>
-	 *const db_debug_file = ''; //默认直接显示调试信息
-	 *const db_debug_file = '@debug.log'; //将调式信息设置为相对核心文件路径的debug.log
-	 *const db_debug_file = 'debug.log'; //将调式信息设置为相对路径的debug.log
-	 *const db_debug_file = '/debug.log'; //将调式信息设置为绝对路径的debug.log
+	 *const debug_file = ''; //默认直接显示调试信息
+	 *const debug_file = '@debug.log'; //将调式信息设置为相对核心文件路径的debug.log
+	 *const debug_file = 'debug.log'; //将调式信息设置为相对路径的debug.log
+	 *const debug_file = '/debug.log'; //将调式信息设置为绝对路径的debug.log
 	 * </code>
 	 */
-	const db_debug_file = '';
+	const debug_file = '';
 	
 	/**
 	 * 存根函数（可继承）
@@ -488,7 +485,7 @@ class core {
 		// 【基础功能】设置存根参数
 		static $static_config = null;
 		if ($static_config === null) {
-			$static_config = self::init ( - 3 );
+			$static_config = self::init (4);
 			$static_config = array ('autoload_enable' => $static_config ['autoload_enable'], 
 					'autoload_path' => $static_config ['autoload_path'], 
 					'autoload_extensions' => $static_config ['autoload_extensions'], 
@@ -625,7 +622,7 @@ class core {
 		// 【基础功能】设置入口参数
 		static $static_config = null;
 		if ($static_config === null) {
-			$static_config = self::init ( - 3 );
+			$static_config = self::init (4);
 			$static_config = array ('framework_enable' => $static_config ['framework_enable'], 
 					'framework_require' => $static_config ['framework_require'], 
 					'framework_module' => $static_config ['framework_module'], 
@@ -1368,6 +1365,7 @@ class core {
 	 *sample::main (array('extension_enable'=>'Zend,Misc','extension_path'=>'@ext')); //将扩展类库目录加入到include_path，并包含扩展文件Zend.php和Misc.php
 	 *require_once core::path('sample.php','extension');
 	 *require core::path('@sample.tpl','template');
+	 *core::init(require core::path('sample.php','config'));
 	 * </code>
 	 * @param string $filename
 	 * @param string $filetype
@@ -1378,7 +1376,7 @@ class core {
 		// 【基础功能】设置路径参数
 		static $static_config = null;
 		if ($static_config === null) {
-			$static_config = self::init ( - 3 );
+			$static_config = self::init (4);
 			$static_config = array ('extension_enable' => $static_config ['extension_enable'], 
 				'extension_path' => $static_config ['extension_path'], 
 				'extension_prepend' => $static_config ['extension_prepend'], 
@@ -1479,8 +1477,9 @@ class core {
 				}
 			
 			case 'template' :
+			case 'config' :
 				
-				// 【基础功能】返回模板路径
+				// 【基础功能】返回模板路径、返回配置路径
 				if (strncmp ( $filename, '@', 1 ) == 0) {
 					return dirname ( __FILE__ ) . DIRECTORY_SEPARATOR . substr ( $filename, 1 );
 				} elseif (strncmp ( $filename, '\\', 1 ) == 0 || strncmp ( $filename, '/', 1 ) == 0 || strncmp ( $filename, './', 2 ) == 0 || strncmp ( $filename, '.\\', 2 ) == 0 || strpos ( $filename, ':' ) !== false) {
@@ -1512,126 +1511,179 @@ class core {
 	 *core::init('@config.php'); //读取文件设置参数
 	 *core::init('prefix_search'); //取当前表前缀参数
 	 * </code>
+	 * @link http://www.coremvc.cn/api/core/init.php
 	 * @param mix $config
+	 * @param string $class
 	 * @return array
 	 */
-	static public function init($config = null) {
+	static public function init($config = null, $class = __CLASS__) {
 		
 		// 【基础功能】设置各类参数
+		static $static_config0 = array ();
+		static $static_config1 = array ();
+		static $static_config2 = array ();
+		static $static_config3 = array ();
+		static $static_config4 = array ();
+		static $static_config5 = array ();
+		static $static_config_file = array ();
+		if (! class_exists ($class)) {
+			return;
+		}
 		do {
-			if ($config === null) {
-				$config_array = array ();
-				break;
-			}
-			static $static_config1 = array ('autoload_enable' => '', 'autoload_path' => '', 'autoload_extensions' => '', 
-					'autoload_prepend' => '', 'framework_enable' => '', 'framework_require' => '', 'framework_module' => '', 
-					'framework_action' => '', 'framework_parameter' => '', 'extension_enable' => '', 'extension_path' => '', 
-					'extension_prepend' => '', 'template_path' => '', 'template_search' => '', 'template_replace' => '', 
-					'template_type' => '', 'template_show' => '', 'connect_provider' => '', 'connect_dsn' => '', 
-					'connect_type' => '', 'connect_server' => '', 'connect_username' => '', 'connect_password' => '', 
-					'connect_new_link' => '', 'connect_client_flags' => '', 'connect_dbname' => '', 'connect_charset' => '', 
-					'connect_port' => '', 'connect_socket' => '', 'connect_driver_options' => '', 'prefix_search' => '', 
-					'prefix_replace' => '', 'debug_enable' => '', 'debug_file' => '' );
-			if ($config === 1) {
-				$config_array = $static_config1;
-				break;
-			} elseif ($config === - 1) {
-				return $static_config1;
-			}
-			static $static_config2 = array ('autoload_enable' => self::stub_autoload_enable, 'autoload_path' => self::stub_autoload_path, 
-					'autoload_extensions' => self::stub_autoload_extensions, 'autoload_prepend' => self::stub_autoload_prepend, 
-					'framework_enable' => self::main_framework_enable, 'framework_require' => self::main_framework_require, 
-					'framework_module' => self::main_framework_module, 'framework_action' => self::main_framework_action, 
-					'framework_parameter' => self::main_framework_parameter, 'extension_enable' => self::path_extension_enable, 
-					'extension_path' => self::path_extension_path, 'extension_prepend' => self::path_extension_prepend, 
-					'template_path' => self::path_template_path, 'template_search' => self::view_template_search, 
-					'template_replace' => self::view_template_replace, 'template_type' => self::view_template_type, 
-					'template_show' => self::view_template_show, 'connect_provider' => self::db_connect_provider, 
-					'connect_dsn' => self::db_connect_dsn, 'connect_type' => self::db_connect_type, 
-					'connect_server' => self::db_connect_server, 'connect_username' => self::db_connect_username, 
-					'connect_password' => self::db_connect_password, 'connect_new_link' => self::db_connect_new_link, 
-					'connect_client_flags' => self::db_connect_client_flags, 'connect_dbname' => self::db_connect_dbname, 
-					'connect_charset' => self::db_connect_charset, 'connect_port' => self::db_connect_port, 
-					'connect_socket' => self::db_connect_socket, 'connect_driver_options' => '', 
-					'prefix_search' => self::db_prefix_search, 'prefix_replace' => self::db_prefix_replace, 
-					'debug_enable' => self::db_debug_enable, 'debug_file' => self::db_debug_file );
-			if ($config === 2) {
-				$config_array = $static_config2;
-				break;
-			} elseif ($config === - 2) {
-				return $static_config2;
-			}
-			static $static_config3 = null;
-			if ($static_config3 === null) {
-				$static_config3 = $static_config2;
-				if (self::config !== '') {
-					$config_file = self::config;
-					if (strncmp ( $config_file, '@', 1 ) == 0) {
-						$config_file = dirname ( __FILE__ ) . DIRECTORY_SEPARATOR . substr ( $config_file, 1 );
-					}
-					if (is_file ( $config_file )) {
-						$config_result = require $config_file;
-						if (is_array ( $config_result )) {
-							foreach ( $static_config3 as $key => $value ) {
-								if (isset ( $config_result [$key] )) {
-									$static_config3 [$key] = $config_result [$key];
-								}
-							}
-						}
-					}
+			// 处理level 0（当前值）
+			if (isset($static_config0 [$class])) {
+				$config0 =& $static_config0 [$class];
+				if ($config === 0) {
+					return $config0;
+				} elseif ($config === null) {
+					break;
 				}
+			} else {
+				if ($config === 0) {
+					return;
+				} elseif ($config === null) {
+					$config = -4;
+				}
+			}
+			// 处理level 0,1,2（当前值、类定义的常量空值、类定义的常量值）
+			if (isset($static_config1 [$class])) {
+				$config0 =& $static_config0 [$class];
+				$config1 =& $static_config1 [$class];
+				$config2 =& $static_config2 [$class];
+				$config_file =& $static_config_file [$class];
+			} else {
+				$static_config0 [$class] = null;
+				$static_config1 [$class] = array ();
+				$obj = new ReflectionClass ($class);
+				$static_config2 [$class] = $obj->getConstants ();
+				$config0 =& $static_config0 [$class];
+				$config1 =& $static_config1 [$class];
+				$config2 =& $static_config2 [$class];
+				if (isset($config2 ['_config'])){
+					$static_config_file [$class] = $config2 ['_config'];
+				} else {
+					$static_config_file [$class] = '';
+				}
+				$config_file =& $static_config_file [$class];
+				foreach ($config2 as $key=>$value ) {
+					if ($key[0] === '_') {
+						unset($config2 [$key]);
+						continue;
+					}
+					$config1 [$key] = '';
+				}
+			}
+			if ($config === 1) {
+				return $config1;
+			} elseif ($config === -1) {
+				$config0 = $config1;
+				break;
+			}
+			if ($config === 2) {
+				return $config2;
+			} elseif ($config === -2) {
+				$config0 = $config2;
+				break;
+			}
+			// 处理level 3（PHP配置文件的预设值，预留）
+			if (isset($static_config3 [$class])) {
+				$config3 =& $static_config3 [$class];
+			} else {
+				$static_config3 [$class] = $config2;
+				$config3 =& $static_config3 [$class];
 			}
 			if ($config === 3) {
-				$config_array = $static_config3;
+				return $config3;
+			} elseif ($config === -3) {
+				$config0 = $config3;
 				break;
-			} elseif ($config === - 3) {
-				return $static_config3;
 			}
-			static $static_config4 = null;
-			if ($static_config4 === null) {
-				$static_config4 = $static_config3;
-			}
-			if ($config === 4) {
-				$config_array = $static_config4;
-				break;
-			} elseif ($config === - 4) {
-				return $static_config4;
-			}
-			if (is_array ( $config )) {
-				$static_config4 = $static_config3;
-				foreach ( $static_config4 as $key => $value ) {
-					if (isset ( $config [$key] )) {
-						$static_config4 [$key] = $config [$key];
+			// 处理level 4（类定义的配置常量的返回值）
+			if (isset($static_config4 [$class])) {
+				$config4 =& $static_config4 [$class];
+			} else {
+				$static_config4 [$class] = $config3;
+				$config4 =& $static_config4 [$class];
+				if (is_string($config_file) && $config_file !== '') {
+					if ($class === __CLASS__) {
+						$config_path = $config4 ['config_path'];
+						if (! is_string($config_file) || $config_path === '') {
+							$config_realpath = dirname ( __FILE__ ) . DIRECTORY_SEPARATOR;
+						} elseif ($config_path['0'] === '@') {
+							$config_realpath = dirname ( __FILE__ ) . DIRECTORY_SEPARATOR . substr ( $config_path, 1 ) . DIRECTORY_SEPARATOR;
+						} else {
+							$config_realpath = $config_realpath . DIRECTORY_SEPARATOR;
+						}
+						if ($config_file['0'] === '@') {
+							$config_realfile = dirname ( __FILE__ ) . DIRECTORY_SEPARATOR . substr ( $config_file, 1 );
+						} elseif ($config_file['0'] === '\\' || $config_file['0'] === '/' || strncmp ( $config_file, './', 2 ) == 0 || strncmp ( $config_file, '.\\', 2 ) == 0 || strpos ( $config_file, ':' ) !== false) {
+							$config_realfile = $config_file;
+						} else {
+							$config_realfile = $config_realpath . $config_file;
+						}
+					} else {
+						$config_realfile = self::path($config_file, 'config');
 					}
-				}
-				$config_array = $static_config4;
-				break;
-			}
-			if (is_string ( $config )) {
-				if (array_key_exists ( $config , $static_config4)) {
-					return $static_config4 [$config];
-				}
-				$static_config4 = $static_config3;
-				$config_file = $config;
-				if (strncmp ( $config_file, '@', 1 ) == 0) {
-					$config_file = dirname ( __FILE__ ) . DIRECTORY_SEPARATOR . substr ( $config_file, 1 );
-				}
-				if (is_file ( $config_file )) {
-					$config_result = require $config_file;
-					if (is_array ( $config_result )) {
-						foreach ( $static_config4 as $key => $value ) {
-							if (isset ( $config_result [$key] )) {
-								$static_config4 [$key] = $config_result [$key];
-							}
+					if (is_file ( $config_realfile )) {
+						$config_result = require $config_realfile;
+						if (is_array ( $config_result )) {
+							$config4 = array_merge ($config4, $config_result);
 						}
 					}
 				}
-				$config_array = $static_config4;
+			}
+			if ($config === 4) {
+				return $config4;
+			} elseif ($config === -4) {
+				$config0 = $config4;
 				break;
 			}
+			// 处理level 5（在程序中通过init函数设置的值）
+			if (isset($static_config5 [$class])) {
+				$config5 =& $static_config5 [$class];
+			} else {
+				$static_config5 [$class] = $config4;
+				$config5 =& $static_config5 [$class];
+			}
+			if ($config === 5) {
+				return $config5;
+			} elseif ($config === -5) {
+				$config0 = $config5;
+				break;
+			}
+			if (is_array ( $config )) {
+				$config5 = array_merge ($config4, $config);
+				$config0 = $config5;
+				break;
+			} elseif (is_string ( $config )) {
+				if (strpos($config,'.') !== false) {
+					$config_realfile = self::path($config, 'config');
+					if (is_file ( $config_realfile )) {
+						$config_result = require $config_realfile;
+						if (is_array ( $config_result )) {
+							$config5 = array_merge ($config4, $config_result);
+							$config0 = $config5;
+							break;
+						}
+					}
+				}
+				if (isset ($config0[$config])){
+					return $config0[$config];
+				} else {
+					return;
+				}
+			}
+			$config0 = $config5;
 			return;
 		} while ( true );
-		return array_merge ( self::stub ( $config_array ), self::main ( $config_array ), self::path ( $config_array ), self::view ( $config_array ), self::connect ( $config_array ) );
+		if ($class === __CLASS__) {
+			self::stub ( $config0 );
+			self::main ( $config0 );
+			self::path ( $config0 );
+			self::view ( $config0 );
+			self::connect ( $config0 );
+		}
+		return $config0;
 	
 	}
 	
@@ -1657,7 +1709,7 @@ class core {
 		// 【基础功能】设置视图参数
 		static $_static_config = null;
 		if ($_static_config === null) {
-			$_static_config = self::init ( - 3 );
+			$_static_config = self::init (4);
 			$_static_config = array ('template_search' => $_static_config ['template_search'], 'template_replace' => $_static_config ['template_replace'], 
 					'template_type' => $_static_config ['template_type'], 'template_show' => $_static_config ['template_show'] );
 		}
@@ -1768,7 +1820,7 @@ class core {
 		// 【基础功能】设置数据库参数
 		static $static_config = null;
 		if ($static_config === null) {
-			$static_config = self::init ( - 3 );
+			$static_config = self::init (4);
 			$static_config = array ('connect_provider' => $static_config ['connect_provider'], 'connect_dsn' => $static_config ['connect_dsn'], 
 					'connect_type' => $static_config ['connect_type'], 'connect_server' => $static_config ['connect_server'], 
 					'connect_username' => $static_config ['connect_username'], 'connect_password' => $static_config ['connect_password'], 
