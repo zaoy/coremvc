@@ -11,7 +11,7 @@ CoreMVC遵从new BSD许可证，所以您可以在法律允许的范围以内任
 /**
  * CoreMVC核心模块
  * 
- * @version 1.1.0 alpha 13
+ * @version 1.1.0 alpha 14
  * @author Z <602000@gmail.com>
  * @link http://code.google.com/p/coremvc/
  */
@@ -39,7 +39,7 @@ CoreMVC遵从new BSD许可证，所以您可以在法律允许的范围以内任
 
 9. 数据库连接自动化，可使用多个连接。
 
-10. 整个核心文件只有：1个类、36项设置、21个方法。
+10. 整个核心文件只有：1个类、37项设置、21个方法。
 
 
 ●　版本更新说明
