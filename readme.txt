@@ -11,7 +11,7 @@ CoreMVC遵从new BSD许可证，所以您可以在法律允许的范围以内任
 /**
  * CoreMVC核心模块
  * 
- * @version 1.1.0 alpha 12
+ * @version 1.1.0 alpha 13
  * @author Z <602000@gmail.com>
  * @link http://code.google.com/p/coremvc/
  */
@@ -65,6 +65,9 @@ CoreMVC 1.1.0 相对于 CoreMVC 1.0.0版本的改进
 9. 增强了自动载入功能可在设置参数阶段生效并可自定义载入函数。
 
 10.目前可扩展的类库有：数据库扩展：pdo5、adodb5、adodb5zip；模板扩展：smarty2、smarty2zip、smarty3；其他扩展：Zend、Symfony、PHPUnit、PHPExcel、PHPMailer、PHPCharts。
+
+11.增强了core::init功能，支持继承类的独立配置。
+
 
 
 CoreMVC 1.0.0 相对于 CoreMVC 0.7.3版本的改进
@@ -685,7 +688,7 @@ class core {
 	
 	static public function path() {} // 路径函数
 	
-	static public function init() {} // 初始化函数
+	static public function init() {} // 初始化函数（可继承）
 	
 	
 	/*
