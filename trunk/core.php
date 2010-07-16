@@ -2,7 +2,7 @@
 /**
  * CoreMVC核心模块
  * 
- * @version 1.1.0 alpha 13
+ * @version 1.1.0 alpha 14
  * @author Z <602000@gmail.com>
  * @link http://code.google.com/p/coremvc/
  */
@@ -45,8 +45,8 @@ class core {
 	 * <code>
 	 *const autoload_path = ''; //默认不添加路径到include_path
 	 *const autoload_path = '@'; //添加相对核心文件路径到include_path
-	 *const autoload_path = 'class'; //添加相对路径到include_path
-	 *const autoload_path = '/class'; //添加绝对路径到include_path
+	 *const autoload_path = 'modules'; //添加相对路径到include_path
+	 *const autoload_path = '/modules'; //添加绝对路径到include_path
 	 * </code>
 	 */
 	const autoload_path = '';
@@ -156,7 +156,6 @@ class core {
 	 *const extension_enable = true; //扩展目录加入到include_path。
 	 *const extension_enable = 'Zend'; //扩展目录加入到include_path，并自动执行Zend.php
 	 *const extension_enable = 'Zend,Symfony'; //扩展目录加入到include_path，并自动执行Zend.php和Symfony.php
-	 *const extension_enable = 'all-in-one'; //扩展目录加入到include_path，并自动执行all-in-one.php
 	 * </code>
 	 */
 	const extension_enable = '';
@@ -168,9 +167,9 @@ class core {
 	 * + 定义：该值范围为字符串或空串。
 	 * <code>
 	 *const extension_path = ''; //默认相对核心文件类名路径
-	 *const extension_path = '@ext'; //为当前核心文件所在的"extension"目录，“@”开头相对核心文件路径
-	 *const extension_path = 'ext'; //为当前目录所在的"extension"目录
-	 *const extension_path = '/ext'; //为根目录上的"extension"目录
+	 *const extension_path = '@extensions'; //为当前核心文件所在的"extensions"目录，“@”开头相对核心文件路径
+	 *const extension_path = 'extensions'; //为当前目录所在的"extensions"目录
+	 *const extension_path = '/extensions'; //为根目录上的"extensions"目录
 	 * </code>
 	 */
 	const extension_path = '';
@@ -193,10 +192,24 @@ class core {
 	 * + 作用：自动载入类功能是否打开。
 	 * + 定义：该值范围为逻辑值或空串。
 	 * <code>
+	 *const config_path = ''; //默认当前目录相对路径
+	 *const config_path = '@configs'; //为当前核心文件所在的"configs"目录，“@”开头相对核心文件路径
+	 *const config_path = 'configs'; //为当前目录所在的"configs"目录
+	 *const config_path = '/configs'; //为根目录上的"configs"目录
+	 * </code>
+	 */
+	const config_path = '';
+	
+	/**
+	 * 视图模板路径【path】
+	 *
+	 * + 作用：自动载入类功能是否打开。
+	 * + 定义：该值范围为逻辑值或空串。
+	 * <code>
 	 *const template_path = ''; //默认当前目录相对路径
-	 *const template_path = '@tpl'; //为当前核心文件所在的"template"目录，“@”开头相对核心文件路径
-	 *const template_path = 'tpl'; //为当前目录所在的"template"目录
-	 *const template_path = '/tpl'; //为根目录上的"template"目录
+	 *const template_path = '@templates'; //为当前核心文件所在的"templates"目录，“@”开头相对核心文件路径
+	 *const template_path = 'templates'; //为当前目录所在的"templates"目录
+	 *const template_path = '/templates'; //为根目录上的"templates"目录
 	 * </code>
 	 */
 	const template_path = '';
@@ -1380,9 +1393,11 @@ class core {
 			$static_config = array ('extension_enable' => $static_config ['extension_enable'], 
 				'extension_path' => $static_config ['extension_path'], 
 				'extension_prepend' => $static_config ['extension_prepend'], 
+				'config_path' => $static_config ['config_path'], 
 				'template_path' => $static_config ['template_path'] );
 		}
 		static $static_extension_realpath = null;
+		static $static_config_realpath = null;
 		static $static_template_realpath = null;
 		static $static_extension_enable = null;
 		static $static_extension_path = null;
@@ -1403,6 +1418,16 @@ class core {
 		}
 		if ($filename_is_array && isset ( $filename ['extension_prepend'] ) ) {
 			$static_config ['extension_prepend'] = $filename ['extension_prepend'];
+		}
+		if ($filename_is_array && isset ( $filename ['config_path'] ) || $static_config_realpath === null) {
+			$filename_is_array && isset ( $filename ['config_path'] ) and $static_config ['config_path'] = $filename ['config_path'];
+			if ($static_config ['config_path'] === '') {
+				$static_config_realpath = dirname ( __FILE__ ) . DIRECTORY_SEPARATOR;
+			} elseif (strncmp ( $static_config ['config_path'], '@', 1 ) == 0) {
+				$static_config_realpath = dirname ( __FILE__ ) . DIRECTORY_SEPARATOR . substr ( $static_config ['config_path'], 1 ) . DIRECTORY_SEPARATOR;
+			} else {
+				$static_config_realpath = $static_config ['config_path'] . DIRECTORY_SEPARATOR;
+			}
 		}
 		if ($filename_is_array && isset ( $filename ['template_path'] ) || $static_template_realpath === null) {
 			$filename_is_array && isset ( $filename ['template_path'] ) and $static_config ['template_path'] = $filename ['template_path'];
@@ -1476,10 +1501,18 @@ class core {
 					return $static_extension_realpath . $filename;
 				}
 			
-			case 'template' :
 			case 'config' :
+				// 【基础功能】返回配置路径
+				if (strncmp ( $filename, '@', 1 ) == 0) {
+					return dirname ( __FILE__ ) . DIRECTORY_SEPARATOR . substr ( $filename, 1 );
+				} elseif (strncmp ( $filename, '\\', 1 ) == 0 || strncmp ( $filename, '/', 1 ) == 0 || strncmp ( $filename, './', 2 ) == 0 || strncmp ( $filename, '.\\', 2 ) == 0 || strpos ( $filename, ':' ) !== false) {
+					return $filename;
+				} else {
+					return $static_config_realpath . $filename;
+				}
 				
-				// 【基础功能】返回模板路径、返回配置路径
+			case 'template' :
+				// 【基础功能】返回模板路径
 				if (strncmp ( $filename, '@', 1 ) == 0) {
 					return dirname ( __FILE__ ) . DIRECTORY_SEPARATOR . substr ( $filename, 1 );
 				} elseif (strncmp ( $filename, '\\', 1 ) == 0 || strncmp ( $filename, '/', 1 ) == 0 || strncmp ( $filename, './', 2 ) == 0 || strncmp ( $filename, '.\\', 2 ) == 0 || strpos ( $filename, ':' ) !== false) {
@@ -1493,7 +1526,7 @@ class core {
 	}
 	
 	/**
-	 * 初始化函数
+	 * 初始化函数（可继承）
 	 *
 	 * + 作用：1.设置各类参数，返回参数数组。
 	 * + 示例：

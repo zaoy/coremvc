@@ -403,6 +403,7 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			'extension_enable'=>'',
 			'extension_path'=>'',
 			'extension_prepend'=>'',
+			'config_path'=>'',
 			'template_path'=>'',
 		));
 		//返回值
@@ -410,6 +411,7 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			'extension_enable'=>'',
 			'extension_path'=>'',
 			'extension_prepend'=>'',
+			'config_path'=>'',
 			'template_path'=>'',
 		),core::path(array()));
 		//设置值
@@ -417,6 +419,7 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			'extension_enable'=>'',
 			'extension_path'=>'@ext',
 			'extension_prepend'=>'',
+			'config_path'=>'',
 			'template_path'=>'',
 		),core::path(array(
 			'extension_path'=>'@ext',
@@ -426,6 +429,7 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			'extension_enable'=>'',
 			'extension_path'=>'@ext',
 			'extension_prepend'=>'',
+			'config_path'=>'',
 			'template_path'=>'',
 		),core::path(array()));
 		//再设置
@@ -433,6 +437,7 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			'extension_enable'=>'',
 			'extension_path'=>'@ext',
 			'extension_prepend'=>'',
+			'config_path'=>'',
 			'template_path'=>'@tpl',
 		),core::path(array(
 			'template_path'=>'@tpl',
@@ -442,6 +447,7 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			'extension_enable'=>'',
 			'extension_path'=>'@ext',
 			'extension_prepend'=>'',
+			'config_path'=>'',
 			'template_path'=>'@tpl',
 		),core::path(array()));
 		//恢复值
@@ -449,11 +455,13 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			'extension_enable'=>'',
 			'extension_path'=>'',
 			'extension_prepend'=>'',
+			'config_path'=>'',
 			'template_path'=>'',
 		),core::path(array(
 			'extension_enable'=>'',
 			'extension_path'=>'',
 			'extension_prepend'=>'',
+			'config_path'=>'',
 			'template_path'=>'',
 		)));
 		
@@ -630,6 +638,7 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			'extension_enable'=>'',
 			'extension_path' => '',
 			'extension_prepend'=>'',
+			'config_path' => '',
 			'template_path' => '',
 			'template_search' => '',
 			'template_replace' => '',
@@ -691,7 +700,7 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		$this->assertSame($config2,core::init(5));
 		$this->assertSame(true,core::init('framework_enable'));
 		//类名
-		require core::path('@tests/init_1_2.php');
+		require_once core::path('@tests/init_1_2.php');
 		$this->assertNull(core::init(0,'init_1_2'));
 		$this->assertSame(array('a'=>'b','framework_enable'=>true),core::init(null,'init_1_2'));
 		$this->assertSame(array('a'=>'b','framework_enable'=>true),core::init(0,'init_1_2'));
@@ -706,6 +715,12 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		$this->assertSame(array('a'=>'b','framework_enable'=>true),core::init(-5,'init_1_2'));
 		$this->assertSame(array('a'=>'b'),core::init(-3,'init_1_2'));
 		$this->assertSame(array('a'=>'b','framework_enable'=>true),core::init(-4,'init_1_2'));
+		//路径
+		$this->assertNull(core::init('init_1_4.php'));
+		core::init(array('config_path'=>'@tests/init_1'));
+		$this->assertNull(core::init(null,'init_1_3'));
+		require_once core::path('@tests/init_1_3.php');
+		$this->assertSame(array('a'=>'b','c'=>'d'),core::init(null,'init_1_3'));
 		
 		
 	}
