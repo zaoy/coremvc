@@ -4,6 +4,10 @@ class main_2_5 extends core{
 	}
 	public function message(){
 	}
+	final static public function index2(){
+	}
+	final public function message2(){
+	}
 	static public function add($x=0,$y=0){
 		return $x+$y;
 	}
