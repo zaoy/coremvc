@@ -2,7 +2,7 @@
 /**
  * CoreMVC核心模块
  * 
- * @version 1.1.0 alpha 14
+ * @version 1.1.0 alpha 15
  * @author Z <602000@gmail.com>
  * @link http://code.google.com/p/coremvc/
  */
@@ -666,11 +666,11 @@ class core {
 			$string.= is_array($parameter)?implode(' ',$parameter):$parameter;
 			// 2. 数组
 			if (stripos ( $string, '[get:' ) !== false) {
-				$get_array = array_values($_GET);
+				$get_array = array_values($_GET) + $_GET;
 				array_unshift ( $get_array, null);
 			}
 			if (stripos ( $string, '[post:' ) !== false) {
-				$post_array = array_values($_POST);
+				$post_array = array_values($_POST) + $_POST;
 				array_unshift ( $post_array, null);
 			}
 			if (stripos ( $string, '[query:' ) !== false) {
@@ -1124,6 +1124,8 @@ class core {
 			$module_arr = explode ( '&', array_shift ( $module_not ) );
 			$action_not = explode ( '!', array_shift ( $module_arr ) );
 			$action_arr = explode ( '|', array_shift ( $action_not ) );
+			$module_not = array_map('strtolower', $module_not);
+			$module_arr = array_map('strtolower', $module_arr);
 			$action_now = '';
 			$number_of_parameters = 0;
 			foreach ( $action_arr as $action_name ) {
@@ -1149,11 +1151,16 @@ class core {
 						continue;
 					}
 				}
+				if ( in_array( 'final', $return_array ) ) {
+					if (! $method->isFinal () ) {
+						continue;
+					}
+				}
 				$classname = $method->getDeclaringClass()->getName();
-				if ($module_arr && !in_array($classname,$module_arr) ) {
+				if ($module_arr && !in_array(strtolower($classname),$module_arr) ) {
 					continue;
 				}
-				if ($module_not && in_array($classname,$module_not) ) {
+				if ($module_not && in_array(strtolower($classname),$module_not) ) {
 					continue;
 				}
 				$number_of_parameters = $method->getNumberOfParameters();
@@ -1302,6 +1309,8 @@ class core {
 					$action_arr = explode ( '&', array_shift ( $action_not ) );
 					$param_not = explode ( '!', array_shift ( $action_arr ) );
 					$param_arr = explode ( '|', array_shift ( $param_not ) );
+					$action_not = array_map('strtolower', $action_not);
+					$action_arr = array_map('strtolower', $action_arr);
 					$param_now = '';
 					foreach ( $param_arr as $param_name ) {
 						if ($param_name === '') {
@@ -1310,10 +1319,10 @@ class core {
 						if (in_array ( $param_name, $param_not )) {
 							continue;
 						}
-						if ($action_arr && !in_array($action_now,$action_arr) ) {
+						if ($action_arr && !in_array(strtolower($action_now),$action_arr) ) {
 							continue;
 						}
-						if ($action_not && in_array($action_now,$action_not) ) {
+						if ($action_not && in_array(strtolower($action_now),$action_not) ) {
 							continue;
 						}
 						$param_now = $param_name;
