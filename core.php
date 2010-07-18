@@ -2,7 +2,7 @@
 /**
  * CoreMVC核心模块
  * 
- * @version 1.1.0 alpha 15
+ * @version 1.1.0 alpha 16
  * @author Z <602000@gmail.com>
  * @link http://code.google.com/p/coremvc/
  */
@@ -1581,9 +1581,7 @@ class core {
 					break;
 				}
 			} else {
-				if ($config === 0) {
-					return;
-				} elseif ($config === null) {
+				if ($config === null) {
 					$config = -4;
 				}
 			}
@@ -1673,6 +1671,9 @@ class core {
 						}
 					}
 				}
+			}
+			if (! isset($config0)) {
+				$config0 = $config4;
 			}
 			if ($config === 4) {
 				return $config4;

@@ -707,7 +707,7 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			'debug_file' => '',
 		);
 		//返回值
-		$this->assertNull(core::init(0));
+		$this->assertSame($config,core::init(0));
 		$this->assertSame($config,core::init(1));
 		$this->assertSame($config,core::init(2));
 		$this->assertSame($config,core::init(3));
@@ -764,6 +764,7 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		core::init(array('config_path'=>'@tests/init_1'));
 		$this->assertNull(core::init(null,'init_1_3'));
 		require_once core::path('@tests/init_1_3.php');
+		$this->assertSame('b',core::init('a','init_1_3'));
 		$this->assertSame(array('a'=>'b','c'=>'d'),core::init(null,'init_1_3'));
 		
 		
