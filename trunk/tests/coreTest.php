@@ -68,97 +68,81 @@ class coreTest extends PHPUnit_Framework_TestCase {
 	}
 	
 	/**
+	 * Tests core::init()
+	 */
+	public function testInit() {
+		
+		// 1. 【基础功能】设置各类参数，返回参数数组。
+		//设置、取值、清空等
+		$this->assertSame(array(),core::init(true));
+		$this->assertSame('',core::init('a'));
+		$this->assertSame(array('a'=>'b'),core::init(array('a'=>'b')));
+		$this->assertSame('b',core::init('a'));
+		$this->assertSame('',core::init('c'));
+		$this->assertSame(array('a'=>'c'),core::init(array('a'=>'c')));
+		$this->assertSame('c',core::init('a'));
+		$this->assertSame(array('a'=>'c','c'=>'d'),core::init(array('c'=>'d')));
+		$this->assertSame('c',core::init('a'));
+		$this->assertSame('d',core::init('c'));
+		$this->assertSame(array('a'=>'b','c'=>'d'),core::init(array('a'=>'b')));
+		$this->assertSame('b',core::init('a'));
+		$this->assertSame('d',core::init('c'));
+		$this->assertSame(array('a'=>'b','c'=>'d'),core::init(false));
+		//读取配置文件
+		$this->assertSame(array(),core::init(true));
+		$this->assertSame(array('e'=>true),core::init('@tests/init_1.php'));
+		$this->assertSame(array('e'=>true,'f'=>'1','g'=>'','h'=>'i'),core::init('@tests/init_2.ini'));
+		//配置指定变量
+		$value = '';
+		$this->assertSame(array(),core::init(null,$value));
+		$this->assertSame(array(),$value);
+		$this->assertSame(array('a'=>'b'),core::init(array('a'=>'b'),$value));
+		$this->assertSame(array('a'=>'b'),$value);
+		$this->assertSame(array('a'=>'b'),core::init(false,$value));
+		$this->assertSame(array('a'=>'b'),$value);
+		$this->assertSame(array(),core::init(true,$value));
+		$this->assertSame(array(),$value);
+		$this->assertSame(array('e'=>true),core::init('@tests/init_1.php',$value));
+		$this->assertSame(array('e'=>true),$value);
+		
+	}
+	
+	/**
 	 * Tests core::stub()
 	 */
 	public function testStub() {
-		
-		// 1. 【基础功能】设置存根参数。
-		//返回值
-		$this->assertSame(array(
-			'autoload_enable'=>'',
-			'autoload_path'=>'',
-			'autoload_extensions'=>'',
-			'autoload_prepend'=>'',
-		),core::stub(array()));
-		//设置值
-		$this->assertSame(array(
-			'autoload_enable'=>true,
-			'autoload_path'=>'',
-			'autoload_extensions'=>'.php',
-			'autoload_prepend'=>'',
-		),core::stub(array(
-			'autoload_enable'=>true,
-			'autoload_extensions'=>'.php',
-		)));
-		//取前值
-		$this->assertSame(array(
-			'autoload_enable'=>true,
-			'autoload_path'=>'',
-			'autoload_extensions'=>'.php',
-			'autoload_prepend'=>'',
-		),core::stub(array()));
-		//再设置
-		$this->assertSame(array(
-			'autoload_enable'=>true,
-			'autoload_path'=>'@class',
-			'autoload_extensions'=>'.inc.php',
-			'autoload_prepend'=>'',
-		),core::stub(array(
-			'autoload_path'=>'@class',
-			'autoload_extensions'=>'.inc.php',
-		)));
-		//再取前
-		$this->assertSame(array(
-			'autoload_enable'=>true,
-			'autoload_path'=>'@class',
-			'autoload_extensions'=>'.inc.php',
-			'autoload_prepend'=>'',
-		),core::stub(array()));
-		//恢复值
-		$this->assertSame(array(
-			'autoload_enable'=>'',
-			'autoload_path'=>'',
-			'autoload_extensions'=>'',
-			'autoload_prepend'=>'',
-		),core::stub(array(
-			'autoload_enable'=>'',
-			'autoload_path'=>'',
-			'autoload_extensions'=>'',
-			'autoload_prepend'=>'',
-		)));
-		
 		// 2. 【基础功能】自动载入功能，默认关闭。
 		//设置路径
 		$include_path = get_include_path ();
-		core::stub(array('autoload_path'=>'abc'));
+		core::init(array('autoload_path'=>'abc'));
 		$this->assertSame($include_path.PATH_SEPARATOR.'abc',get_include_path ());
-		core::stub(array('autoload_path'=>'xyz'));
+		core::init(array('autoload_path'=>'xyz'));
 		$this->assertSame($include_path.PATH_SEPARATOR.'xyz',get_include_path ());
-		core::stub(array('autoload_prepend'=>true));
+		core::init(array('autoload_prepend'=>true));
 		$this->assertSame('xyz'.PATH_SEPARATOR.$include_path,get_include_path ());
-		core::stub(array('autoload_prepend'=>''));
+		core::init(array('autoload_prepend'=>''));
 		$this->assertSame($include_path.PATH_SEPARATOR.'xyz',get_include_path ());
-		core::stub(array('autoload_path'=>''));
+		core::init(array('autoload_path'=>''));
 		$this->assertSame($include_path,get_include_path ());
 		//设置后缀
 		$autoload_extensions = spl_autoload_extensions ();
-		core::stub(array('autoload_extensions'=>'.inc.php'));
+		core::init(array('autoload_extensions'=>'.inc.php'));
 		$this->assertSame('.inc.php',spl_autoload_extensions ());
-		core::stub(array('autoload_extensions'=>'.class.php'));
+		core::init(array('autoload_extensions'=>'.class.php'));
 		$this->assertSame('.class.php',spl_autoload_extensions ());
-		core::stub(array('autoload_extensions'=>''));
+		core::init(array('autoload_extensions'=>''));
 		$this->assertSame($autoload_extensions,spl_autoload_extensions ());
 		//自动载入
 		$autoload_functions = spl_autoload_functions ();
-		core::stub(array('autoload_enable'=>true));
+		core::init(array('autoload_enable'=>true));
 		$this->assertSame(array_merge($autoload_functions,array('spl_autoload')),spl_autoload_functions ());
-		core::stub(array('autoload_prepend'=>true));
+		core::init(array('autoload_prepend'=>true));
 		if ( version_compare(PHP_VERSION,'5.3.0','>=') ) {
 			$this->assertSame(array_merge(array('spl_autoload'),$autoload_functions),spl_autoload_functions ());
 		} else {
 			$this->assertSame(array_merge($autoload_functions,array('spl_autoload')),spl_autoload_functions ());
 		}
-		core::stub(array('autoload_enable'=>'','autoload_prepend'=>''));
+		core::init(array('autoload_enable'=>'','autoload_prepend'=>''));
 		$this->assertSame($autoload_functions,spl_autoload_functions ());
 
 		//自动载入
@@ -194,68 +178,6 @@ class coreTest extends PHPUnit_Framework_TestCase {
 	 * Tests core::main()
 	 */
 	public function testMain() {
-		
-		// 1. 【基础功能】设置入口参数，返回参数数组。
-		//返回值
-		$this->assertSame(array(
-			'framework_enable'=>'',
-			'framework_require'=>'',
-			'framework_module'=>'',
-			'framework_action'=>'',
-			'framework_parameter'=>'',
-		),core::main(array()));
-		//设置值
-		$this->assertSame(array(
-			'framework_enable'=>true,
-			'framework_require'=>'',
-			'framework_module'=>'',
-			'framework_action'=>'[do]!main',
-			'framework_parameter'=>'',
-		),core::main(array(
-			'framework_enable'=>true,
-			'framework_action'=>'[do]!main',
-		)));
-		//取前值
-		$this->assertSame(array(
-			'framework_enable'=>true,
-			'framework_require'=>'',
-			'framework_module'=>'',
-			'framework_action'=>'[do]!main',
-			'framework_parameter'=>'',
-		),core::main(array()));
-		//再设置
-		$this->assertSame(array(
-			'framework_enable'=>true,
-			'framework_require'=>'@module',
-			'framework_module'=>'[go]',
-			'framework_action'=>'[do]!main',
-			'framework_parameter'=>'',
-		),core::main(array(
-			'framework_require'=>'@module',
-			'framework_module'=>'[go]',
-		)));
-		//再取前
-		$this->assertSame(array(
-			'framework_enable'=>true,
-			'framework_require'=>'@module',
-			'framework_module'=>'[go]',
-			'framework_action'=>'[do]!main',
-			'framework_parameter'=>'',
-		),core::main(array()));
-		//恢复值
-		$this->assertSame(array(
-			'framework_enable'=>'',
-			'framework_require'=>'',
-			'framework_module'=>'',
-			'framework_action'=>'',
-			'framework_parameter'=>'',
-		),core::main(array(
-			'framework_enable'=>'',
-			'framework_require'=>'',
-			'framework_module'=>'',
-			'framework_action'=>'',
-			'framework_parameter'=>'',
-		)));
 		
 		// 2. 【基础功能】使用框架功能，默认关闭。
 		//默认值
@@ -406,7 +328,7 @@ class coreTest extends PHPUnit_Framework_TestCase {
 
 
 		//恢复原来值
-		core::main(array(
+		core::init(array(
 			'framework_enable'=>'',
 			'framework_require'=>'',
 			'framework_module'=>'',
@@ -426,7 +348,7 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		$this->assertFalse(core::main());
 		$this->assertSame('Could not open input file: '.basename($_SERVER ['SCRIPT_FILENAME']).PHP_EOL, ob_get_clean());
 		//恢复原来值
-		core::main(array(
+		core::init(array(
 			'framework_enable'=>'',
 			'framework_require'=>'',
 			'framework_module'=>'',
@@ -441,73 +363,6 @@ class coreTest extends PHPUnit_Framework_TestCase {
 	 */
 	public function testPath() {
 		
-		// 1. 【基础功能】设置路径参数，返回参数数组。
-		//初始化
-		core::path(array(
-			'extension_enable'=>'',
-			'extension_path'=>'',
-			'extension_prepend'=>'',
-			'config_path'=>'',
-			'template_path'=>'',
-		));
-		//返回值
-		$this->assertSame(array(
-			'extension_enable'=>'',
-			'extension_path'=>'',
-			'extension_prepend'=>'',
-			'config_path'=>'',
-			'template_path'=>'',
-		),core::path(array()));
-		//设置值
-		$this->assertSame(array(
-			'extension_enable'=>'',
-			'extension_path'=>'@ext',
-			'extension_prepend'=>'',
-			'config_path'=>'',
-			'template_path'=>'',
-		),core::path(array(
-			'extension_path'=>'@ext',
-		)));
-		//取前值
-		$this->assertSame(array(
-			'extension_enable'=>'',
-			'extension_path'=>'@ext',
-			'extension_prepend'=>'',
-			'config_path'=>'',
-			'template_path'=>'',
-		),core::path(array()));
-		//再设置
-		$this->assertSame(array(
-			'extension_enable'=>'',
-			'extension_path'=>'@ext',
-			'extension_prepend'=>'',
-			'config_path'=>'',
-			'template_path'=>'@tpl',
-		),core::path(array(
-			'template_path'=>'@tpl',
-		)));
-		//再取前
-		$this->assertSame(array(
-			'extension_enable'=>'',
-			'extension_path'=>'@ext',
-			'extension_prepend'=>'',
-			'config_path'=>'',
-			'template_path'=>'@tpl',
-		),core::path(array()));
-		//恢复值
-		$this->assertSame(array(
-			'extension_enable'=>'',
-			'extension_path'=>'',
-			'extension_prepend'=>'',
-			'config_path'=>'',
-			'template_path'=>'',
-		),core::path(array(
-			'extension_enable'=>'',
-			'extension_path'=>'',
-			'extension_prepend'=>'',
-			'config_path'=>'',
-			'template_path'=>'',
-		)));
 		
 		// 2. 【基础功能】返回转换路径，'@'开头相对核心文件路径。
 		//不变
@@ -523,7 +378,7 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		
 		// 3. 【基础功能】返回扩展路径，默认相对核心文件类名路径。
 		//(1)初始化空值
-		core::path(array(
+		core::init(array(
 			'extension_path'=>'',
 		));
 		//前缀
@@ -538,7 +393,7 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		$this->assertSame(realpath(dirname(__FILE__)).'/test.php',core::path('@tests/test.php','extension'));
 		
 		//(2)初始化转换值
-		core::path(array(
+		core::init(array(
 			'extension_path'=>'@tests',
 		));
 		//前缀
@@ -553,7 +408,7 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		$this->assertSame(realpath(dirname(__FILE__)).'/test.php',core::path('@tests/test.php','extension'));
 		
 		//(3)初始化其他值
-		core::path(array(
+		core::init(array(
 			'extension_path'=>dirname(__FILE__),
 		));
 		//前缀
@@ -568,7 +423,7 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		$this->assertSame(realpath(dirname(__FILE__)).'/test.php',core::path('@tests/test.php','extension'));
 		
 		//恢复原来值
-		core::path(array(
+		core::init(array(
 			'extension_path'=>'',
 		));
 		
@@ -576,48 +431,48 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		$include_path = get_include_path();
 		$include_path_prepend = core::path('@tests/path_4','extension').PATH_SEPARATOR.$include_path;
 		$include_path_append = $include_path.PATH_SEPARATOR.core::path('@tests/path_4','extension');
-		core::path(array('extension_enable'=>true,'extension_path'=>'@tests/path_4'));
+		core::init(array('extension_enable'=>true,'extension_path'=>'@tests/path_4'));
 		$this->assertSame($include_path_append,get_include_path());
 		$this->assertTrue(require 'path_4_1.php');
-		core::path(array('extension_prepend'=>true));
+		core::init(array('extension_prepend'=>true));
 		$this->assertSame($include_path_prepend,get_include_path());
-		core::path(array('extension_prepend'=>''));
+		core::init(array('extension_prepend'=>''));
 		$this->assertSame($include_path_prepend,get_include_path());
-		core::path(array('extension_prepend'=>false));
+		core::init(array('extension_prepend'=>false));
 		$this->assertSame($include_path_append,get_include_path());
-		core::path(array('extension_prepend'=>''));
+		core::init(array('extension_prepend'=>''));
 		$this->assertSame($include_path_append,get_include_path());
-		core::path(array('extension_enable'=>'','extension_path'=>'','extension_prepend'=>''));
+		core::init(array('extension_enable'=>'','extension_path'=>'','extension_prepend'=>''));
 		
-		core::path(array('extension_enable'=>true,'extension_path'=>'@tests/path_4','extension_prepend'=>true));
+		core::init(array('extension_enable'=>true,'extension_path'=>'@tests/path_4','extension_prepend'=>true));
 		$this->assertSame($include_path_prepend,get_include_path());
-		core::path(array('extension_enable'=>'','extension_path'=>'','extension_prepend'=>''));
+		core::init(array('extension_enable'=>'','extension_path'=>'','extension_prepend'=>''));
 		
-		core::path(array('extension_enable'=>'Foo','extension_path'=>'@tests/path_4'));
+		core::init(array('extension_enable'=>'Foo','extension_path'=>'@tests/path_4'));
 		$this->assertTrue(class_exists('Foo_Foo'));
 		$this->assertTrue(class_exists('Foo_Foo_Foo',false));
-		core::path(array('extension_enable'=>'','extension_path'=>'','extension_prepend'=>''));
+		core::init(array('extension_enable'=>'','extension_path'=>'','extension_prepend'=>''));
 
 		// 5. 【基础功能】其他类库测试
 		foreach($this->lib_arr as $provider=>$lib_arr){
 			for($i=0;$i<count($lib_arr);$i++){
 				$this->assertFalse(class_exists($lib_arr[$i],false));
 			}
-			core::path(array('extension_enable'=>$provider));
+			core::init(array('extension_enable'=>$provider));
 			for($i=0;$i<count($lib_arr);$i++){
 				$this->assertTrue(class_exists($lib_arr[$i]));
 			}
-			core::path(array('extension_enable'=>''));
+			core::init(array('extension_enable'=>''));
 		}
 
 		// 6. 【基础功能】返回视图路径，默认相对于当前的程序路径。
 		//(1)初始化空值
-		core::path(array(
-			'template_path'=>'',
+		core::init(array(
+			'template_path'=>'aaa',
 		));
 		//前缀
-		$this->assertSame(realpath(dirname(__FILE__).'/..').DIRECTORY_SEPARATOR.'test.php',core::path('test.php','template'));
-		$this->assertSame(realpath(dirname(__FILE__).'/..').DIRECTORY_SEPARATOR.'../test.php',core::path('../test.php','template'));
+		$this->assertSame('aaa'.DIRECTORY_SEPARATOR.'test.php',core::path('test.php','template'));
+		$this->assertSame('aaa'.DIRECTORY_SEPARATOR.'../test.php',core::path('../test.php','template'));
 		//不变
 		$this->assertSame('/test.php',core::path('/test.php','template'));
 		$this->assertSame('\\test.php',core::path('\\test.php','template'));
@@ -627,7 +482,7 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		$this->assertSame(realpath(dirname(__FILE__)).'/test.php',core::path('@tests/test.php','template'));
 		
 		//(2)初始化转换值
-		core::path(array(
+		core::init(array(
 			'template_path'=>'@tests',
 		));
 		//前缀
@@ -642,7 +497,7 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		$this->assertSame(realpath(dirname(__FILE__)).'/test.php',core::path('@tests/test.php','template'));
 		
 		//(3)初始化其他值
-		core::path(array(
+		core::init(array(
 			'template_path'=>dirname(__FILE__),
 		));
 		//前缀
@@ -657,116 +512,9 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		$this->assertSame(realpath(dirname(__FILE__)).'/test.php',core::path('@tests/test.php','template'));
 		
 		//恢复原来值
-		core::path(array(
+		core::init(array(
 			'template_path'=>'',
 		));
-		
-	}
-	
-	/**
-	 * Tests core::init()
-	 */
-	public function testInit() {
-		
-		// 1. 【基础功能】设置各类参数，返回参数数组。
-		$config = array(
-			'autoload_enable' => '',
-			'autoload_path' => '',
-			'autoload_extensions' => '',
-			'autoload_prepend' => '',
-			'framework_enable' => '',
-			'framework_require' => '',
-			'framework_module' => '',
-			'framework_action' => '',
-			'framework_parameter' => '',
-			'extension_enable'=>'',
-			'extension_path' => '',
-			'extension_prepend'=>'',
-			'config_path' => '',
-			'template_path' => '',
-			'template_search' => '',
-			'template_replace' => '',
-			'template_type' => '',
-			'template_show' => '',
-			'connect_provider' => '',
-			'connect_dsn' => '',
-			'connect_type' => '',
-			'connect_server' => '',
-			'connect_username' => '',
-			'connect_password' => '',
-			'connect_new_link' => '',
-			'connect_client_flags' => '',
-			'connect_dbname' => '',
-			'connect_charset' => '',
-			'connect_port' => '',
-			'connect_socket' => '',
-			'connect_driver_options' => '',
-			'prefix_search' => '',
-			'prefix_replace' => '',
-			'debug_enable' => '',
-			'debug_file' => '',
-		);
-		//返回值
-		$this->assertSame($config,core::init(0));
-		$this->assertSame($config,core::init(1));
-		$this->assertSame($config,core::init(2));
-		$this->assertSame($config,core::init(3));
-		$this->assertSame($config,core::init(4));
-		$this->assertSame($config,core::init(5));
-		$this->assertNull(core::init(6));
-		$this->assertSame($config,core::init());
-		$this->assertSame($config,core::init(0));
-		//设置值
-		$config1 = $config;
-		$config1['autoload_enable']=true;
-		$this->assertSame($config1,core::init(array('autoload_enable'=>true)));
-		$this->assertSame($config1,core::init(0));
-		$this->assertSame($config,core::init(1));
-		$this->assertSame($config,core::init(2));
-		$this->assertSame($config,core::init(3));
-		$this->assertSame($config,core::init(4));
-		$this->assertSame($config1,core::init(5));
-		$this->assertSame($config,core::init(-1));
-		$this->assertSame($config,core::init(0));
-		$this->assertSame($config1,core::init(-5));
-		$this->assertSame($config1,core::init(0));
-		$this->assertSame($config,core::init(array()));
-		$this->assertSame($config,core::init(0));
-		//文件
-		$config2 = $config;
-		$config2['framework_enable']=true;
-		$this->assertSame($config2,core::init('@tests/init_1_1.php'));
-		$this->assertSame($config2,core::init(0));
-		$this->assertSame($config,core::init(1));
-		$this->assertSame($config,core::init(2));
-		$this->assertSame($config,core::init(3));
-		$this->assertSame($config,core::init(4));
-		$this->assertSame($config2,core::init(5));
-		$this->assertSame(true,core::init('framework_enable'));
-		//类名
-		require_once core::path('@tests/init_1_2.php');
-		$this->assertNull(core::init(0,'init_1_2'));
-		$this->assertSame(array('a'=>'b','framework_enable'=>true),core::init(null,'init_1_2'));
-		$this->assertSame(array('a'=>'b','framework_enable'=>true),core::init(0,'init_1_2'));
-		$this->assertSame(array('a'=>''),core::init(1,'init_1_2'));
-		$this->assertSame(array('a'=>'b'),core::init(2,'init_1_2'));
-		$this->assertSame(array('a'=>'b'),core::init(3,'init_1_2'));
-		$this->assertSame(array('a'=>'b','framework_enable'=>true),core::init(4,'init_1_2'));
-		$this->assertSame(array('a'=>'b','framework_enable'=>true),core::init(5,'init_1_2'));
-		$this->assertSame('b',core::init('a','init_1_2'));
-		$this->assertSame(array('a'=>''),core::init(-1,'init_1_2'));
-		$this->assertSame(array('a'=>'b'),core::init(-2,'init_1_2'));
-		$this->assertSame(array('a'=>'b','framework_enable'=>true),core::init(-5,'init_1_2'));
-		$this->assertSame(array('a'=>'b'),core::init(-3,'init_1_2'));
-		$this->assertSame(array('a'=>'b','framework_enable'=>true),core::init(-4,'init_1_2'));
-		//路径
-		$this->assertNull(core::init('init_1_4.php'));
-		core::init(array('config_path'=>'@tests/init_1'));
-		$this->assertNull(core::init(null,'init_1_3'));
-		require_once core::path('@tests/init_1_3.php');
-		$this->assertSame('b',core::init('a','init_1_3'));
-		$this->assertSame(array('a'=>'b','c'=>'d'),core::init(null,'init_1_3'));
-		
 		
 	}
 	
@@ -774,66 +522,6 @@ class coreTest extends PHPUnit_Framework_TestCase {
 	 * Tests core::view()
 	 */
 	public function testView() {
-		
-		// 1. 【基础功能】设置视图参数，返回参数数组。
-		//初始化
-		core::view(array(
-			'template_search'=>'',
-			'template_replace'=>'',
-			'template_type'=>'',
-			'template_show'=>'',
-		));
-		//返回值
-		$this->assertSame(array(
-			'template_search'=>'',
-			'template_replace'=>'',
-			'template_type'=>'',
-			'template_show'=>'',
-		),core::view(array()));
-		//设置值
-		$this->assertSame(array(
-			'template_search'=>'',
-			'template_replace'=>'',
-			'template_type'=>'smarty2',
-			'template_show'=>'',
-		),core::view(array(
-			'template_type'=>'smarty2',
-		)));
-		//取前值
-		$this->assertSame(array(
-			'template_search'=>'',
-			'template_replace'=>'',
-			'template_type'=>'smarty2',
-			'template_show'=>'',
-		),core::view(array()));
-		//再设置
-		$this->assertSame(array(
-			'template_search'=>'',
-			'template_replace'=>'',
-			'template_type'=>'smarty2',
-			'template_show'=>false,
-		),core::view(array(
-			'template_show'=>false,
-		)));
-		//再取前
-		$this->assertSame(array(
-			'template_search'=>'',
-			'template_replace'=>'',
-			'template_type'=>'smarty2',
-			'template_show'=>false,
-		),core::view(array()));
-		//恢复值
-		$this->assertSame(array(
-			'template_search'=>'',
-			'template_replace'=>'',
-			'template_type'=>'',
-			'template_show'=>'',
-		),core::view(array(
-			'template_search'=>'',
-			'template_replace'=>'',
-			'template_type'=>'',
-			'template_show'=>'',
-		)));
 		
 		// 2. 【基础功能】【扩展功能】模板。
 		foreach ( $this->view_arr as $provider=>$view_arr ) {
@@ -849,7 +537,7 @@ class coreTest extends PHPUnit_Framework_TestCase {
 				//仅返回
 				$this->assertSame($result, core::view($tpl,$view_arr[$i],$provider,false));
 				//设置值
-				core::view(array(
+				core::init(array(
 					'template_search'=>'.tpl',
 					'template_replace'=>'.php',
 					'template_type'=>$provider,
@@ -857,7 +545,7 @@ class coreTest extends PHPUnit_Framework_TestCase {
 				));
 				$this->assertSame($result, core::view($tpl,$view_arr[$i]));
 				//恢复值
-				core::view(array(
+				core::init(array(
 					'template_search'=>'',
 					'template_replace'=>'',
 					'template_type'=>'',
@@ -893,48 +581,59 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			'debug_enable' => '',
 			'debug_file' => '',
 		);
-		//返回值
-		$this->assertSame($config,core::connect(array()));
-		//设置值
-		$config1 = $config;
-		$config1['connect_username'] = 'ODBC';
-		$this->assertSame($config1,core::connect(array('connect_username'=>'ODBC')));
-		//取前值
-		$this->assertSame($config1,core::connect(array()));
-		//再设置
 		$config2 = $config;
 		$config2['connect_username'] = 'ODBC';
 		$config2['connect_new_link'] = true;
-		$this->assertSame($config2,core::connect(array('connect_new_link'=>true)));
-		//再取前
-		$this->assertSame($config2,core::connect(array()));
-		//恢复值
-		$this->assertSame($config,core::connect($config));
-		
-		// 2. 【基础功能】选择指定连接、连接数据库、断开数据库。
-		$this->assertNull(core::connect(0));
-		$this->assertType('resource',core::connect(true));
-		$this->assertType('resource',core::connect(true));
-		$this->assertSame(0,core::connect());
+
+		$this->assertSame(array('current'=>0,'configs'=>array(array()),'connections'=>array(null)),core::connect());
+		$this->assertNull(core::connect(0,$ref));
+		$this->assertSame(array(),$ref);
+		$this->assertSame(array('current'=>0,'configs'=>array(array()),'connections'=>array(null)),core::connect());
 		$this->assertNull(core::connect(1,$ref));
-		$this->assertSame(1,core::connect());
+		$this->assertSame(array(),$ref);
+		$this->assertSame(array('current'=>1,'configs'=>array(array(),array()),'connections'=>array(null,null)),core::connect());
+		$this->assertNull(core::connect(0,$ref));
+		$this->assertSame(array(),$ref);
+		$this->assertSame(array('current'=>0,'configs'=>array(array(),array()),'connections'=>array(null,null)),core::connect());
+		$this->assertNull(core::connect($config,$ref));
 		$this->assertSame($config,$ref);
-		core::connect($config2);
+		$this->assertSame(array('current'=>0,'configs'=>array($config,array()),'connections'=>array(null,null)),core::connect());
+		$this->assertType('resource',core::connect(true,$ref));
+		$this->assertSame($config,$ref);
+		$this->assertSame(array('current'=>0,'configs'=>array($config,array()),'connections'=>array(core::connect(true),null)),core::connect());
+		$this->assertNull(core::connect(false,$ref));
+		$this->assertSame(array(),$ref);
+		$this->assertSame(array('current'=>0,'configs'=>array(array(),array()),'connections'=>array(null,null)),core::connect());
+		$this->assertNull(core::connect(1,$ref));
+		$this->assertSame(array(),$ref);
+		$this->assertSame(array('current'=>1,'configs'=>array(array(),array()),'connections'=>array(null,null)),core::connect());
+		core::init($config2);
+		$this->assertSame(array('current'=>1,'configs'=>array(array(),array()),'connections'=>array(null,null)),core::connect());
 		$this->assertType('resource',core::connect(true,$ref));
 		$this->assertSame($config2,$ref);
-		$this->assertType('resource',core::connect(0));
-		$this->assertTrue(core::connect(false));
-		$this->assertType('resource',core::connect(1,$ref));
+		$this->assertSame(array('current'=>1,'configs'=>array(array(),$config2),'connections'=>array(null,core::connect(true))),core::connect());
+		$this->assertNull(core::connect(false,$ref));
+		$this->assertSame(array(),$ref);
+		$this->assertSame(array('current'=>1,'configs'=>array(array(),array()),'connections'=>array(null,null)),core::connect());
+		$this->assertNull(core::connect(0,$ref));
+		$this->assertSame(array(),$ref);
+		$this->assertSame(array('current'=>0,'configs'=>array(array(),array()),'connections'=>array(null,null)),core::connect());
+		$this->assertNull(core::connect($config2,$ref));
 		$this->assertSame($config2,$ref);
-		$this->assertTrue(core::connect(false,$ref));
-		$this->assertSame($config,$ref);
+		$this->assertSame(array('current'=>0,'configs'=>array($config2,array()),'connections'=>array(null,null)),core::connect());
+		$this->assertType('resource',core::connect(true,$ref));
+		$this->assertSame($config2,$ref);
+		$this->assertSame(array('current'=>0,'configs'=>array($config2,array()),'connections'=>array(core::connect(true),null)),core::connect());
+		$this->assertNull(core::connect(false,$ref));
+		$this->assertSame(array(),$ref);
+		$this->assertSame(array('current'=>0,'configs'=>array(array(),array()),'connections'=>array(null,null)),core::connect());
 		
 		// 3. 【基础功能】【扩展功能】连接数据库、断开数据库。
 		foreach ( $this->db_arr as $provider=>$db_arr ) {
 			list($arr,$con,$cls) = $db_arr;
 			core::connect($arr);
 			$this->assertSame($con,is_resource($result = core::connect(true))?'resource':get_class($result));
-			$this->assertTrue(core::connect(false));
+			$this->assertNull(core::connect(false));
 		}
 		
 	}

@@ -1,8 +1,8 @@
 【CoreMVC 产品说明】
 
-CoreMVC是PHP的一款小巧精致的MVC框架。
+CoreMVC是一款灵巧的PHP开源框架。
 
-2010年7月18日
+2010年7月22日
 
 〖版权说明〗
 
@@ -11,9 +11,9 @@ CoreMVC遵从new BSD许可证，所以您可以在法律允许的范围以内任
 /**
  * CoreMVC核心模块
  * 
- * @version 1.1.0 alpha 16
+ * @version 1.2.0 alpha 1
  * @author Z <602000@gmail.com>
- * @link http://code.google.com/p/coremvc/
+ * @link http://www.coremvc.cn/
  */
 
 
@@ -44,6 +44,17 @@ CoreMVC遵从new BSD许可证，所以您可以在法律允许的范围以内任
 
 ●　版本更新说明
 
+CoreMVC 1.2.0 相对于 CoreMVC 1.1.0版本的改进
+--------------------------------------------
+1. 修改了配置设置的方法，由原来的类常量改成单一的类静态变量，可以分步配置了。
+
+2. 修改了core::init代码，修正了继承类初始化和核心类初始化变量不共享的问题。
+
+3. 修改了core::path在默认配置下模板和配置都使用相对路径。
+
+4. 优化了core::connect并增加了参数类型。
+
+
 CoreMVC 1.1.0 相对于 CoreMVC 1.0.0版本的改进
 --------------------------------------------
 1. 增加了模板路径替换的参数设置。
@@ -67,7 +78,6 @@ CoreMVC 1.1.0 相对于 CoreMVC 1.0.0版本的改进
 10.目前可扩展的类库有：数据库扩展：pdo5、adodb5、adodb5zip；模板扩展：smarty2、smarty2zip、smarty3；其他扩展：Zend、Symfony、PHPUnit、PHPExcel、PHPMailer、PHPCharts。
 
 11.增强了core::init功能，支持继承类的独立配置。
-
 
 
 CoreMVC 1.0.0 相对于 CoreMVC 0.7.3版本的改进
