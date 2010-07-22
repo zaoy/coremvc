@@ -2,7 +2,7 @@
 /**
  * CoreMVC核心模块
  * 
- * @version 1.2.0 alpha 5
+ * @version 1.2.0 alpha 6
  * @author Z <602000@gmail.com>
  * @link http://www.coremvc.cn/
  */
@@ -247,10 +247,10 @@ class core {
 						spl_autoload_unregister ( $static_last ['autoload_realname'] );
 					}
 				} else {
-					if ($config ['autoload_enable']===true) {
-						$static_last ['autoload_realname'] = 'spl_autoload';
-					} else {
+					if (is_callable ($config ['autoload_enable'])) {
 						$static_last ['autoload_realname'] = $config ['autoload_enable'];
+					} else {
+						$static_last ['autoload_realname'] = 'spl_autoload';
 					}
 					if ($static_last ['spl_autoload_functions'] === array('__autoload')) {
 						spl_autoload_register ( '__autoload' );
@@ -1105,7 +1105,7 @@ class core {
 					if ( in_array ($extension_path, $include_path_array) ) {
 						$include_path_array = array_values(array_diff($include_path_array, array($extension_path)));
 					}
-					if ($extension_prepend === true) {
+					if ($extension_prepend) {
 						array_unshift($include_path_array, $extension_path);
 					} else {
 						array_push($include_path_array, $extension_path);
@@ -1493,7 +1493,7 @@ class core {
 				} else {
 					$result = mysql_query ( $sql, $dbh );
 				}
-				if ($args ['debug_enable'] === true) {
+				if ($args ['debug_enable']) {
 					if ($result === false) {
 						$extra = array( 'errno'=>mysql_errno ( $dbh ), 'error'=>mysql_error ( $dbh ) );
 					} else {
