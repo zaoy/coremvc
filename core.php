@@ -2,7 +2,7 @@
 /**
  * CoreMVC核心模块
  * 
- * @version 1.2.0 alpha 2
+ * @version 1.2.0 alpha 3
  * @author Z <602000@gmail.com>
  * @link http://www.coremvc.cn/
  */
@@ -61,6 +61,17 @@ class core {
 					$current_config = array ();
 				}
 
+			}
+		}
+
+		// 导入环境变量
+		if (isset ($_SERVER [__CLASS__ . '_config']) && $_SERVER [__CLASS__ . '_config']) {
+			$prefix = __CLASS__ . '_config_';
+			$length = strlen($prefix);
+			foreach ($_SERVER as $key=>$value) {
+				if (strncmp ($key, $prefix, $length) === 0) {
+					$current_config [substr ($key, $length)] = $value;
+				}
 			}
 		}
 
