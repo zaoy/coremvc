@@ -2,7 +2,7 @@
 /**
  * CoreMVC核心模块
  * 
- * @version 1.2.0 alpha 3
+ * @version 1.2.0 alpha 4
  * @author Z <602000@gmail.com>
  * @link http://www.coremvc.cn/
  */
@@ -60,17 +60,40 @@ class core {
 				if (! is_array ($current_config)){
 					$current_config = array ();
 				}
-
 			}
 		}
 
 		// 导入环境变量
 		if (isset ($_SERVER [__CLASS__ . '_config']) && $_SERVER [__CLASS__ . '_config']) {
-			$prefix = __CLASS__ . '_config_';
-			$length = strlen($prefix);
+			$env_prefix = __CLASS__ . '_config_';
+			$env_length = strlen($env_prefix);
 			foreach ($_SERVER as $key=>$value) {
-				if (strncmp ($key, $prefix, $length) === 0) {
-					$current_config [substr ($key, $length)] = $value;
+				if (strncmp ($key, $env_prefix, $env_length) === 0) {
+					$current_config [substr ($key, $env_length)] = $value;
+				}
+			}
+			// 导入配置文件
+			$env_config = $_SERVER [__CLASS__ . '_config'];
+			$first = $env_config ['0'];
+			if ($first === '@'){
+				$env_file = dirname (__FILE__) . DIRECTORY_SEPARATOR . substr ($env_config, 1);
+			} else {
+				$env_file = $env_config;
+			}
+			$ext = strtolower (strrchr ($env_file, '.'));
+			if ($ext === '.php') {
+				if (is_file ($env_file)) {
+					$import_config = @require $env_file;
+					if (is_array ($import_config) ){
+						$current_config = array_merge ($current_config, $import_config);
+					}
+				}
+			} elseif ($ext === '.ini') {
+				if (is_file ($env_file)) {
+					$import_config = @parse_ini_file ($env_file);
+					if (is_array ($import_config) ){
+						$current_config = array_merge ($current_config, $import_config);
+					}
 				}
 			}
 		}
