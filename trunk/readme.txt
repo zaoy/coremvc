@@ -11,7 +11,7 @@ CoreMVC遵从new BSD许可证，所以您可以在法律允许的范围以内任
 /**
  * CoreMVC核心模块
  * 
- * @version 1.2.0 alpha 1
+ * @version 1.2.0 alpha 2
  * @author Z <602000@gmail.com>
  * @link http://www.coremvc.cn/
  */
@@ -53,6 +53,8 @@ CoreMVC 1.2.0 相对于 CoreMVC 1.1.0版本的改进
 3. 修改了core::path在默认配置下模板和配置都使用相对路径。
 
 4. 优化了core::connect并增加了参数类型。
+
+5. 增加了core::main的一次跳转执行函数的功能，以便于模块风格下增加前端验证操作。
 
 
 CoreMVC 1.1.0 相对于 CoreMVC 1.0.0版本的改进

@@ -2,7 +2,7 @@
 /**
  * CoreMVC核心模块
  * 
- * @version 1.2.0 alpha 1
+ * @version 1.2.0 alpha 2
  * @author Z <602000@gmail.com>
  * @link http://www.coremvc.cn/
  */
@@ -252,21 +252,21 @@ class core {
 	 */
 	public static function main($framework_enable = null, $framework_require = null, $framework_module = null, $framework_action = null, $framework_parameter = null) {
 
+		// 跳转功能
+		$framework_function = self::init ('framework_function');
+		if (is_callable ($framework_function)) {
+			self::init (array ('framework_function'=>''));
+			return call_user_func ($framework_function, $framework_enable, $framework_require, $framework_module, $framework_action, $framework_parameter);
+		}
+
 		// 入口参数处理
 		$config = self::init (false);
-		$config = array (
-			'framework_enable' => isset ($config ['framework_enable']) ? $config ['framework_enable'] : '', 
-			'framework_require' => isset ($config ['framework_require']) ? $config ['framework_require'] : '', 
-			'framework_module' => isset ($config ['framework_module']) ? $config ['framework_module'] : '', 
-			'framework_action' => isset ($config ['framework_action']) ? $config ['framework_action'] : '', 
-			'framework_parameter' => isset ($config ['framework_parameter']) ? $config ['framework_parameter'] : '', 
-		);
-		isset ( $framework_enable ) or $framework_enable = $config ['framework_enable'];
-		isset ( $framework_require ) or $framework_require = $config ['framework_require'];
-		isset ( $framework_module ) or $framework_module = $config ['framework_module'];
-		isset ( $framework_action ) or $framework_action = $config ['framework_action'];
-		isset ( $framework_parameter ) or $framework_parameter = $config ['framework_parameter'];
-		$return_array = is_bool($framework_enable)||$framework_enable===''?array ():explode (',',$framework_enable);
+		isset ( $framework_enable ) or $framework_enable = isset ($config ['framework_enable']) ? $config ['framework_enable'] : '';
+		isset ( $framework_require ) or $framework_require = isset ($config ['framework_require']) ? $config ['framework_require'] : '';
+		isset ( $framework_module ) or $framework_module = isset ($config ['framework_module']) ? $config ['framework_module'] : '';
+		isset ( $framework_action ) or $framework_action = isset ($config ['framework_action']) ? $config ['framework_action'] : '';
+		isset ( $framework_parameter ) or $framework_parameter = isset ($config ['framework_parameter']) ? $config ['framework_parameter'] : '';
+		$return_array = is_bool($framework_enable) || $framework_enable === '' ? array () : explode (',', $framework_enable);
 
 		// 框架控制功能
 		while ( $framework_enable ) {
