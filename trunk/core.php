@@ -2,7 +2,7 @@
 /**
  * CoreMVC核心模块
  * 
- * @version 1.2.0 alpha 6
+ * @version 1.2.0 alpha 7
  * @author Z <602000@gmail.com>
  * @link http://www.coremvc.cn/
  */
@@ -242,11 +242,10 @@ class core {
 				if (empty($static_last ['autoload_enable'])) {
 					$static_last ['spl_autoload_functions'] = spl_autoload_functions ();
 				}
-				if (empty($config ['autoload_enable'])) {
-					if (! in_array($static_last ['autoload_realname'],(array)$static_last ['spl_autoload_functions']) ) {
-						spl_autoload_unregister ( $static_last ['autoload_realname'] );
-					}
-				} else {
+				if (! in_array($static_last ['autoload_realname'],(array)$static_last ['spl_autoload_functions']) ) {
+					spl_autoload_unregister ( $static_last ['autoload_realname'] );
+				}
+				if (! empty($config ['autoload_enable'])) {
 					if (is_callable ($config ['autoload_enable'])) {
 						$static_last ['autoload_realname'] = $config ['autoload_enable'];
 					} else {
@@ -1201,9 +1200,10 @@ class core {
 	 * @link http://www.coremvc.cn/api/core/connect.php
 	 * @param mix $args
 	 * @param array &$ref
+	 * @param array $info
 	 * @return $dbh
 	 */
-	public static function connect($args = null, &$ref = null) {
+	public static function connect($args = null, &$ref = null, $info = null) {
 
 
 		// 导入配置文件
@@ -1251,8 +1251,34 @@ class core {
 		} elseif ($args === true && isset ($connect ['current']) && isset ($connect ['connections']) 
 			&& isset ($connect ['configs'] [$connect ['current']]) && isset ($connect ['connections'] [$connect ['current']])) {
 			// 返回当前连接
-			$ref = $connect ['configs'] [$connect ['current']];
-			return $connect ['connections'] [$connect ['current']];
+			$pos = $connect ['current'];
+			$ref = $connect ['configs'] [$pos];
+			$dbh = &$connect ['connections'] [$pos];
+			switch ($ref ['connect_provider']) {
+
+				// 【扩展功能】重连数据库
+				default :
+					$callback = array ( $ref ['connect_provider'], 'reconnect' );
+					if (! is_callable ($callback)) {
+						$provider_file = self::path ( $ref ['connect_provider'] . '.php', 'extension' );
+						if (is_file ($provider_file)) {
+							require_once $provider_file;
+						}
+					}
+					if (is_callable ($callback)) {
+						$dbh = call_user_func ( $callback, $dbh, $ref, $pos, $info );
+						break;
+					}
+
+				case '' :
+				case 'mysql' :
+					if ($dbh === null || ! mysql_ping($dbh)) {
+						self::connect (false, $ref, $info);
+						$dbh = self::connect (true, $ref, $info);
+					}
+					break;
+			}
+			return $dbh;
 		}
 
 		// 选择指定连接
@@ -1344,6 +1370,21 @@ class core {
 		// 断开数据库
 		if ($args === false) {
 			switch ($ref ['connect_provider']) {
+
+				// 【扩展功能】断开数据库
+				default :
+					$callback = array ($ref ['connect_provider'], 'disconnect');
+					if (! is_callable ($callback)) {
+						$provider_file = self::path ( $ref ['connect_provider'] . '.php', 'extension' );
+						if (is_file ($provider_file)) {
+							require_once $provider_file;
+						}
+					}
+					if (is_callable ($callback)) {
+						$return = call_user_func ( $callback, $dbh, $ref, $pos, $info );
+						break;
+					}
+
 				case '' :
 				case 'mysql' :
 					if (is_resource ( $dbh ) && get_resource_type ( $dbh ) == 'mysql link') {
@@ -1352,19 +1393,6 @@ class core {
 						$return = false;
 					}
 					break;
-
-				// 【扩展功能】断开数据库
-				default :
-					$provider = $ref ['connect_provider'];
-					$provider_file = self::path ( $provider . '.php', 'extension' );
-					if (is_file ($provider_file)) {
-						require_once $provider_file;
-						$return = call_user_func ( array ( $provider, 'disconnect' ), $dbh, $ref );
-					} else {
-						$return = false;
-					}
-					break;
-
 			}
 			$ref = $cfg = array ();
 			$dbh = null;
@@ -1374,6 +1402,21 @@ class core {
 		// 连接数据库
 		if ($args === true) {
 			switch ($ref ['connect_provider']) {
+
+				// 【扩展功能】连接数据库
+				default :
+					$callback = array ($ref ['connect_provider'], 'connect');
+					if (! is_callable ($callback)) {
+						$provider_file = self::path ( $ref ['connect_provider'] . '.php', 'extension' );
+						if (is_file ($provider_file)) {
+							require_once $provider_file;
+						}
+					}
+					if (is_callable ($callback)) {
+						$dbh = call_user_func ( $callback, $ref, $pos,$info );
+						break;
+					}
+
 				case '' :
 				case 'mysql' :
 					$type = $ref ['connect_type'];
@@ -1394,18 +1437,6 @@ class core {
 					}
 					if ($charset !== '') {
 						mysql_set_charset ( $charset, $dbh );
-					}
-					break;
-
-				// 【扩展功能】连接数据库
-				default :
-					$provider = $ref ['connect_provider'];
-					$provider_file = self::path ( $provider . '.php', 'extension' );
-					if (is_file ($provider_file)) {
-						require_once $provider_file;
-						$dbh = call_user_func ( array ( $provider, 'connect' ), $ref );
-					} else {
-						$dbh = null;
 					}
 					break;
 			}
@@ -1449,11 +1480,24 @@ class core {
 
 		// 【基础功能】执行语句
 		$ref_flag = (func_num_args () > 2);
-		$dbh = self::connect ( true, $args );
+		$dbh = self::connect ( true, $args, array('execute', $sql, $param, $ref) );
 		if ($args ['prefix_search'] !== '' && $args ['prefix_search'] !== $args ['prefix_replace']) {
 			$sql = str_replace ( $args ['prefix_search'], $args ['prefix_replace'], $sql );
 		}
 		switch ($args ['connect_provider']) {
+
+			// 【扩展功能】执行语句
+			default :
+				$callback = array ($provider = $args ['connect_provider'], 'execute');
+				if (is_callable ($callback)) {
+					if ($ref_flag) {
+						$result = call_user_func_array ( $callback, array ($dbh, $args, __CLASS__, $sql, $param, &$ref ) );
+					} else {
+						$result = call_user_func_array ( $callback, array ($dbh, $args, __CLASS__, $sql, $param ) );
+					}
+					break;
+				}
+
 			case '' :
 			case 'mysql' :
 				if (is_array ( $param )) {
@@ -1515,17 +1559,6 @@ class core {
 					mysql_query ( 'DEALLOCATE PREPARE ' . $stmt, $dbh );
 				}
 				break;
-
-			// 【扩展功能】执行语句
-			default :
-				$provider = $args ['connect_provider'];
-				if ($ref_flag) {
-					$result = call_user_func_array ( array ($provider, 'execute' ), array ($dbh, $args, __CLASS__, $sql, $param, &$ref ) );
-				} else {
-					$result = call_user_func_array ( array ($provider, 'execute' ), array ($dbh, $args, __CLASS__, $sql, $param ) );
-				}
-				break;
-
 		}
 		return $result;
 
@@ -1770,7 +1803,7 @@ class core {
 				$sql = substr($sql,6);
 				$debug_provider = 'mysql';
 			} else {
-				$dbh = self::connect ( true, $args );
+				$dbh = self::connect ( true, $args, array('prepare', $sql, $param, $format, $debug, $output, $extra) );
 				switch ($args ['connect_provider']) {
 					case '' :
 						$mysql = 'mysql_' . $sql;
@@ -2081,13 +2114,23 @@ class core {
 				case false :
 
 					// 【扩展功能】准备SQL语句
-					$provider = $args ['connect_provider'];
+					$callback = array ($args ['connect_provider'], 'prepare');
+					if (! is_callable ($callback)) {
+						$provider_file = self::path ( $args ['connect_provider'] . '.php', 'extension' );
+						if (is_file ($provider_file)) {
+							require_once $provider_file;
+						}
+					}
 					if ($args ['prefix_search'] !== '' && $args ['prefix_search'] !== $args ['prefix_replace']) {
 						$sql = str_replace ( $args ['prefix_search'], $args ['prefix_replace'], $sql );
 					}
-					$return = call_user_func ( array ($provider, 'prepare' ), $dbh, $args, __CLASS__, $sql, $param, $format );
-
+					if (is_callable ($callback)) {
+						$return = call_user_func ( $callback, $dbh, $args, __CLASS__, $sql, $param, $format );
+					} else {
+						$return = self::prepare ( 'mysql_' . $sql, $param, $format);
+					}
 					break;
+
 				default :
 					if ($format) {
 						$return_sql = str_replace ( array ('%', '?' ), array ('%%', '%s' ), $sql );
@@ -2197,13 +2240,22 @@ class core {
 	public static function sequence($tablename = 'sequence', $start_index = 1) {
 
 		// 【基础功能】生成自增序列
-		$dbh = self::connect ( true, $args );
+		$dbh = self::connect ( true, $args, array('sequence', $tablename, $start_index) );
 		// 表名
 		if ($args ['prefix_search'] !== '' && $args ['prefix_search'] !== $args ['prefix_replace']) {
 			$tablename = str_replace ( $args ['prefix_search'], $args ['prefix_replace'], $tablename );
 		}
 		// 执行
 		switch ($args ['connect_provider']) {
+
+			// 【扩展功能】生成自增序列
+			default :
+				$callback = array ($args ['connect_provider'], 'sequence' );
+				if (is_callable ($callback)) {
+					$return = call_user_func ( $callback, $dbh, $args, __CLASS__, $tablename, $start_index );
+					break;
+				}
+
 			case '' :
 			case 'mysql' :
 				$result = mysql_query ( 'UPDATE ' . $tablename . ' SET id=LAST_INSERT_ID(id+1)', $dbh );
@@ -2224,13 +2276,6 @@ class core {
 					$return = $start_index;
 				}
 				break;
-
-			// 【扩展功能】生成自增序列
-			default :
-				$provider = $args ['connect_provider'];
-				$return = call_user_func ( array ($provider, 'sequence' ), $dbh, $args, __CLASS__, $tablename, $start_index );
-				break;
-
 		}
 		return $return;
 	}
@@ -2471,7 +2516,7 @@ class core {
 	public static function selects($field_sql = null, $table_param = null, $where_bool = null, $other = null, $struct = null) {
 
 		// 【基础功能】静态选择数据
-		$dbh = self::connect ( true, $args );
+		$dbh = self::connect ( true, $args, array ('selects', $field_sql, $table_param, $where_bool, $other, $struct) );
 		// 类名
 		if ($struct === null || $struct === '') {
 			$class_arr = array (null, 'class' => null );
@@ -2597,6 +2642,19 @@ class core {
 		}
 		// 执行
 		switch ($args ['connect_provider']) {
+
+			// 【扩展功能】静态选择数据
+			default :
+				$callback = array ($args ['connect_provider'], 'selects' );
+				if (is_callable ($callback)) {
+					if ($args ['prefix_search'] !== '' && $args ['prefix_search'] !== $args ['prefix_replace']) {
+						$sql = str_replace ( $args ['prefix_search'], $args ['prefix_replace'], $sql );
+					}
+					$ref = array ('page' => &$page, 'class_arr' => $class_arr, 'classkey' => $classkey, 'classkey_arr' => $classkey_arr, 'classname' => $classname, 'calledclass' => $calledclass );
+					list ( $data_arr, $data_all ) = call_user_func ( $callback, $dbh, $args, __CLASS__, $sql, $param, $ref );
+					break;
+				}
+
 			case '' :
 			case 'mysql' :
 				if ($page !== null) {
@@ -2719,16 +2777,6 @@ class core {
 						break;
 				}
 				break;
-
-			// 【扩展功能】静态选择数据
-			default :
-				$provider = $args ['connect_provider'];
-				if ($args ['prefix_search'] !== '' && $args ['prefix_search'] !== $args ['prefix_replace']) {
-					$sql = str_replace ( $args ['prefix_search'], $args ['prefix_replace'], $sql );
-				}
-				$ref = array ('page' => &$page, 'class_arr' => $class_arr, 'classkey' => $classkey, 'classkey_arr' => $classkey_arr, 'classname' => $classname, 'calledclass' => $calledclass );
-				list ( $data_arr, $data_all ) = call_user_func ( array ($provider, 'selects' ), $dbh, $args, __CLASS__, $sql, $param, $ref );
-
 		}
 		// 整理
 		if ($class_arr === array (null ) || $class_arr === array ('' )) {
@@ -2810,7 +2858,7 @@ class core {
 	public static function inserts($table_sql = null, $column_set_param = null, $value_bool = null, $other = null, $class = null) {
 
 		// 【基础功能】静态插入数据
-		$dbh = self::connect ( true, $args );
+		$dbh = self::connect ( true, $args, array ('inserts', $table_sql, $column_set_param, $value_bool, $other, $class) );
 		// 参数
 		if (is_bool ( $value_bool )) {
 			$sql = $table_sql;
@@ -2838,19 +2886,21 @@ class core {
 		}
 		// 执行
 		switch ($args ['connect_provider']) {
+
+			// 【扩展功能】静态插入数据
+			default :
+				$callback = array ($args ['connect_provider'], 'inserts');
+				if (is_callable ($callback)) {
+					if ($args ['prefix_search'] !== '' && $args ['prefix_search'] !== $args ['prefix_replace']) {
+						$sql = str_replace ( $args ['prefix_search'], $args ['prefix_replace'], $sql );
+					}
+					return call_user_func ( $callback, $dbh, $args, __CLASS__, $sql, $param );
+				}
+
 			case '' :
 			case 'mysql' :
 				self::execute ( $sql, $param, $ref );
 				return $ref ['affected_rows'];
-
-			// 【扩展功能】静态插入数据
-			default :
-				$provider = $args ['connect_provider'];
-				if ($args ['prefix_search'] !== '' && $args ['prefix_search'] !== $args ['prefix_replace']) {
-					$sql = str_replace ( $args ['prefix_search'], $args ['prefix_replace'], $sql );
-				}
-				return call_user_func ( array ($provider, 'inserts' ), $dbh, $args, __CLASS__, $sql, $param );
-
 		}
 
 	}
@@ -2886,7 +2936,7 @@ class core {
 	public static function updates($table_sql = null, $set_param = null, $where_bool = null, $other = null, $class = null) {
 
 		// 【基础功能】静态修改数据
-		$dbh = self::connect ( true, $args );
+		$dbh = self::connect ( true, $args, array('updates',$table_sql, $set_param, $where_bool, $other, $class) );
 		// 参数
 		if (is_bool ( $where_bool )) {
 			$sql = $table_sql;
@@ -2914,19 +2964,21 @@ class core {
 		}
 		// 执行
 		switch ($args ['connect_provider']) {
+
+			// 【扩展功能】静态修改数据
+			default :
+				$callback = array ($args ['connect_provider'], 'updates');
+				if (is_callable ($callback)) {
+					if ($args ['prefix_search'] !== '' && $args ['prefix_search'] !== $args ['prefix_replace']) {
+						$sql = str_replace ( $args ['prefix_search'], $args ['prefix_replace'], $sql );
+					}
+					return call_user_func ( $callback, $dbh, $args, __CLASS__, $sql, $param );
+				}
+
 			case '' :
 			case 'mysql' :
 				self::execute ( $sql, $param, $ref );
 				return $ref ['affected_rows'];
-
-			// 【扩展功能】静态修改数据
-			default :
-				$provider = $args ['connect_provider'];
-				if ($args ['prefix_search'] !== '' && $args ['prefix_search'] !== $args ['prefix_replace']) {
-					$sql = str_replace ( $args ['prefix_search'], $args ['prefix_replace'], $sql );
-				}
-				return call_user_func ( array ($provider, 'updates' ), $dbh, $args, __CLASS__, $sql, $param );
-
 		}
 
 	}
@@ -2962,7 +3014,7 @@ class core {
 	public static function deletes($field_sql = null, $table_param = null, $where_bool = null, $other = null, $class = null) {
 
 		// 【基础功能】静态删除数据
-		$dbh = self::connect ( true, $args );
+		$dbh = self::connect ( true, $args, array ('deletes', $field_sql, $table_param, $where_bool, $other, $class) );
 		// 参数
 		if (is_bool ( $where_bool )) {
 			$sql = $field_sql;
@@ -2990,19 +3042,21 @@ class core {
 		}
 		// 执行
 		switch ($args ['connect_provider']) {
+
+			// 【扩展功能】静态删除数据
+			default :
+				$callback = array ($args ['connect_provider'], 'deletes');
+				if (is_callable ($callback)) {
+					if ($args ['prefix_search'] !== '' && $args ['prefix_search'] !== $args ['prefix_replace']) {
+						$sql = str_replace ( $args ['prefix_search'], $args ['prefix_replace'], $sql );
+					}
+					return call_user_func ( $callback, $dbh, $args, __CLASS__, $sql, $param );
+				}
+
 			case '' :
 			case 'mysql' :
 				self::execute ( $sql, $param, $ref );
 				return $ref ['affected_rows'];
-
-			// 【扩展功能】静态删除数据
-			default :
-				$provider = $args ['connect_provider'];
-				if ($args ['prefix_search'] !== '' && $args ['prefix_search'] !== $args ['prefix_replace']) {
-					$sql = str_replace ( $args ['prefix_search'], $args ['prefix_replace'], $sql );
-				}
-				return call_user_func ( array ($provider, 'deletes' ), $dbh, $args, __CLASS__, $sql, $param );
-
 		}
 
 	}
@@ -3053,7 +3107,7 @@ class core {
 	public static function replaces($table_sql = null, $column_set_param = null, $value_bool = null, $other = null, $class = null) {
 
 		// 【基础功能】静态更新数据
-		$dbh = self::connect ( true, $args );
+		$dbh = self::connect ( true, $args, array ('replaces', $table_sql, $column_set_param, $value_bool, $other, $class) );
 		// 参数
 		if (is_bool ( $value_bool )) {
 			$sql = $table_sql;
@@ -3081,19 +3135,21 @@ class core {
 		}
 		// 执行
 		switch ($args ['connect_provider']) {
+
+			// 【扩展功能】静态更新数据
+			default :
+				$callback = array ($args ['connect_provider'], 'replaces');
+				if (is_callable ($callback)) {
+					if ($args ['prefix_search'] !== '' && $args ['prefix_search'] !== $args ['prefix_replace']) {
+						$sql = str_replace ( $args ['prefix_search'], $args ['prefix_replace'], $sql );
+					}
+					return call_user_func ( $callback, $dbh, $args, __CLASS__, $sql, $param );
+				}
+
 			case '' :
 			case 'mysql' :
 				self::execute ( $sql, $param, $ref );
 				return $ref ['affected_rows'];
-
-			// 【扩展功能】静态更新数据
-			default :
-				$provider = $args ['connect_provider'];
-				if ($args ['prefix_search'] !== '' && $args ['prefix_search'] !== $args ['prefix_replace']) {
-					$sql = str_replace ( $args ['prefix_search'], $args ['prefix_replace'], $sql );
-				}
-				return call_user_func ( array ($provider, 'replaces' ), $dbh, $args, __CLASS__, $sql, $param );
-
 		}
 
 	}
@@ -3203,7 +3259,7 @@ class core {
 	public function select($tablename = '', $primary_index = 0) {
 
 		// 【基础功能】选择实例数据
-		$dbh = self::connect ( true, $args );
+		$dbh = self::connect ( true, $args, array ('select', $tablename, $primary_index) );
 		// 表名
 		if ($tablename === '') {
 			$tablename = get_class ( $this );
@@ -3233,6 +3289,16 @@ class core {
 		}
 		// 执行
 		switch ($args ['connect_provider']) {
+
+			// 【扩展功能】选择实例数据
+			default :
+				$callback = array ($args ['connect_provider'], 'select');
+				if (is_callable ($callback)) {
+					$params = compact ( 'primary_name', 'primary_value', 'fieldname', 'valuename', 'paramvars' );
+					$result = call_user_func ( $callback, $dbh, $args, $this, $tablename, $primary_index, $params );
+					break;
+				}
+
 			case '' :
 			case 'mysql' :
 				if ($primary_name !== null) {
@@ -3244,26 +3310,22 @@ class core {
 				}
 				$result = self::execute ( $sql, $paramvars );
 				if ($result === false) {
-					return false;
+					break;;
 				}
 				if (mysql_num_rows ( $result ) == 0) {
 					mysql_free_result ( $result );
-					return false;
+					$result = false;
+					break;
 				}
 				$row = mysql_fetch_assoc ( $result );
 				mysql_free_result ( $result );
 				foreach ( $row as $key => $value ) {
 					$this->$key = $value;
 				}
-				return true;
-
-			// 【扩展功能】选择实例数据
-			default :
-				$provider = $args ['connect_provider'];
-				$params = compact ( 'primary_name', 'primary_value', 'fieldname', 'valuename', 'paramvars' );
-				return call_user_func ( array ($provider, 'select' ), $dbh, $args, $this, $tablename, $primary_index, $params );
-
+				$result = true;
+				break;
 		}
+		return $result;
 
 	}
 
@@ -3313,7 +3375,7 @@ class core {
 	public function insert($tablename = '', $primary_index = 0) {
 
 		// 【基础功能】插入实例数据
-		$dbh = self::connect ( true, $args );
+		$dbh = self::connect ( true, $args, array ('insert', $tablename, $primary_index) );
 		// 表名
 		if ($tablename === '') {
 			$tablename = get_class ( $this );
@@ -3349,6 +3411,16 @@ class core {
 		$paramvars = array_values ( $fieldvars );
 		// 执行
 		switch ($args ['connect_provider']) {
+
+			// 【扩展功能】插入实例数据
+			default :
+				$callback = array ($args ['connect_provider'], 'insert');
+				if (is_callable ($callback)) {
+					$params = compact ( 'primary_name', 'primary_value', 'fieldname', 'valuename', 'paramvars' );
+					$result = call_user_func ( $callback, $dbh, $args, $this, $tablename, $primary_index, $params );
+					break;
+				}
+
 			case '' :
 			case 'mysql' :
 				$sql = 'INSERT INTO ' . $tablename . ' (' . $fieldname . ') VALUES (' . $valuename . ')';
@@ -3361,14 +3433,6 @@ class core {
 					$result = ( bool ) self::execute ( $sql, $paramvars );
 				}
 				break;
-
-			// 【扩展功能】插入实例数据
-			default :
-				$provider = $args ['connect_provider'];
-				$params = compact ( 'primary_name', 'primary_value', 'fieldname', 'valuename', 'paramvars' );
-				$result = call_user_func ( array ($provider, 'insert' ), $dbh, $args, $this, $tablename, $primary_index, $params );
-				break;
-
 		}
 		return $result;
 
@@ -3415,7 +3479,7 @@ class core {
 	public function update($tablename = '', $primary_index = 0) {
 
 		// 【基础功能】修改实例数据
-		$dbh = self::connect ( true, $args );
+		$dbh = self::connect ( true, $args, array ('update', $tablename, $primary_index) );
 		// 表名
 		if ($tablename === '') {
 			$tablename = get_class ( $this );
@@ -3457,6 +3521,16 @@ class core {
 		}
 		// 执行
 		switch ($args ['connect_provider']) {
+
+			// 【扩展功能】修改实例数据
+			default :
+				$callback = array ($args ['connect_provider'], 'update');
+				if (is_callable ($callback)) {
+					$params = compact ( 'primary_name', 'primary_value', 'fieldname', 'valuename', 'paramvars' );
+					$result = call_user_func ( $callback, $dbh, $args, $this, $tablename, $primary_index, $params );
+					break;
+				}
+
 			case '' :
 			case 'mysql' :
 				if ($primary_name !== null) {
@@ -3469,14 +3543,6 @@ class core {
 					return false;
 				}
 				break;
-
-			// 【扩展功能】修改实例数据
-			default :
-				$provider = $args ['connect_provider'];
-				$params = compact ( 'primary_name', 'primary_value', 'fieldname', 'valuename', 'paramvars' );
-				$result = call_user_func ( array ($provider, 'update' ), $dbh, $args, $this, $tablename, $primary_index, $params );
-				break;
-
 		}
 		return $result;
 
@@ -3519,7 +3585,7 @@ class core {
 	public function delete($tablename = '', $primary_index = 0) {
 
 		// 【基础功能】删除实例数据
-		$dbh = self::connect ( true, $args );
+		$dbh = self::connect ( true, $args, array ('delete', $tablename, $primary_index) );
 		// 表名
 		if ($tablename === '') {
 			$tablename = get_class ( $this );
@@ -3549,6 +3615,16 @@ class core {
 		}
 		// 执行
 		switch ($args ['connect_provider']) {
+
+			// 【扩展功能】删除实例数据
+			default :
+				$callback = array ($args ['connect_provider'], 'delete');
+				if (is_callable ($callback)) {
+					$params = compact ( 'primary_name', 'primary_value', 'fieldname', 'valuename', 'paramvars' );
+					$result = call_user_func ( $callback, $dbh, $args, $this, $tablename, $primary_index, $params );
+					break;
+				}
+
 			case '' :
 			case 'mysql' :
 				if ($primary_name !== null) {
@@ -3563,14 +3639,6 @@ class core {
 					$result = false;
 				}
 				break;
-
-			// 【扩展功能】删除实例数据
-			default :
-				$provider = $args ['connect_provider'];
-				$params = compact ( 'primary_name', 'primary_value', 'fieldname', 'valuename', 'paramvars' );
-				$result = call_user_func ( array ($provider, 'delete' ), $dbh, $args, $this, $tablename, $primary_index, $params );
-				break;
-
 		}
 		return $result;
 
@@ -3617,7 +3685,7 @@ class core {
 	public function replace($tablename = '', $primary_index = 0) {
 
 		// 【基础功能】更新实例数据
-		$dbh = self::connect ( true, $args );
+		$dbh = self::connect ( true, $args, array ('replace', $tablename, $primary_index) );
 		// 表名
 		if ($tablename === '') {
 			$tablename = get_class ( $this );
@@ -3651,6 +3719,16 @@ class core {
 		$paramvars = array_values ( $fieldvars );
 		// 执行
 		switch ($args ['connect_provider']) {
+
+			// 【扩展功能】更新实例数据
+			default :
+				$callback = array ($args ['connect_provider'], 'replace');
+				if (is_callable ($callback)) {
+					$params = compact ( 'primary_name', 'primary_value', 'fieldname', 'valuename', 'paramvars' );
+					$result = call_user_func ( $callback, $dbh, $args, $this, $tablename, $primary_index, $params );
+					break;
+				}
+
 			case '' :
 			case 'mysql' :
 				$sql = 'REPLACE INTO ' . $tablename . ' (' . $fieldname . ') VALUES (' . $valuename . ')';
@@ -3663,14 +3741,6 @@ class core {
 					$result = ( bool ) self::execute ( $sql, $paramvars );
 				}
 				break;
-
-			// 【扩展功能】更新实例数据
-			default :
-				$provider = $args ['connect_provider'];
-				$params = compact ( 'primary_name', 'primary_value', 'fieldname', 'valuename', 'paramvars' );
-				$result = call_user_func ( array ($provider, 'replace' ), $dbh, $args, $this, $tablename, $primary_index, $params );
-				break;
-
 		}
 		return $result;
 

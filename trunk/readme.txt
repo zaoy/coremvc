@@ -2,7 +2,7 @@
 
 CoreMVC是一款灵巧的PHP开源框架。
 
-2010年7月22日
+2010年7月25日
 
 〖版权说明〗
 
@@ -11,7 +11,7 @@ CoreMVC遵从new BSD许可证，所以您可以在法律允许的范围以内任
 /**
  * CoreMVC核心模块
  * 
- * @version 1.2.0 alpha 6
+ * @version 1.2.0 alpha 7
  * @author Z <602000@gmail.com>
  * @link http://www.coremvc.cn/
  */
@@ -55,6 +55,8 @@ CoreMVC 1.2.0 相对于 CoreMVC 1.1.0版本的改进
 4. 优化了core::connect并增加了参数类型。
 
 5. 增加了core::main的一次跳转执行函数的功能，以便于模块风格下增加前端验证操作。
+
+6. 增加了数据库扩展：SaeMysql5。
 
 
 CoreMVC 1.1.0 相对于 CoreMVC 1.0.0版本的改进
@@ -158,6 +160,8 @@ core/					扩展目录，CoreMVC扩展目录，可删除。
 　├─　adodb5zip.php			模型扩展，AdodbZip连接器。
 　│
 　├─　adodb5zip/AdodbZip.php		模型扩展，Adodb自动装载器。
+　│
+　├─　SaeMysql5.php			模型扩展，SaeMysql连接器。
 　│
 　├─　smarty2.php			视图扩展，Smarty 2.x连接器。
 　│

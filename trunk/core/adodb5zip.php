@@ -40,6 +40,16 @@ class adodb5zip {
 	}
 	
 	/**
+	 * 重连数据库
+	 * @param dbh $dbh
+	 * @param array $args
+	 * @return dbh
+	 */
+	public static function reconnect($dbh, $args) {
+		return $dbh;
+	}
+	
+	/**
 	 * 断开数据库
 	 * @param dbh $dbh
 	 * @param array $args
