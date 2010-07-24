@@ -29,6 +29,7 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			'pdo5' => array((require 'config_db_pdo5.php'),'PDO','PDOStatement'),
 			'adodb5zip' => array((require 'config_db_adodb5zip.php'),'ADODB_mysqlt','ADORecordSet_mysqlt'),
 			//'adodb5' => array((require 'config_db_adodb5.php'),'ADORecordSet_mysqlt'),
+			//'SaeMysql5' => array((require 'config_db_SaeMysql5.php'),'resource','resource'),//此项需要创建app_test数据库并可完全匿名访问，并需要修改hosts文件
 		);
 		$this->view_arr = array(
 			'include' => array(array('z'=>'b')),
@@ -1054,8 +1055,8 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			$this->assertEquals(array($obj1,$obj2,$obj3),core::selects('SELECT * FROM pre_test',null,true));
 			$this->assertEquals(array($obj2,$obj2,$obj2),core::selects('SELECT ? AS id,? AS name FROM pre_test',array(2,'test'),true));
 			$this->assertEquals(array($obj1,$obj2),core::selects('SELECT * FROM pre_test LIMIT 0,2',array(),true));
-			$page = array('page'=>2,'size'=>1);
-			$this->assertEquals(array($obj2),core::selects('SELECT * FROM pre_test',null,true,array('page'=>&$page)));
+			$page = array('page'=>2,'size'=>1);$GLOBALS['aaa']=true;
+			$this->assertEquals(array($obj2),core::selects('SELECT * FROM pre_test',null,true,array('page'=>&$page)));unset($GLOBALS['aaa']);
 			$this->assertEquals(array('page'=>2,'size'=>1,'count'=>3,'total'=>3),$page);
 			$page = array('page'=>2,'size'=>1,'count'=>4);
 			$this->assertEquals(array($obj2),core::selects('SELECT * FROM pre_test',null,true,array('page'=>&$page)));
