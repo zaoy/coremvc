@@ -2,7 +2,7 @@
 /**
  * CoreMVC核心模块
  * 
- * @version 1.2.0 alpha 7
+ * @version 1.2.0 alpha 8
  * @author Z <602000@gmail.com>
  * @link http://www.coremvc.cn/
  */
@@ -1198,7 +1198,7 @@ class core {
 	 * 数据库连接
 	 *
 	 * @link http://www.coremvc.cn/api/core/connect.php
-	 * @param mix $args
+	 * @param mixed $args
 	 * @param array &$ref
 	 * @param array $info
 	 * @return $dbh
@@ -1590,7 +1590,7 @@ class core {
 	 * @param bool $debug
 	 * @param string $output
 	 * @param array $extra
-	 * @return mix
+	 * @return mixed
 	 */
 	public static function prepare($sql, $param = null, $format = null, $debug = null, $output = null, $extra = null) {
 
@@ -2283,44 +2283,12 @@ class core {
 	/**
 	 * 静态构造函数（可继承）
 	 *
-	 * + 作用：1.静态构造函数，返回构造数组。
-	 * + 示例：
-	 * <code>
-	 * // 返回对象数组。
-	 *$result = core::structs($array_arr); //传入二维数组，返回对象数组
-	 *$result = core::structs($object_arr); //传入对象数组，返回对象数组
-	 *$result = core::structs($object_arr, null); //同上
-	 *$result = core::structs($object_arr, 'core'); //同上
-	 *$result = core::structs($object_arr, array(null, null)); //同上
-	 *$result = core::structs($object_arr, array(null, 'core')); //同上
-	 *$result = core::structs($object_arr, array(null, 'class'=>null)); //同上
-	 *$result = core::structs($object_arr, array(null, 'class'=>'core')); //同上
-	 *$result = account::structs($object_arr); //PHP5.2返回core对象数组，PHP5.3返回account对象数组
-	 *
-	 * // 返回各类数组。 
-	 *$result = core::structs($object_arr, array(null, 'assoc'=>null)); //返回关联数组的数组
-	 *$result = core::structs($object_arr, array(null, 'num'=>null)); //返回二维数组
-	 *$result = core::structs($object_arr, array(null, 'both'=>null)); //返回关联二维数组
-	 *$result = core::structs($object_arr, array(null, 'array'=>array('id'=>null,'name'=>null))); //返回指定二维数组
-	 *$result = core::structs($object_arr, array(null, 'column'=>0)); //返回数值数组
-	 *$result = core::structs($object_arr, array(null, 'column'=>'id')); //返回数值数组
-	 *$result = core::structs($object_arr, array(null, 'class'=>null)); //返回对象数组，PHP5.3以调用为对象
-	 *$result = core::structs($object_arr, array(null, 'class'=>'account')); //返回对象数组，
-	 *$result = core::structs($object_arr, array(null, 'class|classtype'=>null)); //返回对象数组，以第一个字段为对象
-	 *$result = core::structs($object_arr, array(null, 'clone'=>new account)); //返回对象数组
-	 *
-	 * // 返回各种数值。 
-	 *$result = core::structs($object_arr, array('assoc'=>null)); //返回关联数组
-	 *$result = core::structs($object_arr, array('column'=>'id')); //返回数值
-	 *$result = core::structs($object_arr, array('class'=>'account')); //返回单个对象
-	 *$result = core::structs($object_arr, array('id', 'class'=>'account')); //返回id为下标的对象数组
-	 *$result = core::structs($object_arr, array('name',null ,'class'=>'account')); //返回name为下标的对象数组的数组
-	 * </code>
+	 * @link http://www.coremvc.cn/api/core/structs.php
 	 * @param array $array
-	 * @param array $class
+	 * @param mixed $struct
 	 * @return array
 	 */
-	public static function structs($array = null, $class = null) {
+	public static function structs($array = null, $struct = null) {
 
 		// 【基础功能】构造对象数组
 		// 数组
@@ -2334,17 +2302,17 @@ class core {
 			return;
 		}
 		// 类名
-		if ($class === null || $class === '') {
+		if ($struct === null || $struct === '') {
 			$class_arr = array (null, 'class' => null );
-		} elseif (is_string ( $class )) {
-			$class_arr = array (null, 'class' => $class );
-		} elseif (is_object ( $class )) {
-			$class_arr = array (null, 'clone' => $class );
-		} elseif (is_array ( $class )) {
-			if ($class === array ()) {
+		} elseif (is_string ( $struct )) {
+			$class_arr = array (null, 'class' => $struct );
+		} elseif (is_object ( $struct )) {
+			$class_arr = array (null, 'clone' => $struct );
+		} elseif (is_array ( $struct )) {
+			if ($struct === array ()) {
 				return;
 			}
-			$class_arr = $class;
+			$class_arr = $struct;
 		} else {
 			return;
 		}
@@ -2505,12 +2473,12 @@ class core {
 	/**
 	 * 静态选择函数（可继承）
 	 *
-	 * @link http://www.coremvc.cn/api/core/connect.php
-	 * @param mix $field_sql
-	 * @param mix $table_param
-	 * @param mix $where_bool
-	 * @param mix $other
-	 * @param mix $struct
+	 * @link http://www.coremvc.cn/api/core/selects.php
+	 * @param mixed $field_sql
+	 * @param mixed $table_param
+	 * @param mixed $where_bool
+	 * @param mixed $other
+	 * @param mixed $struct
 	 * @return array
 	 */
 	public static function selects($field_sql = null, $table_param = null, $where_bool = null, $other = null, $struct = null) {
@@ -2848,10 +2816,10 @@ class core {
 	 *class test extends core { }
 	 *$int = test::inserts(null,array('id'=>1,'name'=>'a')); //使用前缀+类名作为表名（PHP 5.3以上有效），返回成功插入的个数
 	 * </code>
-	 * @param mix $table_sql
-	 * @param mix $column_set_param
-	 * @param mix $value_bool
-	 * @param mix $other
+	 * @param mixed $table_sql
+	 * @param mixed $column_set_param
+	 * @param mixed $value_bool
+	 * @param mixed $other
 	 * @param string $class
 	 * @return int
 	 */
@@ -2926,10 +2894,10 @@ class core {
 	 *class test extends core { }
 	 *$int = test::updates(null,array("name='a'"),array('id'=>1)); //使用前缀+类名作为表名（PHP 5.3以上有效），返回成功修改的个数
 	 * </code>
-	 * @param mix $table_sql
-	 * @param mix $set_param
-	 * @param mix $where_bool
-	 * @param mix $other
+	 * @param mixed $table_sql
+	 * @param mixed $set_param
+	 * @param mixed $where_bool
+	 * @param mixed $other
 	 * @param string $class
 	 * @return int
 	 */
@@ -3004,10 +2972,10 @@ class core {
 	 *class test extends core { }
 	 *$int = test::deletes(null,null,array('id'=>1)); //使用前缀+类名作为表名（PHP 5.3以上有效），返回成功删除的个数
 	 * </code>
-	 * @param mix $field_sql
-	 * @param mix $table_param
-	 * @param mix $where_bool
-	 * @param mix $other
+	 * @param mixed $field_sql
+	 * @param mixed $table_param
+	 * @param mixed $where_bool
+	 * @param mixed $other
 	 * @param string $class
 	 * @return int
 	 */
@@ -3097,10 +3065,10 @@ class core {
 	 *class test extends core { }
 	 *$int = test::replaces(null,array('id'=>1,'name'=>'a')); //使用前缀+类名作为表名（PHP 5.3以上有效），返回成功更新的个数(修改的按两倍算)
 	 * </code>
-	 * @param mix $table_sql
-	 * @param mix $column_set_param
-	 * @param mix $value_bool
-	 * @param mix $other
+	 * @param mixed $table_sql
+	 * @param mixed $column_set_param
+	 * @param mixed $value_bool
+	 * @param mixed $other
 	 * @param string $class
 	 * @return int
 	 */
@@ -3157,21 +3125,9 @@ class core {
 	/**
 	 * 实例构造函数（可继承）
 	 *
-	 * + 作用：1.返回实例数组；2.返回实例数据；3.载入实例数组
-	 * + 示例：
-	 * <code>
-	 * // 返回实例数组 
-	 *$row = $obj->struct();
-	 *
-	 * // 返回实例数据
-	 *$id = $obj->struct(0);
-	 *$id = $obj->struct('id');
-	 *
-	 * // 实例载入数组。 
-	 *$obj->struct($row); //$row为数组或对象
-	 * </code>
-	 * @param mix $row
-	 * @return mix
+	 * @link http://www.coremvc.cn/api/core/struct.php
+	 * @param mixed $row
+	 * @return mixed
 	 */
 	public function struct($row = null) {
 
@@ -3229,31 +3185,9 @@ class core {
 	/**
 	 * 实例选择函数（可继承）
 	 *
-	 * + 作用：1.选择实例数据，返回是否成功；2.扩展方式。
-	 * + 示例：
-	 * <code>
-	 * // 选择account表id=2的一条记录，第一个属性为主键
-	 *$obj = new core;
-	 *$obj->id = 2;
-	 *$obj->select('account');
-	 *
-	 * // 选择account表的一条记录，不使用主键
-	 *$obj = new core;
-	 *$obj->select('account', -1);
-	 *
-	 * // 选择account表id=2的一条记录，第二个属性为主键
-	 *$obj = new core;
-	 *$obj->rid = 1;
-	 *$obj->id = 2;
-	 *$obj->select('account', 1);
-	 *
-	 * // 选择account表id=2的一条记录，使用继承类
-	 *$account = new account;
-	 *$account->id = 2;
-	 *$account->select();
-	 * </code>
+	 * @link http://www.coremvc.cn/api/core/select.php
 	 * @param string $tablename
-	 * @param mix $primary_index
+	 * @param mixed $primary_index
 	 * @return bool
 	 */
 	public function select($tablename = '', $primary_index = 0) {
@@ -3261,7 +3195,7 @@ class core {
 		// 【基础功能】选择实例数据
 		$dbh = self::connect ( true, $args, array ('select', $tablename, $primary_index) );
 		// 表名
-		if ($tablename === '') {
+		if (empty ($tablename)) {
 			$tablename = get_class ( $this );
 			if ($tablename === __CLASS__) {
 				return false;
@@ -3332,44 +3266,9 @@ class core {
 	/**
 	 * 实例插入函数（可继承）
 	 *
-	 * + 作用：1.插入实例数据，返回是否成功；2.扩展方式。
-	 * + 示例：
-	 * <code>
-	 * // 插入account表一条记录，第一个属性为自增主键
-	 *$obj = new core;
-	 *$obj->id = null;
-	 *$obj->name = 'a';
-	 *$obj->insert('account');
-	 *echo $obj->id;
-	 *
-	 * // 插入account表一条记录，不使用自增主键
-	 *$obj = new core;
-	 *$obj->id = 1;
-	 *$obj->name = 'a';
-	 *$obj->insert('account', -1);
-	 *
-	 * // 插入account表一条记录，第二个属性为自增主键
-	 *$obj = new core;
-	 *$obj->name = 'a';
-	 *$obj->id = null;
-	 *$obj->insert('account', 1);
-	 *echo $obj->id;
-	 *
-	 * // 插入account表一条记录，使用继承类，第一个属性为自增主键
-	 *$account = new account;
-	 *$account->id = null;
-	 *$account->name = 'a';
-	 *$account->insert();
-	 *echo $account->id;
-	 *
-	 * // 插入account表一条记录，使用继承类，无自增主键
-	 *$account = new account;
-	 *$account->id = 1;
-	 *$account->name = 'a';
-	 *$account->insert('', -1);
-	 * </code>
+	 * @link http://www.coremvc.cn/api/core/insert.php
 	 * @param string $tablename
-	 * @param mix $primary_index
+	 * @param mixed $primary_index
 	 * @return bool
 	 */
 	public function insert($tablename = '', $primary_index = 0) {
@@ -3377,7 +3276,7 @@ class core {
 		// 【基础功能】插入实例数据
 		$dbh = self::connect ( true, $args, array ('insert', $tablename, $primary_index) );
 		// 表名
-		if ($tablename === '') {
+		if (empty ($tablename)) {
 			$tablename = get_class ( $this );
 			if ($tablename === __CLASS__) {
 				return false;
@@ -3441,39 +3340,9 @@ class core {
 	/**
 	 * 实例修改函数（可继承）
 	 *
-	 * + 作用：1.修改实例数据，返回是否成功；2.扩展方式。
-	 * + 示例：
-	 * <code>
-	 * // 修改account表id=1的一条记录
-	 *$obj = new core;
-	 *$obj->id = 1;
-	 *$obj->name = 'b';
-	 *$obj->update('account');
-	 *
-	 * // 修改account表的一条记录
-	 *$obj = new core;
-	 *$obj->name = 'b';
-	 *$obj->update('account', -1);
-	 *
-	 * // 修改account表id=2的一条记录
-	 *$obj = new core;
-	 *$obj->name = 'a';
-	 *$obj->id = 2;
-	 *$obj->update('account', 1);
-	 *
-	 * // 修改account表id=1的一条记录，使用继承类
-	 *$account = new account;
-	 *$account->id = 1;
-	 *$account->name = 'b';
-	 *$account->update();
-	 *
-	 * // 修改account表的一条记录，使用继承类
-	 *$account = new account;
-	 *$account->name = 'b';
-	 *$account->update('', -1);
-	 * </code>
+	 * @link http://www.coremvc.cn/api/core/update.php
 	 * @param string $tablename
-	 * @param mix $primary_index
+	 * @param mixed $primary_index
 	 * @return bool
 	 */
 	public function update($tablename = '', $primary_index = 0) {
@@ -3481,7 +3350,7 @@ class core {
 		// 【基础功能】修改实例数据
 		$dbh = self::connect ( true, $args, array ('update', $tablename, $primary_index) );
 		// 表名
-		if ($tablename === '') {
+		if (empty ($tablename)) {
 			$tablename = get_class ( $this );
 			if ($tablename === __CLASS__) {
 				return false;
@@ -3551,35 +3420,9 @@ class core {
 	/**
 	 * 实例删除函数（可继承）
 	 *
-	 * + 作用：1.删除实例数据，返回是否成功；2.扩展方式。
-	 * + 示例：
-	 * <code>
-	 * // 删除account表id=1的一条记录
-	 *$obj = new core;
-	 *$obj->id = 1;
-	 *$obj->delete('account');
-	 *
-	 * // 删除account表的一条记录
-	 *$obj = new core;
-	 *$obj->delete('account', -1);
-	 *
-	 * // 删除account表id=2的一条记录
-	 *$obj = new core;
-	 *$obj->name = 'a';
-	 *$obj->id = 2;
-	 *$obj->delete('account', 1);
-	 *
-	 * // 删除account表id=1的一条记录，使用继承类
-	 *$account = new account;
-	 *$account->id = 1;
-	 *$account->delete();
-	 *
-	 * // 删除account表的一条记录，使用继承类
-	 *$account = new account;
-	 *$account->delete('', -1);
-	 * </code>
+	 * @link http://www.coremvc.cn/api/core/delete.php
 	 * @param string $tablename
-	 * @param mix $primary_index
+	 * @param mixed $primary_index
 	 * @return bool
 	 */
 	public function delete($tablename = '', $primary_index = 0) {
@@ -3587,7 +3430,7 @@ class core {
 		// 【基础功能】删除实例数据
 		$dbh = self::connect ( true, $args, array ('delete', $tablename, $primary_index) );
 		// 表名
-		if ($tablename === '') {
+		if (empty ($tablename)) {
 			$tablename = get_class ( $this );
 			if ($tablename === __CLASS__) {
 				return false;
@@ -3647,39 +3490,9 @@ class core {
 	/**
 	 * 实例更新函数（可继承）
 	 *
-	 * + 作用：1.更新实例数据，返回是否成功；2.扩展方式。
-	 * + 示例：
-	 * <code>
-	 * // 更新account表id=1的一条记录
-	 *$obj = new core;
-	 *$obj->id = 1;
-	 *$obj->name = 'b';
-	 *$obj->replace('account');
-	 *
-	 * // 更新account表的一条记录
-	 *$obj = new core;
-	 *$obj->name = 'b';
-	 *$obj->replace('account', -1);
-	 *
-	 * // 更新account表id=2的一条记录
-	 *$obj = new core;
-	 *$obj->name = 'a';
-	 *$obj->id = 2;
-	 *$obj->replace('account', 1);
-	 *
-	 * // 更新account表id=1的一条记录，使用继承类
-	 *$account = new account;
-	 *$account->id = 1;
-	 *$account->name = 'b';
-	 *$account->replace();
-	 *
-	 * // 更新account表的一条记录，使用继承类
-	 *$account = new account;
-	 *$account->name = 'b';
-	 *$account->replace('', -1);
-	 * </code>
+	 * @link http://www.coremvc.cn/api/core/replace.php
 	 * @param string $tablename
-	 * @param mix $primary_index
+	 * @param mixed $primary_index
 	 * @return bool
 	 */
 	public function replace($tablename = '', $primary_index = 0) {
@@ -3687,7 +3500,7 @@ class core {
 		// 【基础功能】更新实例数据
 		$dbh = self::connect ( true, $args, array ('replace', $tablename, $primary_index) );
 		// 表名
-		if ($tablename === '') {
+		if (empty ($tablename)) {
 			$tablename = get_class ( $this );
 			if ($tablename === __CLASS__) {
 				return false;

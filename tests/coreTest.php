@@ -1375,6 +1375,10 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			$this->assertTrue($test->select());
 			$test->id = 3;
 			$this->assertFalse($test->select());
+			$test->id = 2;
+			$this->assertTrue($test->select(null));
+			$test->id = 3;
+			$this->assertFalse($test->select(null));
 
 			core::connect(array('debug_enable'=>true));
 			ob_start();
