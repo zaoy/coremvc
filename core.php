@@ -2,7 +2,7 @@
 /**
  * CoreMVC核心模块
  * 
- * @version 1.2.0 alpha 9
+ * @version 1.2.0 alpha 10
  * @author Z <602000@gmail.com>
  * @link http://www.coremvc.cn/
  */
@@ -28,6 +28,81 @@ class core {
 	 * @return mixed
 	 */
 	public static function init($config = null, &$variable = null) {
+
+		// 处理环境变量
+		static $server_config;
+		if ($server_config === null) {
+			$server_config = array ();
+			if (isset ($_SERVER [__CLASS__ . '_config'])) {
+				$env_config = $_SERVER [__CLASS__ . '_config'];
+				if ($env_config) {
+					$env_prefix = __CLASS__ . '_config_';
+					$env_length = strlen($env_prefix);
+					foreach ($_SERVER as $key=>$value) {
+						if (strncmp ($key, $env_prefix, $env_length) === 0) {
+							$server_config [substr ($key, $env_length)] = $value;
+						}
+					}
+					// 导入配置文件
+					$first = $env_config ['0'];
+					if ($first === '@'){
+						$env_file = dirname (__FILE__) . DIRECTORY_SEPARATOR . substr ($env_config, 1);
+					} else {
+						$env_file = $env_config;
+					}
+					$ext = strtolower (strrchr ($env_file, '.'));
+					if ($ext === '.php') {
+						if (is_file ($env_file)) {
+							$import_config = @require $env_file;
+							if (is_array ($import_config) ){
+								$server_config = array_merge ($server_config, $import_config);
+							}
+						}
+					} elseif ($ext === '.ini') {
+						if (is_file ($env_file)) {
+							$import_config = @parse_ini_file ($env_file);
+							if (is_array ($import_config) ){
+								$server_config = array_merge ($server_config, $import_config);
+							}
+						}
+					}
+				}
+			} elseif (is_file ('.htaccess')) {
+				$content = file_get_contents ('.htaccess');
+				if (preg_match ('/^\s*SetEnv\s+core_config\s+(.*)\s*$/im', $content, $matches)) {
+					$env_config = rtrim ($matches[1]);
+					if ($env_config) {
+						// 导入环境变量
+						if (preg_match_all ('/^\s*SetEnv\s+core_config_(.+?)\s+(.*)\s*$/im',$content,$matches)) {
+							$server_config = array_combine($matches[1],array_map("rtrim",$matches[2]));
+						}
+						// 导入配置文件
+						$first = $env_config ['0'];
+						if ($first === '@'){
+							$env_file = dirname (__FILE__) . DIRECTORY_SEPARATOR . substr ($env_config, 1);
+						} else {
+							$env_file = $env_config;
+						}
+						$ext = strtolower (strrchr ($env_file, '.'));
+						if ($ext === '.php') {
+							if (is_file ($env_file)) {
+								$import_config = @require $env_file;
+								if (is_array ($import_config) ){
+									$server_config = array_merge ($server_config, $import_config);
+								}
+							}
+						} elseif ($ext === '.ini') {
+							if (is_file ($env_file)) {
+								$import_config = @parse_ini_file ($env_file);
+								if (is_array ($import_config) ){
+									$server_config = array_merge ($server_config, $import_config);
+								}
+							}
+						}
+					}
+				}
+			}
+		}
 
 		// 引用参数处理
 		if ($variable === null){
@@ -64,38 +139,8 @@ class core {
 		}
 
 		// 导入环境变量
-		if (isset ($_SERVER [__CLASS__ . '_config']) && $_SERVER [__CLASS__ . '_config']) {
-			$env_prefix = __CLASS__ . '_config_';
-			$env_length = strlen($env_prefix);
-			foreach ($_SERVER as $key=>$value) {
-				if (strncmp ($key, $env_prefix, $env_length) === 0) {
-					$current_config [substr ($key, $env_length)] = $value;
-				}
-			}
-			// 导入配置文件
-			$env_config = $_SERVER [__CLASS__ . '_config'];
-			$first = $env_config ['0'];
-			if ($first === '@'){
-				$env_file = dirname (__FILE__) . DIRECTORY_SEPARATOR . substr ($env_config, 1);
-			} else {
-				$env_file = $env_config;
-			}
-			$ext = strtolower (strrchr ($env_file, '.'));
-			if ($ext === '.php') {
-				if (is_file ($env_file)) {
-					$import_config = @require $env_file;
-					if (is_array ($import_config) ){
-						$current_config = array_merge ($current_config, $import_config);
-					}
-				}
-			} elseif ($ext === '.ini') {
-				if (is_file ($env_file)) {
-					$import_config = @parse_ini_file ($env_file);
-					if (is_array ($import_config) ){
-						$current_config = array_merge ($current_config, $import_config);
-					}
-				}
-			}
+		if ($server_config) {
+			$current_config = array_merge ($current_config, $server_config);
 		}
 
 		// 配置参数处理
