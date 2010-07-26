@@ -2,7 +2,7 @@
 /**
  * CoreMVC核心模块
  * 
- * @version 1.2.0 alpha 8
+ * @version 1.2.0 alpha 9
  * @author Z <602000@gmail.com>
  * @link http://www.coremvc.cn/
  */
@@ -2782,40 +2782,7 @@ class core {
 	/**
 	 * 静态插入函数（可继承）
 	 *
-	 * + 作用：1.静态插入函数，返回影响记录数；2.扩展方式。
-	 * + 示例：
-	 * <code>
-	 * // 插入一条记录。 
-	 *$int = core::inserts('pre_test',array('id'=>1,'name'=>'a')); //返回成功插入的个数
-	 *
-	 * // 直接使用SQL语句插入一条记录。 
-	 *$int = core::inserts('INSERT INTO pre_test (id,name) VALUES (?,?)',array(1,'a'),true); //返回成功插入的个数
-	 *
-	 * // 从其他表选择插入多条记录。 
-	 *$int = core::inserts('pre_test',array('id','name'),null,'SELECT id,name FROM pre_test2'); //返回成功插入的个数
-	 *
-	 * // 插入多条记录。 
-	 *$arr = array(
-	 *	array('id'=>1,'name'=>'a'),
-	 *	array('id'=>2,'name'=>'b'),
-	 *);
-	 *
-	 *$int = core::inserts('pre_test','id,name',$arr); //返回成功插入的个数
-	 *
-	 * // 插入需计算的记录。 
-	 *$arr = array(
-	 *	array(1,"md5('a')"),
-	 *	array(2,"md5('b')"),
-	 *);
-	 *$int = core::inserts('pre_test',array('id','name'),$arr); //返回成功插入的个数
-	 *
-	 * // 使用类名插入记录。 
-	 *$int = core::inserts(null,array('id'=>1,'name'=>'a'),null,null,'test'); //使用前缀+类名作为表名，返回成功插入的个数
-	 *
-	 * // 使用类名插入记录。 
-	 *class test extends core { }
-	 *$int = test::inserts(null,array('id'=>1,'name'=>'a')); //使用前缀+类名作为表名（PHP 5.3以上有效），返回成功插入的个数
-	 * </code>
+	 * @link http://www.coremvc.cn/api/core/inserts.php
 	 * @param mixed $table_sql
 	 * @param mixed $column_set_param
 	 * @param mixed $value_bool
@@ -2876,24 +2843,7 @@ class core {
 	/**
 	 * 静态修改函数（可继承）
 	 *
-	 * + 作用：1.静态修改函数，返回影响记录数；2.扩展方式。
-	 * <code>
-	 * // 修改记录。 
-	 *$int = core::updates('pre_test',array('name'=>'a'),array('id'=>1)); //返回成功修改的个数
-	 *
-	 * // 直接使用SQL语句修改记录。 
-	 *$int = core::updates('UPDATE pre_test SET name=? WHERE id=?)',array('a',1),true); //返回成功修改的个数
-	 *
-	 * // 修改排序的一条记录。 
-	 *$int = core::updates('pre_test',array('name'=>'c'),array('name'=>'a'),array('ORDER BY id','LIMIT 1')); //返回成功修改的个数
-	 *
-	 * // 使用类名修改记录。 
-	 *$int = core::updates(null,array('name'=>'a'),array('id'=>1),null,'test'); //使用前缀+类名作为表名，返回成功修改的个数
-	 *
-	 * // 使用类名修改记录。 
-	 *class test extends core { }
-	 *$int = test::updates(null,array("name='a'"),array('id'=>1)); //使用前缀+类名作为表名（PHP 5.3以上有效），返回成功修改的个数
-	 * </code>
+	 * @link http://www.coremvc.cn/api/core/updates.php
 	 * @param mixed $table_sql
 	 * @param mixed $set_param
 	 * @param mixed $where_bool
@@ -2954,24 +2904,7 @@ class core {
 	/**
 	 * 静态删除函数（可继承）
 	 *
-	 * + 作用：1.静态删除函数，返回影响记录数；2.扩展方式。
-	 * <code>
-	 * // 删除记录。 
-	 *$int = core::deletes(null,'pre_test',array('id'=>1)); //返回成功删除的个数
-	 *
-	 * // 直接使用SQL语句删除记录。 
-	 *$int = core::deletes('DELETE FROM pre_test where id=?)',array(1),true); //返回成功删除的个数
-	 *
-	 * // 删除排序的一条记录。 
-	 *$int = core::deletes(null,'pre_test',array('name'=>'a'),array('ORDER BY id','LIMIT 1')); //返回成功删除的个数
-	 *
-	 * // 使用类名删除记录。 
-	 *$int = core::deletes(null,null,array('id'=>1),null,'test'); //使用前缀+类名作为表名，返回成功删除的个数
-	 *
-	 * // 使用类名删除记录。 
-	 *class test extends core { }
-	 *$int = test::deletes(null,null,array('id'=>1)); //使用前缀+类名作为表名（PHP 5.3以上有效），返回成功删除的个数
-	 * </code>
+	 * @link http://www.coremvc.cn/api/core/deletes.php
 	 * @param mixed $field_sql
 	 * @param mixed $table_param
 	 * @param mixed $where_bool
@@ -3032,39 +2965,7 @@ class core {
 	/**
 	 * 静态更新函数（可继承）
 	 *
-	 * + 作用：1. 静态更新函数，返回影响记录数；2.扩展方式。
-	 * <code>
-	 * // 更新一条记录。 
-	 *$int = core::replaces('pre_test',array('id'=>1,'name'=>'a')); //返回成功更新的个数(修改的按两倍算)
-	 *
-	 * // 直接使用SQL语句更新一条记录。 
-	 *$int = core::replaces('REPLACE INTO pre_test (id,name) VALUES (?,?)',array(1,'a'),true); //返回成功更新的个数(修改的按两倍算)
-	 *
-	 * // 从其他表选择插入多条记录。 
-	 *$int = core::replaces('pre_test',array('id','name'),null,'SELECT id,name FROM pre_test2'); //返回成功更新的个数(修改的按两倍算)
-	 *
-	 * // 更新多条记录。 
-	 *$arr = array(
-	 *	array('id'=>1,'name'=>'a'),
-	 *	array('id'=>2,'name'=>'b'),
-	 *);
-	 *
-	 *$int = core::replaces('pre_test','id,name',$arr); //返回成功更新的个数(修改的按两倍算)
-	 *
-	 * // 更新需计算的记录。 
-	 *$arr = array(
-	 *	array(1,"md5('a')"),
-	 *	array(2,"md5('b')"),
-	 *);
-	 *$int = core::replaces('pre_test',array('id','name'),$arr); //返回成功更新的个数(修改的按两倍算)
-	 *
-	 * // 使用类名更新记录。 
-	 *$int = core::replaces(null,array('id'=>1,'name'=>'a'),null,null,'test'); //使用前缀+类名作为表名，返回成功更新的个数(修改的按两倍算)
-	 *
-	 * // 使用类名更新记录。 
-	 *class test extends core { }
-	 *$int = test::replaces(null,array('id'=>1,'name'=>'a')); //使用前缀+类名作为表名（PHP 5.3以上有效），返回成功更新的个数(修改的按两倍算)
-	 * </code>
+	 * @link http://www.coremvc.cn/api/core/replaces.php
 	 * @param mixed $table_sql
 	 * @param mixed $column_set_param
 	 * @param mixed $value_bool
@@ -3196,13 +3097,7 @@ class core {
 		$dbh = self::connect ( true, $args, array ('select', $tablename, $primary_index) );
 		// 表名
 		if (empty ($tablename)) {
-			$tablename = get_class ( $this );
-			if ($tablename === __CLASS__) {
-				return false;
-			}
-			if ($args ['prefix_search'] !== '') {
-				$tablename = $args ['prefix_search'] . $tablename;
-			}
+			$tablename = $args ['prefix_search'] . get_class ( $this );
 		}
 		if ($args ['prefix_search'] !== '' && $args ['prefix_search'] !== $args ['prefix_replace']) {
 			$tablename = str_replace ( $args ['prefix_search'], $args ['prefix_replace'], $tablename );
@@ -3277,13 +3172,7 @@ class core {
 		$dbh = self::connect ( true, $args, array ('insert', $tablename, $primary_index) );
 		// 表名
 		if (empty ($tablename)) {
-			$tablename = get_class ( $this );
-			if ($tablename === __CLASS__) {
-				return false;
-			}
-			if ($args ['prefix_search'] !== '') {
-				$tablename = $args ['prefix_search'] . $tablename;
-			}
+			$tablename = $args ['prefix_search'] . get_class ( $this );
 		}
 		if ($args ['prefix_search'] !== '' && $args ['prefix_search'] !== $args ['prefix_replace']) {
 			$tablename = str_replace ( $args ['prefix_search'], $args ['prefix_replace'], $tablename );
@@ -3351,13 +3240,7 @@ class core {
 		$dbh = self::connect ( true, $args, array ('update', $tablename, $primary_index) );
 		// 表名
 		if (empty ($tablename)) {
-			$tablename = get_class ( $this );
-			if ($tablename === __CLASS__) {
-				return false;
-			}
-			if ($args ['prefix_search'] !== '') {
-				$tablename = $args ['prefix_search'] . $tablename;
-			}
+			$tablename = $args ['prefix_search'] . get_class ( $this );
 		}
 		if ($args ['prefix_search'] !== '' && $args ['prefix_search'] !== $args ['prefix_replace']) {
 			$tablename = str_replace ( $args ['prefix_search'], $args ['prefix_replace'], $tablename );
@@ -3431,13 +3314,7 @@ class core {
 		$dbh = self::connect ( true, $args, array ('delete', $tablename, $primary_index) );
 		// 表名
 		if (empty ($tablename)) {
-			$tablename = get_class ( $this );
-			if ($tablename === __CLASS__) {
-				return false;
-			}
-			if ($args ['prefix_search'] !== '') {
-				$tablename = $args ['prefix_search'] . $tablename;
-			}
+			$tablename = $args ['prefix_search'] . get_class ( $this );
 		}
 		if ($args ['prefix_search'] !== '' && $args ['prefix_search'] !== $args ['prefix_replace']) {
 			$tablename = str_replace ( $args ['prefix_search'], $args ['prefix_replace'], $tablename );
@@ -3501,13 +3378,7 @@ class core {
 		$dbh = self::connect ( true, $args, array ('replace', $tablename, $primary_index) );
 		// 表名
 		if (empty ($tablename)) {
-			$tablename = get_class ( $this );
-			if ($tablename === __CLASS__) {
-				return false;
-			}
-			if ($args ['prefix_search'] !== '') {
-				$tablename = $args ['prefix_search'] . $tablename;
-			}
+			$tablename = $args ['prefix_search'] . get_class ( $this );
 		}
 		if ($args ['prefix_search'] !== '' && $args ['prefix_search'] !== $args ['prefix_replace']) {
 			$tablename = str_replace ( $args ['prefix_search'], $args ['prefix_replace'], $tablename );

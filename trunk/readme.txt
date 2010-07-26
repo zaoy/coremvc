@@ -2,7 +2,7 @@
 
 CoreMVC是一款灵巧的PHP开源框架。
 
-2010年7月25日
+2010年7月26日
 
 〖版权说明〗
 
@@ -11,7 +11,7 @@ CoreMVC遵从new BSD许可证，所以您可以在法律允许的范围以内任
 /**
  * CoreMVC核心模块
  * 
- * @version 1.2.0 alpha 8
+ * @version 1.2.0 alpha 9
  * @author Z <602000@gmail.com>
  * @link http://www.coremvc.cn/
  */
@@ -200,6 +200,7 @@ tests/					测试目录，对核心程序进行单元测试的目录，可删除
 pdo5		需开启相关的pdo扩展
 adodb5		需自行下载相关类库到扩展目录的adodb5目录
 adodb5zip
+SaeMysql5
 
 视图扩展
 smarty2		需自行下载相关类库(libs目录下)到扩展目录的smarty2目录
@@ -244,7 +245,7 @@ foo/view.tpl
 /**
  * 导入(import)
  */
-require_once dirname (__FILE__) . '/core.php';
+class_exists ('core') or require_once 'core.php';
 
 ●　定义部份：模块中定义模块的部份，例如：
 /**
@@ -263,10 +264,10 @@ foo::stub () and foo::main ();
 public function foo ( ... ) { ... }
 
 ●　视图方法：模块定义的显示模板的方法。可在控制方法中直接使用视图方法，例如：
-self::view (__CLASS__ . '/view.tpl');
+self::view (__CLASS__ . '/' . __FUNCTION__ '.tpl');
 
 ●　控制方法：模块定义的控制流程的方法。使用静态类型定义方法，例如：
-static public function foo ( ... ) { ... }
+final static public function foo ( ... ) { ... }
 
 
 
@@ -548,7 +549,7 @@ $table_arr = core::selects( ... );
 
 该设计模式用于较为统一的页面显示，带有统一的页头和页尾，例如：
 self::view ('common/head.tpl');
-self::view (__CLASS__ . '/view.tpl');
+self::view (__CLASS__ . '/' . __FUNCTION__ '.tpl');
 self::view ('common/tail.tpl');
 
 
@@ -563,96 +564,129 @@ self::view ('common/tail.tpl');
 └────┘　
 
 该设计模式用于不同模板显示相同样式的区块，例如：
-<?php include_once 'common/pagination.tpl'; ?>
+<?php core::view ('common/pagination.tpl'); ?>
 
 
 
-【CoreMVC 简易教程（常量）】
+【CoreMVC 简易教程（配置）】
 
 
-〖核心模块常量一览〗
+〖核心模块配置一览〗
 
 class core {
 
 	/*
-	 * 配置文件参数
+	 * 配置文件
 	 */
-	const config = ''; // 配置文件，仅此参数不可在程序中初始化
+	private static $config = ''; // 配置文件，在初始化时会自动载入该配置文件，可以是.php或.ini文件
 
 	/*
-	 * 框架视图参数
+	 * 配置参数
 	 */
-	const stub_autoload_enable = ''; // 自动载入开关
+	private static $config = array (
 
-	const stub_autoload_path = ''; // 自动载入路径
+		/*
+		 * 框架配置
+		 */
+		'autoload_enable' => '', // 自动载入开关
 
-	const stub_autoload_extensions = ''; // 自动载入后缀
+		'autoload_path' => '', // 自动载入路径
 
-	const stub_autoload_prepend = ''; // 自动载入顺序
+		'autoload_extensions' => '', // 自动载入后缀
 
-	const main_framework_enable = ''; // 框架控制开关
+		'autoload_prepend' => '', // 自动载入顺序
 
-	const main_framework_require = ''; // 框架控制的包含文件
+		'framework_enable' => '', // 框架控制开关
 
-	const main_framework_module = ''; // 框架控制的模块参数
+		'framework_function' => '', // 框架控制的托管函数
 
-	const main_framework_action = ''; // 框架控制的动作参数
+		'framework_require' => '', // 框架控制的包含文件
 
-	const main_framework_parameter = ''; // 框架控制的传参参数
+		'framework_module' => '', // 框架控制的模块参数
 
-	const path_extension_path = ''; // 扩展模块路径
+		'framework_action' => '', // 框架控制的动作参数
 
-	const path_template_path = ''; // 视图模板路径
+		'framework_parameter' => '', // 框架控制的传参参数
 
-	const view_template_type = ''; // 视图模板类型
+		'extension_enable' => '', // 扩展模块开头
 
-	const view_template_show = ''; // 视图输出方式
+		'extension_path' => '', // 扩展模块路径
 
-	const view_default_dir = ''; // 视图所在路径
+		'extension_prepend' => '', // 扩展路径顺序
 
-	/*
-	 * 数据库参数 
-	 */
-	const db_connect_provider = ''; // 数据库提供类型
+		/*
+		 * 视图配置
+		 */
+		'template_path' => '', // 视图模板路径
 
-	const db_connect_dsn = ''; // 数据库连接字符串
+		'template_search' => '', // 视图模板路径标识符
 
-	const db_connect_type = ''; // 数据库连接类型
+		'template_replace' => '', // 视图模板路径替换值
 
-	const db_connect_server = ''; // 数据库连接服务器
+		'template_type' => '', // 视图模板类型
 
-	const db_connect_username = ''; // 数据库连接帐号
+		'template_show' => '', // 视图输出方式
 
-	const db_connect_password = ''; // 数据库连接密码
+		/*
+		 * 数据库配置
+		 */
+		'connect_provider' => '', // 数据库提供类型
 
-	const db_connect_new_link = ''; // 数据库连接新连接参数
+		'connect_dsn' => '', // 数据库连接字符串
 
-	const db_connect_client_flags = ''; // 数据库连接客户端参数
+		'connect_type' => '', // 数据库连接类型
 
-	const db_connect_dbname = ''; // 数据库连接初始数据库
+		'connect_server' => '', // 数据库连接服务器
 
-	const db_connect_charset = ''; // 数据库连接编码
+		'connect_username' => '', // 数据库连接帐号
 
-	const db_connect_port = ''; // 数据库连接端口号
+		'connect_password' => '', // 数据库连接密码
 
-	const db_connect_socket = ''; // 数据库连接socket值
+		'connect_new_link' => '', // 数据库连接新连接参数
 
-	const db_prefix_search = ''; // 表名前缀标识符
+		'connect_client_flags' => '', // 数据库连接客户端参数
 
-	const db_prefix_replace = ''; // 表名前缀替换值
+		'connect_dbname' => '', // 数据库连接初始数据库
+
+		'connect_charset' => '', // 数据库连接编码
+
+		'connect_port' => '', // 数据库连接端口号
+
+		'connect_socket' => '', // 数据库连接socket值
+
+		'connect_driver_options' => '', // 数据库连接选项值
+
+		'prefix_search' => '', // 表名前缀标识符
+
+		'prefix_replace' => '', // 表名前缀替换值
+
+		'debug_enable' => '', // 数据库调试开头
+
+		'debug_file' => '', // 数据库调试日志文件
+
+	);
+
 }
 
 
-〖核心模块常量说明〗
+〖核心模块配置说明〗
 
-●　config参数只能在常量中定义，不能在运行时设置。
+●　$config静态变量既可以设置配置文件所在位置，也可以直接定义，还可以通过.htaccess的环境变量来定义。
+《.htaccess》
+SetEnv	core_config	1
+SetEnv	core_config_autoload_path	@modules
 
-●　运行时设置参数时，数组下标均去掉第一个前缀，配置文件如：
+《.htaccess》
+SetEnv	core_config	@config.php
+
+
+●　运行时设置属性，配置文件如：
 <?php
 return array(
 	'autoload_enable' => true,
+	'autoload_path' => '@modules',
 	'framework_enable' => true,
-	'template_path' => '@tpl',
+	'template_path' => '@templates',
 	'template_type' => 'smarty',
 	'connect_provider' => 'pdo',
 	'connect_dsn' => 'mysql:host=localhost;dbname=test',
@@ -664,25 +698,12 @@ return array(
 
 ●　运行时可设置配置参数的有以下方法：
 <?php
-core::stub($config_array);
-core::main($config_array);
-core::path($config_array);
-core::init($config_array); // 此方法为设置所有参数
-core::view($config_array);
-core::connect($config_array);
+core::init($config_file);
 
-core::stub(requre $config_file);
-core::main(requre $config_file);
-core::path(requre $config_file);
-core::init($config_file); // 此方法为设置所有参数
-core::init(requre $config_file); // 此方法为设置所有参数
-core::view(requre $config_file);
-core::connect(requre $config_file);
+core::init($config_array);
+
+core::init(require $config_file);
 ?>
-
-●　driver_options参数虽然不能在常量中定义，但可以在运行时设置，并且driver_options可以是数组，该参数仅对PDO有效。
-
-●　详细的参数说明请参见core.php中的注释
 
 
 
@@ -698,13 +719,13 @@ class core {
 	 * 控制方法（静态调用）
 	 */
 	
+	static public function init() {} // 初始化函数（可继承）
+	
 	static public function stub() {} // 存根函数（可继承）
 	
 	static public function main() {} // 入口函数（可继承）
 	
 	static public function path() {} // 路径函数
-	
-	static public function init() {} // 初始化函数（可继承）
 	
 	
 	/*
@@ -764,6 +785,9 @@ class core {
 
 ○　Controller
 --------------------
+core::init	初始化函数
+		1. 【基础功能】设置各类参数，返回参数数组。
+
 core::stub	存根函数（可继承）
 		1. 【基础功能】设置存根参数，返回参数数组。
 		2. 【基础功能】自动载入功能，默认关闭。
@@ -780,9 +804,6 @@ core::path	路径函数
 		3. 【基础功能】返回扩展路径，默认相对核心文件类名路径。
 		4. 【基础功能】返回视图路径，默认相对于当前的程序路径。
 		
-core::init	初始化函数
-		1. 【基础功能】设置各类参数，返回参数数组。
-
 ○　View
 --------------------
 core::view	视图函数（可继承）
