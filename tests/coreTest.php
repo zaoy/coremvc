@@ -350,11 +350,22 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		$this->assertSame('Could not open input file: '.basename($_SERVER ['SCRIPT_FILENAME']).PHP_EOL, ob_get_clean());
 		//恢复原来值
 		core::init(array(
-			'framework_enable'=>'',
-			'framework_require'=>'',
-			'framework_module'=>'',
-			'framework_action'=>'',
-			'framework_parameter'=>'',
+			'hide_info'=>'aaa',
+		));
+		ob_start();
+		$this->assertFalse(core::main());
+		$this->assertSame('aaa'.PHP_EOL, ob_get_clean());
+		core::init(array(
+			'hide_info_cli'=>'bbb',
+		));
+		ob_start();
+		$this->assertFalse(core::main());
+		$this->assertSame('bbb'.PHP_EOL, ob_get_clean());
+	//恢复原来值
+		core::init(array(
+			'hide_info'=>'',
+			'hide_info_cli'=>'',
+			'hidd_info_web'=>'',
 		));
 		
 	}

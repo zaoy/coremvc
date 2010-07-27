@@ -11,7 +11,7 @@ CoreMVC遵从new BSD许可证，所以您可以在法律允许的范围以内任
 /**
  * CoreMVC核心模块
  * 
- * @version 1.2.0 alpha 10
+ * @version 1.2.0 alpha 11
  * @author Z <602000@gmail.com>
  * @link http://www.coremvc.cn/
  */
@@ -57,6 +57,8 @@ CoreMVC 1.2.0 相对于 CoreMVC 1.1.0版本的改进
 5. 增加了core::main的一次跳转执行函数的功能，以便于模块风格下增加前端验证操作。
 
 6. 增加了数据库扩展：SaeMysql5。
+
+7. 增加了core::main自动隐藏信息的可设置功能。
 
 
 CoreMVC 1.1.0 相对于 CoreMVC 1.0.0版本的改进
@@ -608,11 +610,19 @@ class core {
 
 		'framework_parameter' => '', // 框架控制的传参参数
 
+		'hide_info' => '', // 页面隐藏信息
+
+		'hide_info_cli' => '', // 页面隐藏信息(cli)
+
+		'hide_info_web' => '', // 页面隐藏信息(web)
+
 		'extension_enable' => '', // 扩展模块开头
 
 		'extension_path' => '', // 扩展模块路径
 
 		'extension_prepend' => '', // 扩展路径顺序
+
+		'config_path' => '', // 配置文件顺序
 
 		/*
 		 * 视图配置
