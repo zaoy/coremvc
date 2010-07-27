@@ -2,7 +2,7 @@
 /**
  * CoreMVC核心模块
  * 
- * @version 1.2.0 alpha 11
+ * @version 1.2.0 alpha 12
  * @author Z <602000@gmail.com>
  * @link http://www.coremvc.cn/
  */
@@ -1213,10 +1213,8 @@ class core {
 			'template_search' => isset ($_view_config ['template_search']) ? $_view_config ['template_search'] : '', 
 			'template_replace' => isset ($_view_config ['template_replace']) ? $_view_config ['template_replace'] : '', 
 			'template_type' => isset ($_view_config ['template_type']) ? $_view_config ['template_type'] : '', 
-			'template_show' => isset ($_view_config ['template_show']) ? $_view_config ['template_show'] : '', 
 		);
 		isset ( $_view_type ) and $_view_config ['template_type'] = $_view_type;
-		isset ( $_view_show ) and $_view_config ['template_show'] = $_view_show;
 
 		// 视图数据处理
 		if ($_view_config ['template_search'] !== '' && $_view_config ['template_search'] !== $_view_config ['template_replace']) {
@@ -1226,7 +1224,7 @@ class core {
 		}
 		$_view_vars2 = is_array ($_view_vars) ? $_view_vars : array ();
 		$_view_type2 = $_view_config ['template_type'] === '' ? 'include' : $_view_config ['template_type'];
-		$_view_show2 = $_view_config ['template_show'] === '' ? true : $_view_config ['template_show'];
+		$_view_show2 = $_view_show === null ? true : $_view_show;
 
 		// 视图模板处理
 		switch ($_view_type2) {
@@ -1514,31 +1512,11 @@ class core {
 	/**
 	 * 执行SQL语句
 	 *
-	 * + 作用：1.执行SQL语句，返回结果集；2.扩展方式。
-	 * + 示例：
-	 * <code>
-	 * // 执行SQL语句 
-	 *core::execute('SET NAMES GBK');
-	 *
-	 * // 执行带参数的SQL语句 
-	 *$result = core::execute('SELECT * FROM test WHERE id=?', array(1));
-	 *
-	 * // 执行SQL语句，并返回执行信息 
-	 *$result = core::execute('SELECT * FROM test', null, $ref);
-	 *echo '查询总数：'.$ref['num_rows'];
-	 *
-	 * // 执行带参数的SQL语句，并返回执行信息 
-	 *$result = core::execute('SELECT * FROM test WHERE name LIKE ?', array('test%'), $ref);
-	 *echo '查询总数：'.$ref['num_rows'];
-	 *
-	 * // 执行带参数的SQL语句，同时使用附加参数（仅针对PDO） 
-	 *$ref = array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY);
-	 *$result = core::execute('SELECT * FROM test WHERE name=:name', array('name'=>'test'), $ref);
-	 * </code>
+	 * @link http://www.coremvc.cn/api/core/execute.php
 	 * @param string $sql
 	 * @param array $param
 	 * @param array &$ref
-	 * @return $result
+	 * @return mixed
 	 */
 	public static function execute($sql, $param = null, &$ref = null) {
 
@@ -1631,23 +1609,7 @@ class core {
 	/**
 	 * 准备SQL语句
 	 *
-	 * + 作用：1.准备SQL语句，返回SQL和参数的数组；2.调试SQL语句；3.扩展方式
-	 * + 示例：
-	 * <code>
-	 * // 获得SQL语句和参数
-	 *list($sql,$param) = core::prepare('selects',array($field,$table,$where,$other));
-	 *
-	 * // 获得不带参数的SQL语句
-	 *$sql = core::prepare('selects',array($field,$table,$where,$other),true);
-	 *
-	 * // 获得子句
-	 *$sql = core::prepare('field',array('col1','col2'),true);
-	 *
-	 * // 调试SQL语句
-	 *core::prepare('SELECT ?,?',array(1,'a'),null,true); //页面显示SQL语句
-	 *core::prepare('SELECT ?,?',array(1,'a'),null,true,'db.log'); //将SQL语句写入文件
-	 *core::prepare('SELECT ?,?',array(1,'a'),null,true,null,array('errno'=>mysql_errno($dbh),'error'=>mysql_error($dbh))); //同时显示错误信息
-	 * </code>
+	 * @link http://www.coremvc.cn/api/core/prepare.php
 	 * @param string $sql
 	 * @param array $param
 	 * @param bool $format
@@ -2284,19 +2246,7 @@ class core {
 	/**
 	 * 生成自增序列（可继承）
 	 *
-	 * + 作用：1.生成自增序列，返回序列号；2.扩展方式。
-	 * + 示例：
-	 * <code>
-	 * // 使用默认自增序列的情况。 
-	 *$seq = core::sequence();
-	 *
-	 * // 使用多个独立的自增序列的情况。 
-	 *$user_id = core::sequence('sequence_user');
-	 *$role_id = core::sequence('sequence_role');
-	 *
-	 * // 使用特定开始值的自增序列的情况。 
-	 *$type_id = core::sequence('sequence_type',10000);
-	 * </code>
+	 * @link http://www.coremvc.cn/api/core/sequence.php
 	 * @param string $tablename
 	 * @param int $start_index
 	 * @return int

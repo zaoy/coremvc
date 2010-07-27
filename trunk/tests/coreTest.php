@@ -553,15 +553,13 @@ class coreTest extends PHPUnit_Framework_TestCase {
 					'template_search'=>'.tpl',
 					'template_replace'=>'.php',
 					'template_type'=>$provider,
-					'template_show'=>false,
 				));
-				$this->assertSame($result, core::view($tpl,$view_arr[$i]));
+				$this->assertSame($result, core::view($tpl,$view_arr[$i],null,false));
 				//恢复值
 				core::init(array(
 					'template_search'=>'',
 					'template_replace'=>'',
 					'template_type'=>'',
-					'template_show'=>'',
 				));
 			}
 		}

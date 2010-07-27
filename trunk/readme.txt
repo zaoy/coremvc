@@ -2,7 +2,7 @@
 
 CoreMVC是一款灵巧的PHP开源框架。
 
-2010年7月27日
+2010年7月28日
 
 〖版权说明〗
 
@@ -11,7 +11,7 @@ CoreMVC遵从new BSD许可证，所以您可以在法律允许的范围以内任
 /**
  * CoreMVC核心模块
  * 
- * @version 1.2.0 alpha 11
+ * @version 1.2.0 alpha 12
  * @author Z <602000@gmail.com>
  * @link http://www.coremvc.cn/
  */
@@ -39,7 +39,7 @@ CoreMVC遵从new BSD许可证，所以您可以在法律允许的范围以内任
 
 9. 数据库连接自动化，可使用多个连接。
 
-10. 整个核心文件只有：1个类、37项设置、21个方法。
+10. 整个核心文件只有：1个类、39项设置、21个方法。
 
 
 ●　版本更新说明
@@ -634,8 +634,6 @@ class core {
 		'template_replace' => '', // 视图模板路径替换值
 
 		'template_type' => '', // 视图模板类型
-
-		'template_show' => '', // 视图输出方式
 
 		/*
 		 * 数据库配置
