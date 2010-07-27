@@ -2,7 +2,7 @@
 /**
  * CoreMVC核心模块
  * 
- * @version 1.2.0 alpha 10
+ * @version 1.2.0 alpha 11
  * @author Z <602000@gmail.com>
  * @link http://www.coremvc.cn/
  */
@@ -1056,10 +1056,29 @@ class core {
 
 		// 模拟文件隐藏效果
 		if (! in_array( 'manual', $return_array ) ) {
+			$hide_info = isset ($config ['hide_info']) ? $config ['hide_info'] : '';
+			$hide_info_cli = isset ($config ['hide_info_cli']) ? $config ['hide_info_cli'] : $hide_info;
+			$hide_info_web = isset ($config ['hide_info_web']) ? $config ['hide_info_web'] : $hide_info;
 			if (PHP_SAPI == 'cli') {
-				echo ('Could not open input file: ' . basename ( $_SERVER ['SCRIPT_FILENAME'] ) . PHP_EOL);
+				if (empty ($hide_info_cli)) {
+					echo ('Could not open input file: ' . basename ( $_SERVER ['SCRIPT_FILENAME'] ) . PHP_EOL);
+				} elseif (is_callable ($hide_info_cli)) {
+					call_user_func ($hide_info_cli);
+					echo PHP_EOL;
+				} else {
+					echo $hide_info_cli . PHP_EOL;
+				}
 			} else {
-				header ( "HTTP/1.0 404 Not Found" );
+				if (empty ($hide_info_web)) {
+					header ('HTTP/1.0 404 Not Found');
+				} elseif (is_callable ($hide_info_web)) {
+					call_user_func ($hide_info_web);
+				} elseif (filter_var ($hide_info_web, FILTER_VALIDATE_URL)) {
+					header ('Location: ' . $hide_info_web);
+				} else {
+					header ( "Content-type:text/html;charset=UTF-8" );
+					echo $hide_info_web;
+				}
 			}
 		}
 
