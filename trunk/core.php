@@ -2,7 +2,7 @@
 /**
  * CoreMVC核心模块
  * 
- * @version 1.2.0 alpha 12
+ * @version 1.2.0
  * @author Z <602000@gmail.com>
  * @link http://www.coremvc.cn/
  */
@@ -193,6 +193,7 @@ class core {
 	/**
 	 * 存根函数（可继承）
 	 *
+	 * @link http://www.coremvc.cn/api/core/stub.php
 	 * @param bool $autoload_enable
 	 * @param string $autoload_path
 	 * @param string $autoload_extensions
@@ -321,6 +322,7 @@ class core {
 	/**
 	 * 入口函数（可继承）
 	 *
+	 * @link http://www.coremvc.cn/api/core/main.php
 	 * @param bool $framework_enable
 	 * @param string $framework_require
 	 * @param string $framework_mdoule
