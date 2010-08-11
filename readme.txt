@@ -2,7 +2,7 @@
 
 CoreMVC是一款灵巧的PHP开源框架。
 
-2010年7月29日
+2010年8月10日
 
 〖版权说明〗
 
@@ -11,7 +11,7 @@ CoreMVC遵从new BSD许可证，所以您可以在法律允许的范围以内任
 /**
  * CoreMVC核心模块
  * 
- * @version 1.2.0
+ * @version 1.3.0 alpha 1
  * @author Z <602000@gmail.com>
  * @link http://www.coremvc.cn/
  */
@@ -43,6 +43,13 @@ CoreMVC遵从new BSD许可证，所以您可以在法律允许的范围以内任
 
 
 ●　版本更新说明
+
+CoreMVC 1.3.0 相对于 CoreMVC 1.2.0版本的改进
+--------------------------------------------
+1. 分离了core::init、core::stub、core::path几个方法的互相调用，关系更清晰。
+
+2. 修改了core::stub，使得执行该函数时就能自动初始化。
+
 
 CoreMVC 1.2.0 相对于 CoreMVC 1.1.0版本的改进
 --------------------------------------------
