@@ -2,7 +2,7 @@
 /**
  * CoreMVC核心模块
  * 
- * @version 1.3.0 alpha 1
+ * @version 1.3.0 alpha 2
  * @author Z <602000@gmail.com>
  * @link http://www.coremvc.cn/
  */
@@ -162,49 +162,45 @@ class core {
 		}
 
 		// 入口参数处理
-		isset ( $framework_enable ) or $framework_enable = isset ($config ['framework_enable']) ? $config ['framework_enable'] : '';
-		$return_array = is_bool($framework_enable) || $framework_enable === '' ? array () : explode (',', $framework_enable);
+		if (isset ($framework_enable)) {
+			$config ['framework_enable'] = $framework_enable;
+		} elseif (! isset ($config ['framework_enable'])) {
+			$config ['framework_enable'] = '';
+		}
+		if (isset ($framework_require)) {
+			$config ['framework_require'] = $framework_require;
+		} elseif (! isset ($config ['framework_require'])) {
+			$config ['framework_require'] = '';
+		}
+		if (isset ($framework_module)) {
+			$config ['framework_module'] = $framework_module;
+		} elseif (! isset ($config ['framework_module'])) {
+			$config ['framework_module'] = '';
+		}
+		if (isset ($framework_action)) {
+			$config ['framework_action'] = $framework_action;
+		} elseif (! isset ($config ['framework_action'])) {
+			$config ['framework_action'] = '';
+		}
+		if (isset ($framework_parameter)) {
+			$config ['framework_parameter'] = $framework_parameter;
+		} elseif (! isset ($config ['framework_parameter'])) {
+			$config ['framework_parameter'] = '';
+		}
+		if (is_bool($config ['framework_enable']) || $config ['framework_enable'] === '') {
+			$return_array = array ();
+		} else {
+			$return_array = explode (',', $config ['framework_enable']);
+		}
 
 		// 框架控制功能
-		if ( $framework_enable ) {
-			$return = self::_main_framework (array(
-				'return_array' => $return_array,
-				'framework_require' => isset ( $framework_require ) ? $framework_require : (isset ($config ['framework_require']) ? $config ['framework_require'] : ''),
-				'framework_module' => isset ( $framework_module ) ? $framework_module : (isset ($config ['framework_module']) ? $config ['framework_module'] : ''),
-				'framework_action' => isset ( $framework_action ) ? $framework_action : (isset ($config ['framework_action']) ? $config ['framework_action'] : ''),
-				'framework_parameter' => isset ( $framework_parameter ) ? $framework_parameter : (isset ($config ['framework_parameter']) ? $config ['framework_parameter'] : ''),
-			));
-			if ($return !== array(1,2,3)) {
-				return $return;
-			}
+		if ( $config ['framework_enable'] ) {
+			return self::_main_framework ($config, $return_array);
 		}
 
 		// 模拟文件隐藏效果
 		if (! in_array( 'manual', $return_array ) ) {
-			$hide_info = isset ($config ['hide_info']) ? $config ['hide_info'] : '';
-			$hide_info_cli = isset ($config ['hide_info_cli']) ? $config ['hide_info_cli'] : $hide_info;
-			$hide_info_web = isset ($config ['hide_info_web']) ? $config ['hide_info_web'] : $hide_info;
-			if (PHP_SAPI == 'cli') {
-				if (empty ($hide_info_cli)) {
-					echo ('Could not open input file: ' . basename ( $_SERVER ['SCRIPT_FILENAME'] ) . PHP_EOL);
-				} elseif (is_callable ($hide_info_cli)) {
-					call_user_func ($hide_info_cli);
-					echo PHP_EOL;
-				} else {
-					echo $hide_info_cli . PHP_EOL;
-				}
-			} else {
-				if (empty ($hide_info_web)) {
-					header ('HTTP/1.0 404 Not Found');
-				} elseif (is_callable ($hide_info_web)) {
-					call_user_func ($hide_info_web);
-				} elseif (filter_var ($hide_info_web, FILTER_VALIDATE_URL)) {
-					header ('Location: ' . $hide_info_web);
-				} else {
-					header ( "Content-type:text/html;charset=UTF-8" );
-					echo $hide_info_web;
-				}
-			}
+			self::_main_hide ($config);
 		}
 
 		return false;
@@ -2758,15 +2754,49 @@ class core {
 	}
 
 	/**
+	 * 入口函数（可继承）
+	 *
+	 * @param array $array
+	 */
+	private static function _main_hide($array) {
+
+		$hide_info = isset ($array ['hide_info']) ? $array ['hide_info'] : '';
+		$hide_info_cli = isset ($array ['hide_info_cli']) ? $array ['hide_info_cli'] : $hide_info;
+		$hide_info_web = isset ($array ['hide_info_web']) ? $array ['hide_info_web'] : $hide_info;
+		if (PHP_SAPI == 'cli') {
+			if (empty ($hide_info_cli)) {
+				echo ('Could not open input file: ' . basename ( $_SERVER ['SCRIPT_FILENAME'] ) . PHP_EOL);
+			} elseif (is_callable ($hide_info_cli)) {
+				call_user_func ($hide_info_cli);
+				echo PHP_EOL;
+			} else {
+				echo $hide_info_cli . PHP_EOL;
+			}
+		} else {
+			if (empty ($hide_info_web)) {
+				header ('HTTP/1.0 404 Not Found');
+			} elseif (is_callable ($hide_info_web)) {
+				call_user_func ($hide_info_web);
+			} elseif (filter_var ($hide_info_web, FILTER_VALIDATE_URL)) {
+				header ('Location: ' . $hide_info_web);
+			} else {
+				header ( "Content-type:text/html;charset=UTF-8" );
+				echo $hide_info_web;
+			}
+		}
+
+	}
+
+	/**
 	 * 框架控制函数
 	 *
 	 * @param array $array
-	 * @return array
+	 * @param array $return_array
+	 * @return mixed
 	 */
-	private static function _main_framework($array) {
+	private static function _main_framework($array, $return_array) {
 
 		// 1. 默认
-		$return_array = $array ['return_array'];
 		$require = $array ['framework_require'];;
 		$module = $array ['framework_module'] === '' ? '(static)|[file:1]!(self)' : $array ['framework_module'];
 		$action = $array ['framework_action'] === '' ? '[get:1]|index^(self)' : $array ['framework_action'];
@@ -3104,8 +3134,8 @@ class core {
 			if ( $return_array !== array() ) {
 				return false;
 			}
-			var_dump($module);
-			return array(1,2,3);
+			self::_main_hide ($array);
+			return false;
 		} else {
 			if ( in_array( 'module', $return_array ) ) {
 				if (! in_array( 'action', $return_array ) ) {
@@ -3280,7 +3310,8 @@ class core {
 			if ( $return_array !== array() ) {
 				return false;
 			}
-			return array(1,2,3);
+			self::_main_hide ($array);
+			return false;
 		} else {
 			if ( in_array( 'action', $return_array ) ) {
 				if (! in_array( 'parameter', $return_array ) ) {
