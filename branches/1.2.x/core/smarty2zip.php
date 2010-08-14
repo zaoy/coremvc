@@ -32,7 +32,12 @@ if( $smarty === null ) {
 
 	// 编译路径
 	if ( $compile_dir === '' ) {
-		$smarty->compile_dir = sys_get_temp_dir () . basename(__FILE__,'.php') . '/template_c/' . md5 ( $smarty->template_dir );
+		$_view_sys_get_temp_dir = sys_get_temp_dir ();
+		$_view_sys_get_temp_dir_last_char = substr ($_view_sys_get_temp_dir, -1, 1);
+		if ($_view_sys_get_temp_dir_last_char !== '/' && $_view_sys_get_temp_dir_last_char !== '\\') {
+			$_view_sys_get_temp_dir .= DIRECTORY_SEPARATOR;
+		}
+		$smarty->compile_dir = $_view_sys_get_temp_dir . basename(__FILE__,'.php') . '/template_c/' . md5 ( $smarty->template_dir );
 		if (! is_dir ( $smarty->compile_dir )) {
 			if (mkdir ( $smarty->compile_dir, 0777, true ) === false) {
 				trigger_error ( 'Connot create directory ' . $smarty->compile_dir , E_USER_ERROR );
