@@ -1,9 +1,9 @@
 <?php
 /**
- * AdodbZip 1.1
+ * AdodbZip
  * 
- * 作者：
- * Z(QQ号602000 QQ群5193883)
+ * @version 1.2
+ * @author Z <602000@gmail.com>
  * 
  * 代码示例：
  * include_once 'AdodbZip.php';
@@ -28,16 +28,28 @@
 /**
  * AdodbZip启动项
  */
-// 设定参数
-$sys_get_temp_dir = sys_get_temp_dir ();
-$sys_get_temp_dir_last_char = substr ($sys_get_temp_dir, -1, 1);
-if ($sys_get_temp_dir_last_char !== '/' && $sys_get_temp_dir_last_char !== '\\') {
-	$sys_get_temp_dir .= DIRECTORY_SEPARATOR;
+if (function_exists ('sys_get_temp_dir')) {
+	$sys_get_temp_dir = realpath (sys_get_temp_dir ());
+} elseif ($sys_get_temp_dir = getenv ('TMP')) {
+	$sys_get_temp_dir = realpath ($sys_get_temp_dir);
+} elseif ($sys_get_temp_dir = getenv ('TEMP')) {
+	$sys_get_temp_dir = realpath ($sys_get_temp_dir);
+} elseif ($sys_get_temp_dir = getenv ('TMPDIR')) {
+	$sys_get_temp_dir = realpath ($sys_get_temp_dir);
+} else {
+	$sys_get_temp_dir = tempnam (__FILE__, '');
+	if (file_exists($sys_get_temp_dir)) {
+		unlink($sys_get_temp_dir);
+		$sys_get_temp_dir = realpath (dirname ($sys_get_temp_dir));
+	} else {
+		$sys_get_temp_dir = '/tmp';
+	}
 }
-AdodbZip::$zip_url = 'http://cdnetworks-kr-1.dl.sourceforge.net/project/adodb/adodb-php5-only/adodb-509-for-php5/adodb509.zip'; //［设置项］Adodb的Zip文件下载地址，文件比较大建议先下载或者解压
-AdodbZip::$zip_file = $sys_get_temp_dir . preg_replace ( '/^.*\/(adodb.*?\.zip)$/i', 'adodb/$1', AdodbZip::$zip_url ); //［设置项］Adodb的Zip文件缓存位置
+// 设定参数
+AdodbZip::$zip_url = 'http://cdnetworks-kr-2.dl.sourceforge.net/project/adodb/adodb-php5-only/adodb-511-for-php5/adodb511.zip'; //［设置项］Adodb的Zip文件下载地址，文件比较大建议先下载或者解压
+AdodbZip::$zip_file = $sys_get_temp_dir . '/' . preg_replace ( '/^.*\/(adodb.*?\.zip)$/i', 'adodb/$1', AdodbZip::$zip_url ); //［设置项］Adodb的Zip文件缓存位置
 AdodbZip::$entry_dir = 'adodb5';
-AdodbZip::$extract_dir = $sys_get_temp_dir . 'adodb/' . AdodbZip::$entry_dir; //［设置项］Adodb程序文件缓存位置
+AdodbZip::$extract_dir = $sys_get_temp_dir . '/adodb/' . AdodbZip::$entry_dir; //［设置项］Adodb程序文件缓存位置
 AdodbZip::$server = 'localhost'; //［设置项］服务器	
 AdodbZip::$user = 'root'; //［设置项］用户名
 AdodbZip::$pwd = ''; //［设置项］密码

@@ -1,9 +1,9 @@
 <?php
 /**
- * SmartyZip 1.6
+ * SmartyZip
  * 
- * 作者：
- * Z(QQ号602000 QQ群5193883)
+ * @version 1.7
+ * @author Z <602000@gmail.com>
  * 
  * 代码示例：
  * include_once 'SmartyZip.php';
@@ -29,18 +29,30 @@
 /**
  * SmartyZip启动项
  */
-// 设定参数
-$sys_get_temp_dir = sys_get_temp_dir ();
-$sys_get_temp_dir_last_char = substr ($sys_get_temp_dir, -1, 1);
-if ($sys_get_temp_dir_last_char !== '/' && $sys_get_temp_dir_last_char !== '\\') {
-	$sys_get_temp_dir .= DIRECTORY_SEPARATOR;
+if (function_exists ('sys_get_temp_dir')) {
+	$sys_get_temp_dir = realpath (sys_get_temp_dir ());
+} elseif ($sys_get_temp_dir = getenv ('TMP')) {
+	$sys_get_temp_dir = realpath ($sys_get_temp_dir);
+} elseif ($sys_get_temp_dir = getenv ('TEMP')) {
+	$sys_get_temp_dir = realpath ($sys_get_temp_dir);
+} elseif ($sys_get_temp_dir = getenv ('TMPDIR')) {
+	$sys_get_temp_dir = realpath ($sys_get_temp_dir);
+} else {
+	$sys_get_temp_dir = tempnam (__FILE__, '');
+	if (file_exists($sys_get_temp_dir)) {
+		unlink($sys_get_temp_dir);
+		$sys_get_temp_dir = realpath (dirname ($sys_get_temp_dir));
+	} else {
+		$sys_get_temp_dir = '/tmp';
+	}
 }
+// 设定参数
 SmartyZip::$zip_url = 'http://www.smarty.net/distributions/Smarty-2.6.26.zip'; //［设置项］Smarty的Zip文件下载地址
-SmartyZip::$zip_file = $sys_get_temp_dir . preg_replace ( '/^.*\/(Smarty-.*.zip)$/i', 'smarty/$1', SmartyZip::$zip_url ); //［设置项］Smarty的Zip文件缓存位置
+SmartyZip::$zip_file = $sys_get_temp_dir .'/' . preg_replace ( '/^.*\/(Smarty-.*.zip)$/i', 'smarty/$1', SmartyZip::$zip_url ); //［设置项］Smarty的Zip文件缓存位置
 SmartyZip::$entry_dir = preg_replace ( '/^.*\/(Smarty-.*).zip$/i', '$1/libs', SmartyZip::$zip_file );
-SmartyZip::$extract_dir = $sys_get_temp_dir . 'smarty/' . SmartyZip::$entry_dir; //［设置项］Smarty程序文件缓存位置
+SmartyZip::$extract_dir = $sys_get_temp_dir . '/smarty/' . SmartyZip::$entry_dir; //［设置项］Smarty程序文件缓存位置
 SmartyZip::$template_dir = dirname ( realpath ( __FILE__ ) ); //［设置项］Smarty模板文件 所在位置	
-SmartyZip::$compile_dir = $sys_get_temp_dir . 'smarty/template_c/' . md5 ( SmartyZip::$template_dir ); //［设置项］Smarty编译文件缓存位置
+SmartyZip::$compile_dir = $sys_get_temp_dir . '/smarty/template_c/' . md5 ( SmartyZip::$template_dir ); //［设置项］Smarty编译文件缓存位置
 unset ($sys_get_temp_dir);
 
 

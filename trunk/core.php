@@ -2,7 +2,7 @@
 /**
  * CoreMVC核心模块
  * 
- * @version 1.3.0 alpha 3
+ * @version 1.3.0 alpha 5
  * @author Z <602000@gmail.com>
  * @link http://www.coremvc.cn/
  */
@@ -127,7 +127,7 @@ class core {
 		));
 
 		// 判断访问或者引用
-		foreach ( debug_backtrace ( false ) as $row ) {
+		foreach ( debug_backtrace () as $row ) {
 			switch ($row ['function']) {
 				case 'include' :
 				case 'require' :
@@ -2866,7 +2866,7 @@ class core {
 		if (stripos ( $string, '[file:' ) !== false) {
 			$file_array = array ();
 			// 测试时要小心此处查找的是上上个调用者
-			list(,$row) = debug_backtrace ( false );
+			list(,$row) = debug_backtrace ();
 			strtok ( $row ['file'], '/\\' );
 			while ( ($tok = strtok ( '/\\' )) !== false ) {
 				array_unshift ( $file_array, $tok );
