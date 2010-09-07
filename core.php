@@ -2,7 +2,7 @@
 /**
  * CoreMVC核心模块
  * 
- * @version 1.3.0 alpha 2
+ * @version 1.3.0 alpha 3
  * @author Z <602000@gmail.com>
  * @link http://www.coremvc.cn/
  */
@@ -162,39 +162,19 @@ class core {
 		}
 
 		// 入口参数处理
-		if (isset ($framework_enable)) {
-			$config ['framework_enable'] = $framework_enable;
-		} elseif (! isset ($config ['framework_enable'])) {
-			$config ['framework_enable'] = '';
-		}
-		if (isset ($framework_require)) {
-			$config ['framework_require'] = $framework_require;
-		} elseif (! isset ($config ['framework_require'])) {
-			$config ['framework_require'] = '';
-		}
-		if (isset ($framework_module)) {
-			$config ['framework_module'] = $framework_module;
-		} elseif (! isset ($config ['framework_module'])) {
-			$config ['framework_module'] = '';
-		}
-		if (isset ($framework_action)) {
-			$config ['framework_action'] = $framework_action;
-		} elseif (! isset ($config ['framework_action'])) {
-			$config ['framework_action'] = '';
-		}
-		if (isset ($framework_parameter)) {
-			$config ['framework_parameter'] = $framework_parameter;
-		} elseif (! isset ($config ['framework_parameter'])) {
-			$config ['framework_parameter'] = '';
-		}
-		if (is_bool($config ['framework_enable']) || $config ['framework_enable'] === '') {
-			$return_array = array ();
+		isset ($framework_enable) and $config ['framework_enable'] = $framework_enable;
+		if (empty($config ['framework_enable']) || !is_string($config ['framework_enable'])) {
+			$return_array = array();
 		} else {
 			$return_array = explode (',', $config ['framework_enable']);
 		}
 
 		// 框架控制功能
-		if ( $config ['framework_enable'] ) {
+		if (! empty($config ['framework_enable'])) {
+			isset ($framework_require) and $config ['framework_require'] = $framework_require;
+			isset ($framework_module) and $config ['framework_module'] = $framework_module;
+			isset ($framework_action) and $config ['framework_action'] = $framework_action;
+			isset ($framework_parameter) and $config ['framework_parameter'] = $framework_parameter;
 			return self::_main_framework ($config, $return_array);
 		}
 
@@ -2796,21 +2776,69 @@ class core {
 	 */
 	private static function _main_framework($array, $return_array) {
 
-		// 1. 默认
-		$require = $array ['framework_require'];;
-		$module = $array ['framework_module'] === '' ? '(static)|[file:1]!(self)' : $array ['framework_module'];
-		$action = $array ['framework_action'] === '' ? '[get:1]|index^(self)' : $array ['framework_action'];
-		$parameter = $array ['framework_parameter'];
-		$string = $require . ' ' . $module . ' ' . $action . ' ';
-		$string.= is_array($parameter)?implode(' ',$parameter):$parameter;
-		// 2. 数组
+		// 1. 设置默认值、替换内置宏
+		if (function_exists ('get_called_class')) {
+			$classname_static =  get_called_class ();
+		} else {
+			$classname_static = '[file:1]';
+		}
+		if (empty($array ['framework_require'])) {
+			$require = '';
+		} else {
+			$require = $array ['framework_require'];
+			if (strpos ($require, '(self)') !== false) {
+				$require = str_replace ('(self)', __CLASS__, $require);
+			}
+			if (strpos ($require, '(static)') !== false) {
+				$require = str_replace ('(static)', $classname_static, $require);
+			}
+		}
+		if (empty($array ['framework_module'])) {
+			$module = $classname_static . '!' . __CLASS__; //默认值：(static)!(self)
+		} else {
+			$module = $array ['framework_module'];
+			if (strpos ($module, '(self)') !== false) {
+				$module = str_replace ('(self)', __CLASS__, $module);
+			}
+			if (strpos ($module, '(static)') !== false) {
+				$module = str_replace ('(static)', $classname_static, $module);
+			}
+		}
+		if (empty($array ['framework_action'])) {
+			$action = '[get:1]|index'; //默认值：[get:1]|index
+		} else {
+			$action = $array ['framework_action'];
+			if (strpos ($action, '(self)') !== false) {
+				$action = str_replace ('(self)', __CLASS__, $action);
+			}
+			if (strpos ($action, '(static)') !== false) {
+				$action = str_replace ('(static)', $classname_static, $action);
+			}
+		}
+		if (empty($array ['framework_parameter'])) {
+			$parameter = '';
+		} else {
+			$parameter = $array ['framework_parameter'];
+			if (strpos ($parameter, '(self)') !== false) {
+				$parameter = str_replace ('(self)', __CLASS__, $parameter);
+			}
+			if (strpos ($parameter, '(static)') !== false) {
+				$parameter = str_replace ('(static)', $classname_static, $parameter);
+			}
+		}
+
+		// 2. 生成替换数组
+		$value_array = array();
+		$string = $require . ' ' . $module . ' ' . $action . ' ' . $parameter;
 		if (stripos ( $string, '[get:' ) !== false) {
 			$get_array = array_values($_GET) + $_GET;
 			array_unshift ( $get_array, null);
+			$value_array ['get'] = $get_array;
 		}
 		if (stripos ( $string, '[post:' ) !== false) {
 			$post_array = array_values($_POST) + $_POST;
 			array_unshift ( $post_array, null);
+			$value_array ['post'] = $post_array;
 		}
 		if (stripos ( $string, '[query:' ) !== false) {
 			$query_array = array ();
@@ -2819,6 +2847,7 @@ class core {
 				$query_array = explode('&',$query_string);
 				array_unshift ( $query_array, $query_string );
 			}
+			$value_array ['query'] = $query_array;
 		}
 		if (stripos ( $string, '[path:' ) !== false) {
 			$path_array = array ();
@@ -2831,6 +2860,8 @@ class core {
 					$tok = strtok ( '/' );
 				}
 			}
+			$path_array ['path'] = $path_array;
+			$value_array ['path'] = $path_array;
 		}
 		if (stripos ( $string, '[file:' ) !== false) {
 			$file_array = array ();
@@ -2842,451 +2873,146 @@ class core {
 			}
 			$file_array [0] = strtok ( $file_array [0], '.' );
 			array_unshift ( $file_array, strtok ( '.' ) );
+			$value_array ['file'] = $file_array;
 		}
-		// 3. 引用
-		if ($require != '') {
-			$reason = $require;
-			$result = '';
-			$pos1 = 0;
-			while ( true ) {
-				$pos2 = strpos ( $reason, '[', $pos1 );
-				if ($pos2 === false) {
-					$result .= substr ( $reason, $pos1 );
-					break;
-				}
-				$result .= substr ( $reason, $pos1, $pos2 - $pos1 );
-				$pos1 = $pos2 + 1;
-				$pos2 = strpos ( $reason, ']', $pos1 );
-				if ($pos2 === false) {
-					break;
-				}
-				$tok = substr ( $reason, $pos1, $pos2 - $pos1 );
-				$pos1 = $pos2 + 1;
-				if (strpos ( $tok, ':' ) === false) {
-					$str = isset ( $_GET [$tok] ) ? $_GET [$tok] : '';
-				} else {
-					list ( $key, $sub ) = explode ( ':', $tok );
-					$key_lower = strtolower($key);
-					$key_upper = strtoupper($key);
-					$key_ucfirst = ucfirst($key_lower);
-					$key_lcfirst = $key_upper;
-					if ( strlen($key_lcfirst) > 0 ) {
-						$key_lcfirst[0] = strtolower($key_lcfirst[0]);
-					}
-					switch ($key_lower){
-						case 'get':
-							$str = isset ( $get_array [$sub] ) ? $get_array [$sub] : '';
-							break;
-						case 'post':
-							$str = isset ( $post_array [$sub] ) ? $post_array [$sub] : '';
-							break;
-						case 'query':
-							$str = isset ( $query_array [$sub] ) ? $query_array [$sub] : '';
-							break;
-						case 'path':
-							$str = isset ( $path_array [$sub] ) ? $path_array [$sub] : '';
-							break;
-						case 'file':
-							$str = isset ( $file_array [$sub] ) ? $file_array [$sub] : '';
-							break;
-						default:
-							$str = '';
-							break;
-					}
-					switch ($key) {
-						case $key_lower:
-							break;
-						case $key_upper:
-							$str = strtoupper($str);
-							break;
-						case $key_ucfirst:
-							$str = ucfirst(strtolower($str));
-							break;
-						case $key_lcfirst:
-							$str = strtoupper($str);
-							if ( strlen($str) > 0 ) {
-								$str[0] = strtolower($str[0]);
-							}
-							break;
-						default:
-							$str = strtolower($str);
-							break;
-					}
-				}
-				if (preg_match ( '/^[a-zA-Z0-9_\x7f-\xff]+$/', $str ) === false) {
-					$str = '';
-				}
-				$result .= $str;
+
+		// 3. 生成返回数组
+		$return4_array = array_values (array_intersect ($return_array, array('require','module','action','parameter')));
+		if (empty ($return4_array)) {
+			$return4_result = array ();
+			$return4_final = '';
+		} else {
+			$return4_result = array_flip ($return4_array);
+			if (isset ($return4_result ['require'])) {
+				$return4_result ['require'] = false;
+				$return4_final = 'require';
 			}
-			$reason = $result;
-			$result = '';
-			$pos1 = 0;
-			while ( true ) {
-				$pos2 = strpos ( $reason, '{', $pos1 );
-				if ($pos2 === false) {
-					$result .= substr ( $reason, $pos1 );
-					break;
-				}
-				$result .= substr ( $reason, $pos1, $pos2 - $pos1 );
-				$pos1 = $pos2 + 1;
-				$pos2 = strpos ( $reason, '}', $pos1 );
-				if ($pos2 === false) {
-					break;
-				}
-				$tok = substr ( $reason, $pos1, $pos2 - $pos1 );
-				$pos1 = $pos2 + 1;
-				$sub = $tok;
-				if (isset ( $_POST [$sub] )) {
-					$str = $_POST [$sub];
-				} else {
-					$str = '';
-				}
-				if (preg_match ( '/^[a-zA-Z0-9_\x7f-\xff]+$/', $str ) === false) {
-					$str = '';
-				}
-				$result .= $str;
+			if (isset ($return4_result ['module'])) {
+				$return4_result ['module'] = false;
+				$return4_final = 'module';
 			}
-			if (strpos ( $result, '(self)' ) !== false) {
-				$result = str_replace ( '(self)', __CLASS__, $result );
+			if (isset ($return4_result ['action'])) {
+				$return4_result ['action'] = false;
+				$return4_final = 'action';
 			}
-			if (strpos ( $result, '(static)' ) !== false) {
-				if (function_exists ( 'get_called_class' )) {
-					$result = str_replace ( '(static)', get_called_class (), $result );
-				} else {
-					$result = str_replace ( '(static)', '', $result );
-				}
+			if (isset ($return4_result ['parameter'])) {
+				$return4_result ['parameter'] = false;
+				$return4_final = 'parameter';
 			}
-			$require_not = explode ( '!', $result );
-			$require_arr = explode ( '|', array_shift ( $require_not ) );
-			$require_now = '';
-			foreach ( $require_arr as $require_name ) {
-				if ($require_name === '') {
-					continue;
-				}
-				if (in_array ( $require_name, $require_not )) {
-					continue;
-				}
-				$require_name = self::path ( $require_name );
-				if (is_file ( $require_name )) {
-					$require_now = $require_name;
+		}
+
+		// 4. 处理引用部份
+		$require_now = '';
+		if ($require) {
+			$result_array = self::_main_framework_resolve ($require, $value_array, 'require');
+			foreach ($result_array as $value){
+				$value_file = self::_path_file ( $value );
+				if (is_file ( $value_file )) {
+					$require_now = $value;
+					$require_name = $value_file;
 					break;
 				}
 			}
 			if ($require_now === '') {
-				return false;
-			} else {
-				if ( in_array( 'require', $return_array ) ) {
-					if (! in_array( 'module', $return_array ) && ! in_array( 'action', $return_array ) ) {
-						return $require_now;
+				if ($return4_final === '') {
+					if (! in_array ('manual',$return_array)) {
+						self::_main_hide ($array);
 					}
-				}
-				require_once $require_name;
-			}
-		} else {
-			if ( in_array( 'require', $return_array ) ) {
-				if (! in_array( 'module', $return_array ) && ! in_array( 'action', $return_array ) ) {
-					return '';
+					return false;
+				} elseif (count($return4_array) === 1) {
+					return false;
+				} else {
+					return array_values($return4_result);
 				}
 			}
-			$require_now = '';
+			require_once $require_name;
 		}
-		// 4. 模块
-		$reason = $module;
-		$result = '';
-		$pos1 = 0;
-		while ( true ) {
-			$pos2 = strpos ( $reason, '[', $pos1 );
-			if ($pos2 === false) {
-				$result .= substr ( $reason, $pos1 );
-				break;
-			}
-			$result .= substr ( $reason, $pos1, $pos2 - $pos1 );
-			$pos1 = $pos2 + 1;
-			$pos2 = strpos ( $reason, ']', $pos1 );
-			if ($pos2 === false) {
-				break;
-			}
-			$tok = substr ( $reason, $pos1, $pos2 - $pos1 );
-			$pos1 = $pos2 + 1;
-			if (strpos ( $tok, ':' ) === false) {
-				$str = isset ( $_GET [$tok] ) ? $_GET [$tok] : '';
-			} else {
-				list ( $key, $sub ) = explode ( ':', $tok );
-				$key_lower = strtolower($key);
-				$key_upper = strtoupper($key);
-				$key_ucfirst = ucfirst($key_lower);
-				$key_lcfirst = $key_upper;
-				if ( strlen($key_lcfirst) > 0 ) {
-					$key_lcfirst[0] = strtolower($key_lcfirst[0]);
-				}
-				switch ($key_lower){
-					case 'get':
-						$str = isset ( $get_array [$sub] ) ? $get_array [$sub] : '';
-						break;
-					case 'post':
-						$str = isset ( $post_array [$sub] ) ? $post_array [$sub] : '';
-						break;
-					case 'query':
-						$str = isset ( $query_array [$sub] ) ? $query_array [$sub] : '';
-						break;
-					case 'path':
-						$str = isset ( $path_array [$sub] ) ? $path_array [$sub] : '';
-						break;
-					case 'file':
-						$str = isset ( $file_array [$sub] ) ? $file_array [$sub] : '';
-						break;
-					default:
-						$str = '';
-						break;
-				}
-				switch ($key) {
-					case $key_lower:
-						break;
-					case $key_upper:
-						$str = strtoupper($str);
-						break;
-					case $key_ucfirst:
-						$str = ucfirst(strtolower($str));
-						break;
-					case $key_lcfirst:
-						$str = strtoupper($str);
-						if ( strlen($str) > 0 ) {
-							$str[0] = strtolower($str[0]);
-						}
-						break;
-					default:
-						$str = strtolower($str);
-						break;
-				}
-			}
-			if (preg_match ( '/^[a-zA-Z0-9_\x7f-\xff]+$/', $str ) === false) {
-				$str = '';
-			}
-			$result .= $str;
+		if (isset ($return4_result ['require'])) {
+			$return4_result ['require'] = $require_now;
 		}
-		$reason = $result;
-		$result = '';
-		$pos1 = 0;
-		while ( true ) {
-			$pos2 = strpos ( $reason, '{', $pos1 );
-			if ($pos2 === false) {
-				$result .= substr ( $reason, $pos1 );
-				break;
-			}
-			$result .= substr ( $reason, $pos1, $pos2 - $pos1 );
-			$pos1 = $pos2 + 1;
-			$pos2 = strpos ( $reason, '}', $pos1 );
-			if ($pos2 === false) {
-				break;
-			}
-			$tok = substr ( $reason, $pos1, $pos2 - $pos1 );
-			$pos1 = $pos2 + 1;
-			$sub = $tok;
-			if (isset ( $_POST [$sub] )) {
-				$str = $_POST [$sub];
-			} else {
-				$str = '';
-			}
-			if (preg_match ( '/^[a-zA-Z0-9_\x7f-\xff]+$/', $str ) === false) {
-				$str = '';
-			}
-			$result .= $str;
+		if ($return4_array === array('require')) {
+			return $require_now;
+		} elseif ($return4_final === 'require') {
+			return array_values($return4_result);
 		}
-		if (strpos ( $result, '(self)' ) !== false) {
-			$result = str_replace ( '(self)', __CLASS__, $result );
-		}
-		if (strpos ( $result, '(static)' ) !== false) {
-			if (function_exists ( 'get_called_class' )) {
-				$result = str_replace ( '(static)', get_called_class (), $result );
-			} else {
-				$result = str_replace ( '(static)', '', $result );
-			}
-		}
-		$module_not = explode ( '!', $result );
-		$module_arr = explode ( '|', array_shift ( $module_not ) );
+
+		// 5. 处理模块部份
 		$module_now = '';
-		foreach ( $module_arr as $module_name ) {
-			if ($module_name === '') {
-				continue;
-			}
-			if (in_array ( $module_name, $module_not )) {
-				continue;
-			}
-			if (preg_match ( '/(^|\\\\)[0-9]/', $module_name )) {
+		$result_array = self::_main_framework_resolve ($module, $value_array, 'module');
+		foreach ($result_array as $value){
+			if (preg_match ( '/(^|\\\\)[0-9]/', $value ) === 1) {
 				continue;
 			}
 			try {
-				$class_exists = class_exists ( $module_name );
+				if (! class_exists ($value)){
+					continue;
+				}
 			} catch ( Exception $e ) {
 				continue;
 			}
-			if (! $class_exists) {
-				continue;
-			}
-			$class = new ReflectionClass ( $module_name );
+			$class = new ReflectionClass ( $value );
 			if ( $class->isInternal () || $class->isAbstract () || $class->isInterface () ) {
 				continue;
 			}
-			$module_now = $module_name;
+			$module_now = $value;
 			break;
 		}
 		if ($module_now === '') {
-			if ( $return_array !== array() ) {
+			if ($return4_final === '') {
+				if (! in_array ('manual',$return_array)) {
+					self::_main_hide ($array);
+				}
 				return false;
+			} elseif (count($return4_array) === 1) {
+				return false;
+			} else {
+				return array_values($return4_result);
 			}
-			self::_main_hide ($array);
-			return false;
 		} else {
-			if ( in_array( 'module', $return_array ) ) {
-				if (! in_array( 'action', $return_array ) ) {
-					if ( in_array( 'require', $return_array ) ) {
-						return array ($require_now, $module_now );
-					} else {
-						return $module_now;
-					}
-				}
+			if (isset ($return4_result ['module'])) {
+				$return4_result ['module'] = $module_now;
+			}
+			if ($return4_array === array('module')) {
+				return $module_now;
+			} elseif ($return4_final === 'module') {
+				return array_values($return4_result);
 			}
 		}
-		// 5. 动作
-		$reason = $action;
-		$result = '';
-		$pos1 = 0;
-		while ( true ) {
-			$pos2 = strpos ( $reason, '[', $pos1 );
-			if ($pos2 === false) {
-				$result .= substr ( $reason, $pos1 );
-				break;
-			}
-			$result .= substr ( $reason, $pos1, $pos2 - $pos1 );
-			$pos1 = $pos2 + 1;
-			$pos2 = strpos ( $reason, ']', $pos1 );
-			if ($pos2 === false) {
-				break;
-			}
-			$tok = substr ( $reason, $pos1, $pos2 - $pos1 );
-			$pos1 = $pos2 + 1;
-			if (strpos ( $tok, ':' ) === false) {
-				$str = isset ( $_GET [$tok] ) ? $_GET [$tok] : '';
-			} else {
-				list ( $key, $sub ) = explode ( ':', $tok );
-				$key_lower = strtolower($key);
-				$key_upper = strtoupper($key);
-				$key_ucfirst = ucfirst($key_lower);
-				$key_lcfirst = $key_upper;
-				if ( strlen($key_lcfirst) > 0 ) {
-					$key_lcfirst[0] = strtolower($key_lcfirst[0]);
-				}
-				switch ($key_lower){
-					case 'get':
-						$str = isset ( $get_array [$sub] ) ? $get_array [$sub] : '';
-						break;
-					case 'post':
-						$str = isset ( $post_array [$sub] ) ? $post_array [$sub] : '';
-						break;
-					case 'query':
-						$str = isset ( $query_array [$sub] ) ? $query_array [$sub] : '';
-						break;
-					case 'path':
-						$str = isset ( $path_array [$sub] ) ? $path_array [$sub] : '';
-						break;
-					case 'file':
-						$str = isset ( $file_array [$sub] ) ? $file_array [$sub] : '';
-						break;
-					default:
-						$str = '';
-						break;
-				}
-				switch ($key) {
-					case $key_lower:
-						break;
-					case $key_upper:
-						$str = strtoupper($str);
-						break;
-					case $key_ucfirst:
-						$str = ucfirst(strtolower($str));
-						break;
-					case $key_lcfirst:
-						$str = strtoupper($str);
-						if ( strlen($str) > 0 ) {
-							$str[0] = strtolower($str[0]);
-						}
-						break;
-					default:
-						$str = strtolower($str);
-						break;
-				}
-			}
-			if (preg_match ( '/^[a-zA-Z0-9_\x7f-\xff]+$/', $str ) === false) {
-				$str = '';
-			}
-			$result .= $str;
-		}
-		$reason = $result;
-		$result = '';
-		$pos1 = 0;
-		while ( true ) {
-			$pos2 = strpos ( $reason, '{', $pos1 );
-			if ($pos2 === false) {
-				$result .= substr ( $reason, $pos1 );
-				break;
-			}
-			$result .= substr ( $reason, $pos1, $pos2 - $pos1 );
-			$pos1 = $pos2 + 1;
-			$pos2 = strpos ( $reason, '}', $pos1 );
-			if ($pos2 === false) {
-				break;
-			}
-			$tok = substr ( $reason, $pos1, $pos2 - $pos1 );
-			$pos1 = $pos2 + 1;
-			$sub = $tok;
-			if (isset ( $_POST [$sub] )) {
-				$str = $_POST [$sub];
-			} else {
-				$str = '';
-			}
-			if (preg_match ( '/^[a-zA-Z0-9_\x7f-\xff]+$/', $str ) === false) {
-				$str = '';
-			}
-			$result .= $str;
-		}
-		if (strpos ( $result, '(self)' ) !== false) {
-			$result = str_replace ( '(self)', __CLASS__, $result );
-		}
-		if (strpos ( $result, '(static)' ) !== false) {
-			if (function_exists ( 'get_called_class' )) {
-				$result = str_replace ( '(static)', get_called_class (), $result );
-			} else {
-				$result = str_replace ( '(static)', '', $result );
-			}
-		}
-		$module_not = explode ( '^', $result );
-		$module_arr = explode ( '&', array_shift ( $module_not ) );
-		$action_not = explode ( '!', array_shift ( $module_arr ) );
-		$action_arr = explode ( '|', array_shift ( $action_not ) );
-		$module_not = array_map('strtolower', $module_not);
-		$module_arr = array_map('strtolower', $module_arr);
+
+		// 6. 处理动作部份
 		$action_now = '';
-		$number_of_parameters = 0;
-		foreach ( $action_arr as $action_name ) {
-			if ($action_name === '') {
+		$result_array = self::_main_framework_resolve ($action, $value_array, 'action',$module_now);
+		foreach ($result_array as $value){
+			list ($module_new, $action_new) = $value;
+			if ($module_new !== $module_now) {
+				if (preg_match ( '/(^|\\\\)[0-9]/', $module_new ) === 1) {
+					continue;
+				}
+				try {
+					if (! class_exists ($module_new)){
+						continue;
+					}
+				} catch ( Exception $e ) {
+					continue;
+				}
+				$class = new ReflectionClass ( $module_new );
+				if ( $class->isInternal () || $class->isAbstract () || $class->isInterface () ) {
+					continue;
+				}
+			}
+			if (! method_exists ( $module_new, $action_new )) {
 				continue;
 			}
-			if (in_array ( $action_name, $action_not )) {
-				continue;
-			}
-			if (! method_exists ( $module_now, $action_name )) {
-				continue;
-			}
-			$method = new ReflectionMethod ( $module_now, $action_name );
+			$method = new ReflectionMethod ( $module_new, $action_new );
 			if (! $method->isPublic () || $method->isConstructor () || $method->isDestructor () ) {
 				continue;
 			}
-			if ( in_array( 'object', $return_array ) ) {
-				if ( $method->isStatic () ) {
+			if ( in_array('static', $return_array) && ! in_array('object', $return_array) ) {
+				if (! $method->isStatic ()) {
 					continue;
 				}
-			} else {
-				if (! $method->isStatic () ) {
+			} elseif ( in_array('object', $return_array) && ! in_array('static', $return_array) ) {
+				if ($method->isStatic ()) {
 					continue;
 				}
 			}
@@ -3295,206 +3021,58 @@ class core {
 					continue;
 				}
 			}
-			$classname = $method->getDeclaringClass()->getName();
-			if ($module_arr && !in_array(strtolower($classname),$module_arr) ) {
-				continue;
+			$isstatic = $method->isStatic ();
+			$module_now = $module_new;
+			$action_now = $action_new;
+			if (isset ($return4_result ['module'])) {
+				$return4_result ['module'] = $module_now;
 			}
-			if ($module_not && in_array(strtolower($classname),$module_not) ) {
-				continue;
-			}
-			$number_of_parameters = $method->getNumberOfParameters();
-			$action_now = $action_name;
 			break;
 		}
 		if ($action_now === '') {
-			if ( $return_array !== array() ) {
+			if ($return4_final === '') {
+				if (! in_array ('manual',$return_array)) {
+					self::_main_hide ($array);
+				}
 				return false;
-			}
-			self::_main_hide ($array);
-			return false;
-		} else {
-			if ( in_array( 'action', $return_array ) ) {
-				if (! in_array( 'parameter', $return_array ) ) {
-					if ( in_array( 'module', $return_array ) ) {
-						if ( in_array( 'require', $return_array ) ) {
-							return array ($require_now, $module_now, $action_now );
-						} else {
-							return array ($module_now, $action_now );
-						}
-					} else {
-						return $action_now;
-					}
-				}
-			}
-		}
-		// 6. 参数
-		$parameter_array = array();
-		if ($parameter != '') {
-			if (!is_array($parameter)) {
-				$parameter = array($parameter);
-			}
-			foreach ($parameter as $param) {
-				$reason = $param;
-				$result = '';
-				$pos1 = 0;
-				while ( true ) {
-					$pos2 = strpos ( $reason, '[', $pos1 );
-					if ($pos2 === false) {
-						$result .= substr ( $reason, $pos1 );
-						break;
-					}
-					$result .= substr ( $reason, $pos1, $pos2 - $pos1 );
-					$pos1 = $pos2 + 1;
-					$pos2 = strpos ( $reason, ']', $pos1 );
-					if ($pos2 === false) {
-						break;
-					}
-					$tok = substr ( $reason, $pos1, $pos2 - $pos1 );
-					$pos1 = $pos2 + 1;
-					if (strpos ( $tok, ':' ) === false) {
-						$str = isset ( $_GET [$tok] ) ? $_GET [$tok] : '';
-					} else {
-						list ( $key, $sub ) = explode ( ':', $tok );
-						$key_lower = strtolower($key);
-						$key_upper = strtoupper($key);
-						$key_ucfirst = ucfirst($key_lower);
-						$key_lcfirst = $key_upper;
-						if ( strlen($key_lcfirst) > 0 ) {
-							$key_lcfirst[0] = strtolower($key_lcfirst[0]);
-						}
-						switch ($key_lower){
-							case 'get':
-								$str = isset ( $get_array [$sub] ) ? $get_array [$sub] : '';
-								break;
-							case 'post':
-								$str = isset ( $post_array [$sub] ) ? $post_array [$sub] : '';
-								break;
-							case 'query':
-								$str = isset ( $query_array [$sub] ) ? $query_array [$sub] : '';
-								break;
-							case 'path':
-								$str = isset ( $path_array [$sub] ) ? $path_array [$sub] : '';
-								break;
-							case 'file':
-								$str = isset ( $file_array [$sub] ) ? $file_array [$sub] : '';
-								break;
-							default:
-								$str = '';
-								break;
-						}
-						switch ($key) {
-							case $key_lower:
-								break;
-							case $key_upper:
-								$str = strtoupper($str);
-								break;
-							case $key_ucfirst:
-								$str = ucfirst(strtolower($str));
-								break;
-							case $key_lcfirst:
-								$str = strtoupper($str);
-								if ( strlen($str) > 0 ) {
-									$str[0] = strtolower($str[0]);
-								}
-								break;
-							default:
-								$str = strtolower($str);
-								break;
-						}
-					}
-					if (preg_match ( '/^[a-zA-Z0-9_\x7f-\xff]+$/', $str ) === false) {
-						$str = '';
-					}
-					$result .= $str;
-				}
-				$reason = $result;
-				$result = '';
-				$pos1 = 0;
-				while ( true ) {
-					$pos2 = strpos ( $reason, '{', $pos1 );
-					if ($pos2 === false) {
-						$result .= substr ( $reason, $pos1 );
-						break;
-					}
-					$result .= substr ( $reason, $pos1, $pos2 - $pos1 );
-					$pos1 = $pos2 + 1;
-					$pos2 = strpos ( $reason, '}', $pos1 );
-					if ($pos2 === false) {
-						break;
-					}
-					$tok = substr ( $reason, $pos1, $pos2 - $pos1 );
-					$pos1 = $pos2 + 1;
-					$sub = $tok;
-					if (isset ( $_POST [$sub] )) {
-						$str = $_POST [$sub];
-					} else {
-						$str = '';
-					}
-					if (preg_match ( '/^[a-zA-Z0-9_\x7f-\xff]+$/', $str ) === false) {
-						$str = '';
-					}
-					$result .= $str;
-				}
-				if (strpos ( $result, '(self)' ) !== false) {
-					$result = str_replace ( '(self)', __CLASS__, $result );
-				}
-				if (strpos ( $result, '(static)' ) !== false) {
-					if (function_exists ( 'get_called_class' )) {
-						$result = str_replace ( '(static)', get_called_class (), $result );
-					} else {
-						$result = str_replace ( '(static)', '', $result );
-					}
-				}
-				$action_not = explode ( '^', $result );
-				$action_arr = explode ( '&', array_shift ( $action_not ) );
-				$param_not = explode ( '!', array_shift ( $action_arr ) );
-				$param_arr = explode ( '|', array_shift ( $param_not ) );
-				$action_not = array_map('strtolower', $action_not);
-				$action_arr = array_map('strtolower', $action_arr);
-				$param_now = '';
-				foreach ( $param_arr as $param_name ) {
-					if ($param_name === '') {
-						continue;
-					}
-					if (in_array ( $param_name, $param_not )) {
-						continue;
-					}
-					if ($action_arr && !in_array(strtolower($action_now),$action_arr) ) {
-						continue;
-					}
-					if ($action_not && in_array(strtolower($action_now),$action_not) ) {
-						continue;
-					}
-					$param_now = $param_name;
-					break;
-				}
-				if($param_now==''){
-					$parameter_array [] = null;
-				} else {
-					$parameter_array [] = $param_now;
-				}
-			}
-		}
-		if ( in_array( 'parameter', $return_array ) ) {
-			if ( in_array( 'action', $return_array ) ) {
-				if ( in_array( 'module', $return_array ) ) {
-					if ( in_array( 'require', $return_array ) ) {
-						return array ($require_now, $module_now, $action_now, $parameter_array );
-					} else {
-						return array ($module_now, $action_now, $parameter_array );
-					}
-				} else {
-					return array ($action_now, $parameter_array );
-				}
+			} elseif (count($return4_array) === 1) {
+				return false;
 			} else {
-				return $parameter_array;
+				return array_values($return4_result);
+			}
+		} else {
+			if (isset ($return4_result ['action'])) {
+				$return4_result ['action'] = $action_now;
+			}
+			if ($return4_array === array('action')) {
+				return $action_now;
+			} elseif ($return4_final === 'action') {
+				return array_values($return4_result);
 			}
 		}
-		// 7. 执行
-		if ( in_array( 'object', $return_array ) ) {
+
+		// 7. 处理参数部份
+		$parameter_array = array();
+		if ($parameter) {
+			$result_array = self::_main_framework_resolve ($parameter, $value_array, 'parameter',array($module_now,$action_now));
+			foreach ($result_array as $value){
+				$parameter_array = array_slice ($value, 2);
+				break;
+			}
+		}
+		if (isset ($return4_result ['parameter'])) {
+			$return4_result ['parameter'] = $parameter_array;
+		}
+		if ($return4_array === array('parameter')) {
+			return $parameter_array;
+		} elseif ($return4_final === 'parameter') {
+			return array_values($return4_result);
+		}
+
+		// 8. 执行
+		if ( ! $isstatic ) {
 			$module_now = new $module_now;
 		}
-		$parameter_array = array_slice($parameter_array, 0, $number_of_parameters);
 		$return = call_user_func_array ( array ($module_now, $action_now ) , $parameter_array );
 		if ( in_array( 'return', $return_array ) ) {
 			return $return;
@@ -3502,6 +3080,303 @@ class core {
 			return true;
 		}
 
+	}
+
+	/**
+	 * 框架规则解析
+	 *
+	 * @param string $string
+	 * @param array $value_array
+	 * @param string $flag
+	 * @param mixed $prefix
+	 * @return array
+	 */
+	private static function _main_framework_resolve ($string, $value_array, $flag, $prefix = null) {
+		$result_array = array();
+		$length = strlen($string);
+		$last_pos = 0;
+		$last_bracket = '|';
+		$left_pos1 = 0;
+		$left_pos2 = 0;
+		$left_pos3 = 0;
+		while (true) {
+
+			// 寻找“或且非”截断的字符串
+			if($last_pos >= $length) {
+				break;
+			}
+			$left_pos1 === false or $left_pos1 = strpos ($string, '|', $last_pos);
+			$left_pos2 === false or $left_pos2 = strpos ($string, '&', $last_pos);
+			$left_pos3 === false or $left_pos3 = strpos ($string, '!', $last_pos);
+			if ($left_pos1 === false && $left_pos2 === false && $left_pos3 === false){
+				$str = substr ($string, $last_pos);
+				$left_bracket = '';
+				$last_pos = $length + 1;
+			} else {
+				$left_pos = false;
+				if ($left_pos === false || $left_pos1 !== false && $left_pos1 < $left_pos) {
+					$left_pos = $left_pos1;
+					$left_bracket = '|';
+				}
+				if ($left_pos === false || $left_pos2 !== false && $left_pos2 < $left_pos) {
+					$left_pos = $left_pos2;
+					$left_bracket = '&';
+				}
+				if ($left_pos === false || $left_pos3 !== false && $left_pos3 < $left_pos) {
+					$left_pos = $left_pos3;
+					$left_bracket = '!';
+				}
+				$str = substr ($string, $last_pos, $left_pos - $last_pos);
+				if ($left_bracket === '') {
+					break;
+				}
+				$last_pos = $left_pos + 1;
+			}
+			$deal_bracket = $last_bracket;
+			$last_bracket = $left_bracket;
+			if ($str === '') {
+				continue;
+			}
+			if ($flag === 'parameter' && $deal_bracket === '|') {
+				$arr = explode(',', $str);
+				$str = $prefix;
+				foreach ($arr as $value) {
+					$str [] = self::_main_framework_replace ($value, $value_array, false);
+				}
+			} else {
+				$str = self::_main_framework_replace ($str, $value_array, true);
+				if ($str === false || $str === '') {
+					continue;
+				}
+			}
+
+			// 处理“或且非”截断的字符串
+			switch ($deal_bracket) {
+				case '|':
+					// “或”的处理
+					if ($flag === 'action') {
+						if (strpos($str,'::') === false) {
+							$result_array [] = array ($prefix, $str);
+						} else {
+							list ($str1, $str2) = explode ('::', $str);
+							if ($str1 === '' || $str2 === '') {
+								continue;
+							}
+							$result_array [] = array ($str1, $str2);
+						}
+					} else {
+						$result_array [] = $str;
+					}
+					break;
+				case '&':
+					// “且”的处理
+					if ($flag === 'action' || $flag === 'parameter') {
+						if (strpos($str,'::') === false) {
+							$str1 = '';
+							$str2 = $str;
+						} else {
+							list ($str1, $str2) = explode ('::', $str);
+						}
+						$bool_reg1 = strpos($str1,'*') !== false;
+						if ($bool_reg1) {
+							$str1 = '/'.str_replace('\\*', '.*?', preg_quote($str1, '/')).'/';
+						}
+						$bool_reg2 = strpos($str2,'*') !== false;
+						if ($bool_reg2) {
+							$str2 = '/'.str_replace('\\*', '.*?', preg_quote($str2, '/')).'/';
+						}
+						$right_array = array();
+						foreach ($result_array as $value) {
+							if (($str1 === '' || $bool_reg1 && preg_match ($str1,$value[0]) === 1 || $str1 === $value[0]) && 
+								($str2 === '' || $bool_reg2 && preg_match ($str2,$value[1]) === 1 || $str2 === $value[1])) {
+								$right_array [] = $value;
+							}
+						}
+						$result_array = $right_array;
+					} else {
+						$bool_reg = strpos($str,'*') !== false;
+						if ($bool_reg) {
+							$str = '/'.str_replace('\\*', '.*?', preg_quote($str, '/')).'/';
+						}
+						$right_array = array();
+						foreach ($result_array as $value) {
+							if ($bool_reg && preg_match ($str,$value) === 1 || !$bool_reg && $str === $value) {
+								$right_array [] = $value;
+							}
+						}
+						$result_array = $right_array;
+					}
+					break;
+				case '!':
+					// “非”的处理
+					if ($flag === 'action' || $flag === 'parameter') {
+						if (strpos($str,'::') === false) {
+							$str1 = '';
+							$str2 = $str;
+						} else {
+							list ($str1, $str2) = explode ('::', $str);
+						}
+						$bool_reg1 = strpos($str1,'*') !== false;
+						if ($bool_reg1) {
+							$str1 = '/'.str_replace('\\*', '.*?', preg_quote($str1, '/')).'/';
+						}
+						$bool_reg2 = strpos($str2,'*') !== false;
+						if ($bool_reg2) {
+							$str2 = '/'.str_replace('\\*', '.*?', preg_quote($str2, '/')).'/';
+						}
+						$right_array = array();
+						foreach ($result_array as $value) {
+							if ($str1 !== '' && ($bool_reg1 && preg_match ($str1,$value[0]) !== 1 || !$bool_reg1 && $str1 !== $value[0]) || 
+								$str2 !== '' && ($bool_reg2 && preg_match ($str2,$value[1]) !== 1 || !$bool_reg2 && $str2 !== $value[1])) {
+								$right_array [] = $value;
+							}
+						}
+						$result_array = $right_array;
+					} else {
+						$bool_reg = strpos($str,'*') !== false;
+						if ($bool_reg) {
+							$str = '/'.str_replace('\\*', '.*?', preg_quote($str, '/')).'/';
+						}
+						$right_array = array();
+						foreach ($result_array as $value) {
+							if ($bool_reg && preg_match ($str,$value) !== 1 || !$bool_reg && $str !== $value) {
+								$right_array [] = $value;
+							}
+						}
+						$result_array = $right_array;
+					}
+					break;
+			}
+		}
+		return $result_array;
+	}
+
+	/**
+	 * 框架字串替换
+	 *
+	 * @param string $string
+	 * @param array $value_array
+	 * @param bool $strict
+	 * @return array
+	 */
+	private static function _main_framework_replace ($string, $value_array, $strict) {
+		$result = '';
+		$length = strlen($string);
+		$last_pos = 0;
+		$left_pos1 = 0;
+		$left_pos2 = 0;
+		while (true) {
+
+			// 寻找需要替换字串
+			if($last_pos >= $length) {
+				break;
+			}
+			$left_pos1 === false or $left_pos1 = strpos ($string, '[', $last_pos);
+			$left_pos2 === false or $left_pos2 = strpos ($string, '{', $last_pos);
+			if ($left_pos1 === false && $left_pos2 === false){
+				$result .= substr ($string, $last_pos);
+				break;
+			} elseif ($left_pos1 === false) {
+				$left_pos = $left_pos2;
+				$right_bracket = '}';
+			} elseif ($left_pos2 === false) {
+				$left_pos = $left_pos1;
+				$right_bracket = ']';
+			} elseif ($left_pos1 > $left_pos2) {
+				$left_pos = $left_pos2;
+				$right_bracket = '}';
+			} else {
+				$left_pos = $left_pos1;
+				$right_bracket = ']';
+			}
+			$result .= substr ($string, $last_pos, $left_pos - $last_pos);
+			$last_pos = $left_pos + 1;
+			$right_pos = strpos ($string, $right_bracket, $last_pos);
+			if ($right_pos === false) {
+				return false;
+			}
+			$keyword = substr ($string, $last_pos, $right_pos - $last_pos);
+			if ($keyword === '') {
+				continue;
+			}
+			$last_pos = $right_pos + 1;
+
+			// 替换成POST值
+			if ($right_bracket === '}') {
+				if (isset ( $_POST [$keyword] )) {
+					$valueword = $_POST [$keyword];
+				} else {
+					if($strict) {
+						return false;
+					}
+					continue;
+				}
+
+			// 替换成GET值
+			} elseif (strpos ( $keyword, ':' ) === false) {
+				if (isset ( $_GET [$keyword] )) {
+					$valueword = $_GET [$keyword];
+				} else {
+					if($strict) {
+						return false;
+					}
+					continue;
+				}
+
+			// 替换成其他定义值
+			} else {
+				list ($key, $sub) = explode ( ':', $keyword );
+				if ($key === '' || $sub === ''){
+					continue;
+				}
+				$key_lower = strtolower($key);
+				$key_upper = strtoupper($key);
+				$key_ucfirst = ucfirst($key_lower);
+				$key_lcfirst = $key_upper;
+				if ( strlen($key_lcfirst) > 0 ) {
+					$key_lcfirst[0] = strtolower($key_lcfirst[0]);
+				}
+				switch ($key_lower){
+					case 'get':
+					case 'post':
+					case 'query':
+					case 'path':
+					case 'file':
+						$valueword = isset ( $value_array [$key_lower] [$sub] ) ? $value_array [$key_lower] [$sub] : '';
+						break;
+					default:
+						$valueword = '';
+						break;
+				}
+				switch ($key) {
+					case $key_lower:
+						break;
+					case $key_upper:
+						$valueword = strtoupper($valueword);
+						break;
+					case $key_ucfirst:
+						$valueword = ucfirst(strtolower($valueword));
+						break;
+					case $key_lcfirst:
+						$valueword = strtoupper($valueword);
+						if ( strlen($valueword) > 0 ) {
+							$valueword[0] = strtolower($valueword[0]);
+						}
+						break;
+					default:
+						$valueword = strtolower($valueword);
+						break;
+				}
+			}
+
+			// 验证命名规则
+			if ($strict && preg_match ( '/^[a-zA-Z0-9_\x7f-\xff]+$/', $valueword ) !== 1) {
+				return false;
+			}
+
+			$result .= $valueword;
+		}
+		return $result;
 	}
 
 	/**
