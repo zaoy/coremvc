@@ -212,7 +212,6 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		//错误测试
 		$this->assertTrue(core::main(true,'@tests/main_2_3.php','main_2_3','test_2_3'));
 		ob_start();
-		$this->assertFalse(core::main(true,'@tests/main_2_3.php','main_2_3','test_2_3_a'));
 		$this->assertFalse(core::main(true,'@tests/main_2_3.php','main_2_3','test_2_3_b'));
 		$this->assertFalse(core::main(true,'@tests/main_2_3.php','main_2_3','test_2_3_c'));
 		$this->assertFalse(core::main(true,'@tests/main_2_3.php','main_2_3','test_2_3_d'));
@@ -225,19 +224,104 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			$this->assertTrue(core::main(true,'@tests/main_2_4.php','namespace_2_4\main_2_4','test_2_4'));
 		}
 		//新增测试
-		$this->assertSame(dirname(__FILE__).'/main_2_2.php',core::main('require','@tests/main_2_2.php'));
-		$this->assertFalse(core::main('require','@tests/main_2_2_a.php'));
+		$this->assertSame('@tests/main_2_2.php',core::main('require','@tests/main_2_2.php'));
+		$this->assertSame('@tests/main_2_2.php',core::main('require','@tests/main_2_2.php&*2_2.php'));
+		$this->assertSame('@tests/main_2_2.php',core::main('require','@tests/main_2_2.php!*1_1.php'));
+		$this->assertFalse(core::main('require','@tests/main_2_2_xxx.php'));
+		$this->assertFalse(core::main('require','@tests/main_2_2.php&*1_1.php'));
+		$this->assertFalse(core::main('require','@tests/main_2_2.php!*2_2.php'));
+
 		$this->assertSame('main_2_2',core::main('module','@tests/main_2_2.php','main_2_2'));
-		$this->assertFalse(core::main('module','@tests/main_2_2_a.php','xxx'));
-		$this->assertFalse(core::main('module','@tests/main_2_2.php','main_2_2_a'));
+		$this->assertFalse(core::main('module','@tests/main_2_2.php','xxx'));
+		$this->assertFalse(core::main('module','@tests/main_2_2_xxx.php','main_2_2'));
+		$this->assertFalse(core::main('module','@tests/main_2_2_xxx.php','xxx'));
+		$this->assertSame('main_2_2',core::main('module','@tests/main_2_2.php','main_2_2&main_2_2'));
+		$this->assertSame('main_2_2',core::main('module','@tests/main_2_2.php','main_2_2&main_2_*'));
+		$this->assertSame('main_2_2',core::main('module','@tests/main_2_2.php','main_2_2&main_*_2'));
+		$this->assertFalse(core::main('module','@tests/main_2_2.php','main_2_2&main_1_1'));
+		$this->assertFalse(core::main('module','@tests/main_2_2.php','main_2_2&main_1_*'));
+		$this->assertFalse(core::main('module','@tests/main_2_2.php','main_2_2&main_*_1'));
+		$this->assertSame('main_2_2',core::main('module','@tests/main_2_2.php','main_2_2!main_1_1'));
+		$this->assertSame('main_2_2',core::main('module','@tests/main_2_2.php','main_2_2!main_1_*'));
+		$this->assertSame('main_2_2',core::main('module','@tests/main_2_2.php','main_2_2!main_*_1'));
+		$this->assertFalse(core::main('module','@tests/main_2_2.php','main_2_2!main_2_2'));
+		$this->assertFalse(core::main('module','@tests/main_2_2.php','main_2_2!main_2_*'));
+		$this->assertFalse(core::main('module','@tests/main_2_2.php','main_2_2!main_*_2'));
+
+		$this->assertSame(array('@tests/main_2_2.php','main_2_2'),core::main('require,module','@tests/main_2_2.php','main_2_2'));
+		$this->assertSame(array('main_2_2','@tests/main_2_2.php'),core::main('module,require','@tests/main_2_2.php','main_2_2'));
+		$this->assertSame(array('@tests/main_2_2.php',false),core::main('require,module','@tests/main_2_2.php','xxx'));
+		$this->assertSame(array(false,'@tests/main_2_2.php'),core::main('module,require','@tests/main_2_2.php','xxx'));
+		$this->assertSame(array(false,false),core::main('require,module','@tests/main_2_2_xxx.php','main_2_2'));
+		$this->assertSame(array(false,false),core::main('module,require','@tests/main_2_2_xxx.php','main_2_2'));
+		$this->assertSame(array(false,false),core::main('require,module','@tests/main_2_2_xxx.php','xxx'));
+		$this->assertSame(array(false,false),core::main('module,require','@tests/main_2_2_xxx.php','xxx'));
+
 		$this->assertSame('test_2_2',core::main('action','@tests/main_2_2.php','main_2_2','test_2_2'));
-		$this->assertFalse(core::main('action','@tests/main_2_2_a.php','xxx'));
-		$this->assertFalse(core::main('action','@tests/main_2_2.php','main_2_2_a'));
-		$this->assertFalse(core::main('action','@tests/main_2_2.php','main_2_2','test_2_2_a'));
-		$this->assertEquals(array('main_2_2','test_2_2'),core::main('module,action','@tests/main_2_2.php','main_2_2','test_2_2'));
-		$this->assertFalse(core::main('module,action','@tests/main_2_2_a.php'));
-		$this->assertFalse(core::main('module,action','@tests/main_2_2.php','main_2_2_a'));
-		$this->assertFalse(core::main('module,action','@tests/main_2_2.php','main_2_2','test_2_2_a'));
+		$this->assertFalse(core::main('action','@tests/main_2_2.php','main_2_2','xxx'));
+		$this->assertFalse(core::main('action','@tests/main_2_2.php','xxx','test_2_2'));
+		$this->assertFalse(core::main('action','@tests/main_2_2_xxx.php','main_2_2','test_2_2'));
+		$this->assertFalse(core::main('action','@tests/main_2_2_xxx.php','xxx','test_2_2'));
+		$this->assertFalse(core::main('action','@tests/main_2_2_xxx.php','main_2_2','xxx'));
+		$this->assertFalse(core::main('action','@tests/main_2_2_xxx.php','xxx','xxx'));
+
+		$this->assertSame(array('main_2_2','test_2_2'),core::main('module,action','@tests/main_2_2.php','main_2_2','test_2_2'));
+		$this->assertSame(array('test_2_2','main_2_2'),core::main('action,module','@tests/main_2_2.php','main_2_2','test_2_2'));
+		$this->assertSame(array('@tests/main_2_2.php','main_2_2','test_2_2'),core::main('require,module,action','@tests/main_2_2.php','main_2_2','test_2_2'));
+		$this->assertSame(array('test_2_2','main_2_2','@tests/main_2_2.php'),core::main('action,module,require','@tests/main_2_2.php','main_2_2','test_2_2'));
+		$this->assertSame(array(false,'main_2_2','@tests/main_2_2.php'),core::main('action,module,require','@tests/main_2_2.php','main_2_2','xxx'));
+		$this->assertSame(array(false,false,'@tests/main_2_2.php'),core::main('action,module,require','@tests/main_2_2.php','xxx','test_2_2'));
+		$this->assertSame(array(false,false,false),core::main('action,module,require','@tests/main_2_2_xxx.php','main_2_2','test_2_2'));
+		$this->assertSame(array('test_2_2','main_2_2',''),core::main('action,module,require','','main_2_2','test_2_2'));
+		$this->assertSame(array(false,'main_2_2',''),core::main('action,module,require','','main_2_2','xxx'));
+		$this->assertSame(array(false,false,''),core::main('action,module,require','','xxx','test_2_2'));
+
+		$this->assertSame('test_2_3',core::main('action','@tests/main_2_3.php','main_2_3','test_2_3'));
+		$this->assertSame('test_2_3_a',core::main('action','@tests/main_2_3.php','main_2_3','test_2_3_a'));
+		$this->assertSame('test_2_3',core::main('action,static','@tests/main_2_3.php','main_2_3','test_2_3'));
+		$this->assertFalse(core::main('action,static','@tests/main_2_3.php','main_2_3','test_2_3_a'));
+		$this->assertFalse(core::main('action,object','@tests/main_2_3.php','main_2_3','test_2_3'));
+		$this->assertSame('test_2_3_a',core::main('action,object','@tests/main_2_3.php','main_2_3','test_2_3_a'));
+		$this->assertSame('test_2_3',core::main('action,static,object','@tests/main_2_3.php','main_2_3','test_2_3'));
+		$this->assertSame('test_2_3_a',core::main('action,static,object','@tests/main_2_3.php','main_2_3','test_2_3_a'));
+		$this->assertFalse(core::main('action,final','@tests/main_2_5.php','main_2_5','index'));
+		$this->assertFalse(core::main('action,final','@tests/main_2_5.php','main_2_5','message'));
+		$this->assertSame('index2',core::main('action,final','@tests/main_2_5.php','main_2_5','index2'));
+		$this->assertSame('message2',core::main('action,final','@tests/main_2_5.php','main_2_5','message2'));
+		$this->assertSame(array('main_2_3','test_2_3'),core::main('module,action','','main_2_3','main_2_3::test_2_3'));
+		$this->assertSame(array('main_2_5','index'),core::main('module,action','','main_2_3','main_2_5::index'));
+		$this->assertSame(array('main_2_5','index'),core::main('module,action','','main_2_3','test_2_3_xxx|main_2_5::index'));
+		$this->assertSame(array('main_2_3','test_2_3'),core::main('module,action','','main_2_3','test_2_3&test_2_*|main_2_5::index'));
+		$this->assertSame(array('main_2_5','index'),core::main('module,action','','main_2_3','test_2_3&test_1_*|main_2_5::index'));
+
+		$this->assertSame(array('main_2_5','index'),core::main('module,action','','main_2_3','test_2_3&main_2_5::*|main_2_5::index'));
+		$this->assertSame(array('main_2_3','test_2_3'),core::main('module,action','','main_2_3','test_2_3&main_2_3::*|main_2_5::index'));
+		$this->assertSame(array('main_2_5','index'),core::main('module,action','','main_2_3','test_2_3&*::test_2_5|main_2_5::index'));
+		$this->assertSame(array('main_2_3','test_2_3'),core::main('module,action','','main_2_3','test_2_3&*::test_2_3|main_2_5::index'));
+		$this->assertSame(array('main_2_5','index'),core::main('module,action','','main_2_3','test_2_3&test_2_5|main_2_5::index'));
+		$this->assertSame(array('main_2_3','test_2_3'),core::main('module,action','','main_2_3','test_2_3&test_2_3|main_2_5::index'));
+		$this->assertSame(array('main_2_3','test_2_3'),core::main('module,action','','main_2_3','test_2_3&main_2_3::|main_2_5::index'));
+
+		$this->assertSame(array('main_2_3','test_2_3'),core::main('module,action','','main_2_3','test_2_3!main_2_5::*|main_2_5::index'));
+		$this->assertSame(array('main_2_5','index'),core::main('module,action','','main_2_3','test_2_3!main_2_3::*|main_2_5::index'));
+		$this->assertSame(array('main_2_3','test_2_3'),core::main('module,action','','main_2_3','test_2_3!*::test_2_5|main_2_5::index'));
+		$this->assertSame(array('main_2_5','index'),core::main('module,action','','main_2_3','test_2_3!*::test_2_3|main_2_5::index'));
+		$this->assertSame(array('main_2_3','test_2_3'),core::main('module,action','','main_2_3','test_2_3!test_2_5|main_2_5::index'));
+		$this->assertSame(array('main_2_5','index'),core::main('module,action','','main_2_3','test_2_3!test_2_3|main_2_5::index'));
+		$this->assertSame(array('main_2_5','index'),core::main('module,action','','main_2_3','test_2_3!main_2_3::|main_2_5::index'));
+
+		$this->assertSame(array('main_2_5','add',array('1','2')),core::main('module,action,parameter','','main_2_5','add','1,2'));
+		$this->assertSame(array('main_2_5',false,false),core::main('module,action,parameter','','main_2_5','xxx','1,2'));
+		$this->assertSame(array(false,false,false),core::main('module,action,parameter','','main_2_5_xxx','add','1,2'));
+		$this->assertSame(3,core::main('return','','main_2_5','add','1,2'));
+		$this->assertSame(3,core::main('return','','main_2_5','add','1,2&add'));
+		$this->assertSame(3,core::main('return','','main_2_5','add','1,2&main_2_5::add'));
+		$this->assertSame(5,core::main('return','','main_2_5','add','1,2&main_2_3::add|2,3'));
+		$this->assertSame(5,core::main('return','','main_2_5','add','1,2&main_2_5::xxx|2,3'));
+		$this->assertSame(5,core::main('return','','main_2_5','add','1,2!main_2_5::add|2,3'));
+
+
+
 		ob_start();
 		$this->assertNull(core::main('return','@tests/main_2_2.php','main_2_2','test_2_2'));
 		$this->assertSame('main_2_2_a', ob_get_clean());
@@ -253,18 +337,18 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		ob_start();
 		$this->assertTrue(core::main('manual','@tests/[go].php|@tests/main_2_2.php','[go]|main_2_2','[do]|test_2_2'));
 		$this->assertSame('main_2_2_a', ob_get_clean());
-		$this->assertFalse(core::main('module,action','@tests/main_2_2.php','main_2_2',''));
+		$this->assertSame(array('main_2_2',false),core::main('module,action','@tests/main_2_2.php','main_2_2',''));
 		$this->assertSame('index',core::main('action','@tests/main_2_5.php','main_2_5',''));
 		$this->assertSame('updates',core::main('action','@tests/main_2_5.php','main_2_5','updates'));
-		$this->assertFalse(core::main('action','@tests/main_2_5.php','main_2_5','updates^(self)'));
-		$this->assertFalse(core::main('action','@tests/main_2_5.php','main_2_5','updates^core'));
-		$this->assertFalse(core::main('action','@tests/main_2_5.php','main_2_5','updates^CORE'));
-		$this->assertSame('updates',core::main('action','@tests/main_2_5.php','main_2_5','updates&core'));
-		$this->assertSame('updates',core::main('action','@tests/main_2_5.php','main_2_5','updates&CORE'));
-		$this->assertFalse(core::main('action','@tests/main_2_5.php','main_2_5','updates&main_2_5'));
-		$this->assertFalse(core::main('action','@tests/main_2_5.php','main_2_5','updates&MAIN_2_5'));
-		$this->assertSame('add',core::main('action','@tests/main_2_5.php','main_2_5','add&MAIN_2_5'));
-		$this->assertFalse(core::main('action','@tests/main_2_5.php','main_2_5','add&CORE'));
+		$this->assertFalse(core::main('action','@tests/main_2_5.php','main_2_5','updates&(self)::*'));
+		$this->assertFalse(core::main('action','@tests/main_2_5.php','main_2_5','updates&core::*'));
+		$this->assertFalse(core::main('action','@tests/main_2_5.php','main_2_5','updates&CORE::*'));
+		$this->assertSame('updates',core::main('action','@tests/main_2_5.php','main_2_5','core::updates'));
+		$this->assertSame('updates',core::main('action','@tests/main_2_5.php','main_2_5','CORE::updates'));
+		$this->assertFalse(core::main('action','@tests/main_2_5.php','main_2_5','updates!main_2_5::*'));
+		$this->assertFalse(core::main('action','@tests/main_2_5.php','main_2_5','updates&MAIN_2_5::*'));
+		$this->assertSame('add',core::main('action','@tests/main_2_5.php','main_2_5','add&main_2_5::*'));
+		$this->assertFalse(core::main('action','@tests/main_2_5.php','main_2_5','add&CORE::*'));
 		$_SERVER['QUERY_STRING']='index';
 		$this->assertSame('index',core::main('action','@tests/main_2_5.php','main_2_5','[query:0]'));
 		unset($_SERVER['QUERY_STRING']);
@@ -295,7 +379,7 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		$this->assertSame('index',core::main('action','@tests/main_2_5.php','main_2_5','[posT:aa]'));
 		$this->assertFalse(core::main('action','@tests/main_2_5.php','main_2_5','[posT:AA]'));
 		unset($_POST['aa']);
-		$this->assertFalse(core::main('action','@tests/main_2_5.php','main_2_5','message'));
+		$this->assertFalse(core::main('static,action','@tests/main_2_5.php','main_2_5','message'));
 		$this->assertSame('message',core::main('object,action','@tests/main_2_5.php','main_2_5','message'));
 		$this->assertFalse(core::main('object,action','@tests/main_2_5.php','main_2_5','index'));
 		$this->assertFalse(core::main('action','@tests/main_2_6.php','main_2_6','index'));
@@ -304,25 +388,29 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		$this->assertSame(array('id'),core::main('parameter','','main_2_5','index','id'));
 		$_GET['id']='1';
 		$this->assertSame(array('1'),core::main('parameter','','main_2_5','index','[id]'));
-		$this->assertSame(array('1','1'),core::main('parameter','','main_2_5','index',array('[id]','[get:1]')));
-		$this->assertSame(array('1',null),core::main('parameter','','main_2_5','index',array('[id]','[get:1]^index')));
-		$this->assertSame(array('1','1'),core::main('parameter','','main_2_5','add',array('[id]','[get:1]')));
-		$this->assertSame(array('1',null),core::main('parameter','','main_2_5','add',array('[id]','[get:1]^add')));
-		$this->assertSame(array('1',null),core::main('parameter','','main_2_5','add',array('[id]','[get:1]^ADD')));
-		$this->assertSame(array('1','1'),core::main('parameter','','main_2_5','add',array('[id]','[get:1]^index')));
-		$this->assertSame(array('1','1'),core::main('parameter','','main_2_5','add',array('[id]','[get:1]^INDEX')));
-		$this->assertSame(array('1','1'),core::main('parameter','','main_2_5','add',array('[id]','[get:1]&ADD^INDEX')));
-		$this->assertSame(array('1',null),core::main('parameter','','main_2_5','add',array('[id]','[get:1]&INDEX')));
-		$this->assertSame(array('index',array('1','1')),core::main('action,parameter','','main_2_5','index',array('[id]','[get:1]')));
+		$this->assertSame(array('1','1'),core::main('parameter','','main_2_5','index','[id],[get:1]'));
+		$this->assertSame(array(),core::main('parameter','','main_2_5','index','[id],[get:1]!index'));
+		$this->assertSame(array('1','1'),core::main('parameter','','main_2_5','add','[id],[get:1]'));
+		$this->assertSame(array(),core::main('parameter','','main_2_5','add','[id],[get:1]!add'));
+		$this->assertSame(array('1','1'),core::main('parameter','','main_2_5','add','[id],[get:1]!ADD'));
+		$this->assertSame(array('1','1'),core::main('parameter','','main_2_5','add','[id],[get:1]!index'));
+		$this->assertSame(array('1','1'),core::main('parameter','','main_2_5','add','[id],[get:1]!INDEX'));
+		$this->assertSame(array('1','1'),core::main('parameter','','main_2_5','add','[id],[get:1]&add!INDEX'));
+		$this->assertSame(array('1'),core::main('parameter','','main_2_5','add','[id],[get:1]&INDEX|[id]'));
+		$this->assertSame(array('index',array('1','1')),core::main('action,parameter','','main_2_5','index','[id],[get:1]'));
 		unset($_GET['id']);
-		$this->assertSame(3,core::main('return','','main_2_5','add',array(1,2)));
-		$this->assertSame(3,core::main('return','','main_2_5','add',array(1,2,4)));
+		$this->assertSame(3,core::main('return','','main_2_5','add','1,2'));
+		$this->assertSame(3,core::main('return','','main_2_5','add','1,2,4'));
 		$this->assertSame('index',core::main('action','','main_2_5','index'));
 		$this->assertFalse(core::main('final,action','','main_2_5','index'));
 		$this->assertSame('index2',core::main('action','','main_2_5','index2'));
 		$this->assertSame('index2',core::main('final,action','','main_2_5','index2'));
 		$this->assertSame('message',core::main('object,action','','main_2_5','message'));
 		$this->assertFalse(core::main('final,object,action','','main_2_5','message'));
+		$this->assertSame('index2',core::main('action','','main_2_5','index2'));
+		$this->assertSame('message2',core::main('action','','main_2_5','message2'));
+		$this->assertFalse(core::main('object,action','','main_2_5','index2'));
+		$this->assertFalse(core::main('static,action','','main_2_5','message2'));
 		$this->assertSame('message2',core::main('object,action','','main_2_5','message2'));
 		$this->assertSame('message2',core::main('final,object,action','','main_2_5','message2'));
 
@@ -361,7 +449,7 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		ob_start();
 		$this->assertFalse(core::main());
 		$this->assertSame('bbb'.PHP_EOL, ob_get_clean());
-	//恢复原来值
+		//恢复原来值
 		core::init(array(
 			'hide_info'=>'',
 			'hide_info_cli'=>'',
