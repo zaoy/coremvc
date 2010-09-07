@@ -30,12 +30,18 @@
  * SmartyZip启动项
  */
 // 设定参数
+$sys_get_temp_dir = sys_get_temp_dir ();
+$sys_get_temp_dir_last_char = substr ($sys_get_temp_dir, -1, 1);
+if ($sys_get_temp_dir_last_char !== '/' && $sys_get_temp_dir_last_char !== '\\') {
+	$sys_get_temp_dir .= DIRECTORY_SEPARATOR;
+}
 SmartyZip::$zip_url = 'http://www.smarty.net/distributions/Smarty-2.6.26.zip'; //［设置项］Smarty的Zip文件下载地址
-SmartyZip::$zip_file = sys_get_temp_dir () . preg_replace ( '/^.*\/(Smarty-.*.zip)$/i', 'smarty/$1', SmartyZip::$zip_url ); //［设置项］Smarty的Zip文件缓存位置
+SmartyZip::$zip_file = $sys_get_temp_dir . preg_replace ( '/^.*\/(Smarty-.*.zip)$/i', 'smarty/$1', SmartyZip::$zip_url ); //［设置项］Smarty的Zip文件缓存位置
 SmartyZip::$entry_dir = preg_replace ( '/^.*\/(Smarty-.*).zip$/i', '$1/libs', SmartyZip::$zip_file );
-SmartyZip::$extract_dir = sys_get_temp_dir () . 'smarty/' . SmartyZip::$entry_dir; //［设置项］Smarty程序文件缓存位置
+SmartyZip::$extract_dir = $sys_get_temp_dir . 'smarty/' . SmartyZip::$entry_dir; //［设置项］Smarty程序文件缓存位置
 SmartyZip::$template_dir = dirname ( realpath ( __FILE__ ) ); //［设置项］Smarty模板文件 所在位置	
-SmartyZip::$compile_dir = sys_get_temp_dir () . 'smarty/template_c/' . md5 ( SmartyZip::$template_dir ); //［设置项］Smarty编译文件缓存位置
+SmartyZip::$compile_dir = $sys_get_temp_dir . 'smarty/template_c/' . md5 ( SmartyZip::$template_dir ); //［设置项］Smarty编译文件缓存位置
+unset ($sys_get_temp_dir);
 
 
 // 注册协议

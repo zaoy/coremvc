@@ -29,15 +29,21 @@
  * AdodbZip启动项
  */
 // 设定参数
+$sys_get_temp_dir = sys_get_temp_dir ();
+$sys_get_temp_dir_last_char = substr ($sys_get_temp_dir, -1, 1);
+if ($sys_get_temp_dir_last_char !== '/' && $sys_get_temp_dir_last_char !== '\\') {
+	$sys_get_temp_dir .= DIRECTORY_SEPARATOR;
+}
 AdodbZip::$zip_url = 'http://cdnetworks-kr-1.dl.sourceforge.net/project/adodb/adodb-php5-only/adodb-509-for-php5/adodb509.zip'; //［设置项］Adodb的Zip文件下载地址，文件比较大建议先下载或者解压
-AdodbZip::$zip_file = sys_get_temp_dir () . preg_replace ( '/^.*\/(adodb.*?\.zip)$/i', 'adodb/$1', AdodbZip::$zip_url ); //［设置项］Adodb的Zip文件缓存位置
+AdodbZip::$zip_file = $sys_get_temp_dir . preg_replace ( '/^.*\/(adodb.*?\.zip)$/i', 'adodb/$1', AdodbZip::$zip_url ); //［设置项］Adodb的Zip文件缓存位置
 AdodbZip::$entry_dir = 'adodb5';
-AdodbZip::$extract_dir = sys_get_temp_dir () . 'adodb/' . AdodbZip::$entry_dir; //［设置项］Adodb程序文件缓存位置
+AdodbZip::$extract_dir = $sys_get_temp_dir . 'adodb/' . AdodbZip::$entry_dir; //［设置项］Adodb程序文件缓存位置
 AdodbZip::$server = 'localhost'; //［设置项］服务器	
 AdodbZip::$user = 'root'; //［设置项］用户名
 AdodbZip::$pwd = ''; //［设置项］密码
 AdodbZip::$db = 'test'; //［设置项］数据库
 AdodbZip::$charset = ''; //［设置项］编码
+unset ($sys_get_temp_dir);
 
 
 // 注册协议
