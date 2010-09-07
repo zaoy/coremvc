@@ -2,7 +2,7 @@
 /**
  * Smarty 2.x连接器
  * 
- * 这是CoreMVC扩展文件，需下载Smarty 2.x并将其中的lib拷到smarty2目录中。
+ * 这是CoreMVC扩展文件，需使用smarty2zip目录下的SmartyZip。
  */
 
 /**
@@ -32,12 +32,24 @@ if( $smarty === null ) {
 
 	// 编译路径
 	if ( $compile_dir === '' ) {
-		$_view_sys_get_temp_dir = sys_get_temp_dir ();
-		$_view_sys_get_temp_dir_last_char = substr ($_view_sys_get_temp_dir, -1, 1);
-		if ($_view_sys_get_temp_dir_last_char !== '/' && $_view_sys_get_temp_dir_last_char !== '\\') {
-			$_view_sys_get_temp_dir .= DIRECTORY_SEPARATOR;
+		if (function_exists ('sys_get_temp_dir')) {
+			$_view_sys_get_temp_dir = realpath (sys_get_temp_dir ());
+		} elseif ($_view_sys_get_temp_dir = getenv ('TMP')) {
+			$_view_sys_get_temp_dir = realpath ($_view_sys_get_temp_dir);
+		} elseif ($_view_sys_get_temp_dir = getenv ('TEMP')) {
+			$_view_sys_get_temp_dir = realpath ($_view_sys_get_temp_dir);
+		} elseif ($_view_sys_get_temp_dir = getenv ('TMPDIR')) {
+			$_view_sys_get_temp_dir = realpath ($_view_sys_get_temp_dir);
+		} else {
+			$_view_sys_get_temp_dir = tempnam (__FILE__, '');
+			if (file_exists($_view_sys_get_temp_dir)) {
+				unlink($_view_sys_get_temp_dir);
+				$_view_sys_get_temp_dir = realpath (dirname ($_view_sys_get_temp_dir));
+			} else {
+				$_view_sys_get_temp_dir = '/tmp';
+			}
 		}
-		$smarty->compile_dir = $_view_sys_get_temp_dir . basename(__FILE__,'.php') . '/template_c/' . md5 ( $smarty->template_dir );
+		$smarty->compile_dir = $_view_sys_get_temp_dir . '/' . basename(__FILE__,'.php') . '/template_c/' . md5 ( $smarty->template_dir );
 		if (! is_dir ( $smarty->compile_dir )) {
 			if (mkdir ( $smarty->compile_dir, 0777, true ) === false) {
 				trigger_error ( 'Connot create directory ' . $smarty->compile_dir , E_USER_ERROR );
