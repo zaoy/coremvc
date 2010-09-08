@@ -2,7 +2,7 @@
 /**
  * CoreMVC核心模块
  * 
- * @version 1.3.0 alpha 5
+ * @version 1.3.0 alpha 6
  * @author Z <602000@gmail.com>
  * @link http://www.coremvc.cn/
  */
@@ -563,6 +563,13 @@ class core {
 
 			case '' :
 			case 'mysql' :
+
+				// 是否强制参数转SQL
+				if (isset ($args ['sql_format']) && $args ['sql_format']) {
+					$sql = self::prepare ($sql, $param, true);
+					$param = null;
+				}
+
 				if (is_array ( $param )) {
 					$stmt = 'coremvc_mysql_stmt';
 					$var = '@coremvc_mysql_var';
@@ -600,7 +607,9 @@ class core {
 				} else {
 					$result = mysql_query ( $sql, $dbh );
 				}
-				if ($args ['debug_enable']) {
+
+				// 数据库调试开关
+				if (isset ($args ['debug_enable']) && $args ['debug_enable']) {
 					if ($result === false) {
 						$extra = array( 'errno'=>mysql_errno ( $dbh ), 'error'=>mysql_error ( $dbh ) );
 					} else {
@@ -608,6 +617,7 @@ class core {
 					}
 					self::prepare( $sql, $param, null, true, $args ['debug_file'] ,$extra );
 				}
+
 				if ($ref_flag) {
 					$ref = array ();
 					$ref ['insert_id'] = ( string ) mysql_insert_id ( $dbh );

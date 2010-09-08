@@ -75,12 +75,21 @@ class adodb5 {
 	 * @return rs
 	 */
 	public static function execute($dbh, $args, $class, $sql, $param = null, &$ref = null) {
+
+		// 是否强制参数转SQL
+		if (isset ($args ['sql_format']) && $args ['sql_format']) {
+			$sql = self::prepare ($dbh, $args, $class, $sql, $param, true);
+			$param = null;
+		}
+
 		if (is_array( $param )) {
 			$result = $dbh->Execute ( $sql, $param );
 		} else {
 			$result = $dbh->Execute ( $sql );
 		}
-		if ($args ['debug_enable'] === true) {
+
+		// 数据库调试开关
+		if (isset ($args ['debug_enable']) && $args ['debug_enable']) {
 			if ($result === false) {
 				$extra = array('errno'=>$dbh->ErrorNo(),'error'=>$dbh->ErrorMsg());
 			} else {
@@ -88,7 +97,8 @@ class adodb5 {
 			}
 			call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'], $extra );
 		}
-		if(func_num_args()>4){
+
+		if(func_num_args()>5){
 			$ref = array();
 			$ref ['insert_id'] = $dbh->Insert_ID();
 			$ref ['affected_rows'] = (int)$dbh->Affected_Rows();
@@ -161,6 +171,13 @@ class adodb5 {
 				$sql .= ' '.$limit;
 			}
 		}
+
+		// 是否强制参数转SQL
+		if (isset ($args ['sql_format']) && $args ['sql_format']) {
+			$sql = self::prepare ($dbh, $args, $class, $sql, $param, true);
+			$param = null;
+		}
+
 		$data_key = array ();
 		foreach($class_arr as $value){
 			if($value!==null && $value!=='' && !in_array($value,$data_key,true)){
@@ -173,7 +190,9 @@ class adodb5 {
 			$mode = $dbh->setFetchMode(ADODB_FETCH_BOTH);
 			$sth = $dbh->Execute($sql,$param);
 			$result = (bool)$sth;
-			if ($args ['debug_enable'] === true) {
+
+				// 数据库调试开关
+			if (isset ($args ['debug_enable']) && $args ['debug_enable']) {
 				if ($result === false) {
 					$extra = array('errno'=>$dbh->ErrorNo(),'error'=>$dbh->ErrorMsg());
 				} else {
@@ -181,6 +200,7 @@ class adodb5 {
 				}
 				call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'], $extra );
 			}
+
 			while ( $obj = $sth->FetchRow (  ) ) {
 				$obj_arr = array();
 				foreach($data_key as $value){
@@ -197,7 +217,9 @@ class adodb5 {
 			case 'assoc' :
 				$mode = $dbh->setFetchMode(ADODB_FETCH_ASSOC);
 				$result = $data_arr = $dbh->GetALL($sql,$param);
-				if ($args ['debug_enable'] === true) {
+
+				// 数据库调试开关
+				if (isset ($args ['debug_enable']) && $args ['debug_enable']) {
 					if ($result === false) {
 						$extra = array('errno'=>$dbh->ErrorNo(),'error'=>$dbh->ErrorMsg());
 					} else {
@@ -205,12 +227,15 @@ class adodb5 {
 					}
 					call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'], $extra );
 				}
+
 				$dbh->setFetchMode($mode);
 				break;
 			case 'num' :
 				$mode = $dbh->setFetchMode(ADODB_FETCH_NUM);
 				$result = $data_arr = $dbh->GetALL($sql,$param);
-				if ($args ['debug_enable'] === true) {
+
+				// 数据库调试开关
+				if (isset ($args ['debug_enable']) && $args ['debug_enable']) {
 					if ($result === false) {
 						$extra = array('errno'=>$dbh->ErrorNo(),'error'=>$dbh->ErrorMsg());
 					} else {
@@ -218,13 +243,16 @@ class adodb5 {
 					}
 					call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'], $extra );
 				}
+
 				$dbh->setFetchMode($mode);
 				break;
 			case 'both' :
 			case 'array' :
 				$mode = $dbh->setFetchMode(ADODB_FETCH_BOTH);
 				$result = $data_arr = $dbh->GetALL($sql,$param);
-				if ($args ['debug_enable'] === true) {
+
+				// 数据库调试开关
+				if (isset ($args ['debug_enable']) && $args ['debug_enable']) {
 					if ($result === false) {
 						$extra = array('errno'=>$dbh->ErrorNo(),'error'=>$dbh->ErrorMsg());
 					} else {
@@ -232,13 +260,16 @@ class adodb5 {
 					}
 					call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'], $extra );
 				}
+
 				$dbh->setFetchMode($mode);
 				break;
 			case 'column' :
 				$mode = $dbh->setFetchMode(ADODB_FETCH_BOTH);
 				$sth = $dbh->Execute($sql,$param);
 				$result = (bool)$sth;
-				if ($args ['debug_enable'] === true) {
+
+				// 数据库调试开关
+				if (isset ($args ['debug_enable']) && $args ['debug_enable']) {
 					if ($result === false) {
 						$extra = array('errno'=>$dbh->ErrorNo(),'error'=>$dbh->ErrorMsg());
 					} else {
@@ -246,6 +277,7 @@ class adodb5 {
 					}
 					call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'], $extra );
 				}
+
 				while ( $obj = $sth->FetchRow (  ) ) {
 					if (isset ( $obj [$classname] )) {
 						$data_arr[] = $obj [$classname] ;
@@ -261,7 +293,9 @@ class adodb5 {
 					$mode = $dbh->setFetchMode(ADODB_FETCH_ASSOC);
 					$sth = $dbh->Execute($sql,$param);
 					$result = (bool)$sth;
-					if ($args ['debug_enable'] === true) {
+
+					// 数据库调试开关
+					if (isset ($args ['debug_enable']) && $args ['debug_enable']) {
 						if ($result === false) {
 							$extra = array('errno'=>$dbh->ErrorNo(),'error'=>$dbh->ErrorMsg());
 						} else {
@@ -269,6 +303,7 @@ class adodb5 {
 						}
 						call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'], $extra );
 					}
+
 					while ( $obj = $sth->FetchRow (  ) ) {
 						$obj_classname = $classname;
 						foreach($obj as $key=>$obj_classname){
@@ -297,7 +332,9 @@ class adodb5 {
 					$mode = $dbh->setFetchMode(ADODB_FETCH_ASSOC);
 					$sth = $dbh->Execute($sql,$param);
 					$result = (bool)$sth;
-					if ($args ['debug_enable'] === true) {
+
+					// 数据库调试开关
+					if (isset ($args ['debug_enable']) && $args ['debug_enable']) {
 						if ($result === false) {
 							$extra = array('errno'=>$dbh->ErrorNo(),'error'=>$dbh->ErrorMsg());
 						} else {
@@ -305,6 +342,7 @@ class adodb5 {
 						}
 						call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'], $extra );
 					}
+
 					while ( $obj = $sth->FetchRow (  ) ) {
 						$clone = new $obj_classname ;
 						foreach($obj as $key=>$value){
@@ -324,7 +362,9 @@ class adodb5 {
 				$mode = $dbh->setFetchMode(ADODB_FETCH_ASSOC);
 				$sth = $dbh->Execute($sql,$param);
 				$result = (bool)$sth;
-				if ($args ['debug_enable'] === true) {
+
+				// 数据库调试开关
+				if (isset ($args ['debug_enable']) && $args ['debug_enable']) {
 					if ($result === false) {
 						$extra = array('errno'=>$dbh->ErrorNo(),'error'=>$dbh->ErrorMsg());
 					} else {
@@ -332,6 +372,7 @@ class adodb5 {
 					}
 					call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'], $extra );
 				}
+
 				while ( $obj = $sth->FetchRow (  ) ) {
 					$clone = clone $obj_classname ;
 					foreach($obj as $key=>$value){
@@ -361,8 +402,21 @@ class adodb5 {
 	 * @return int
 	 */
 	public static function inserts($dbh, $args, $class, $sql, $param) {
-		$result = $dbh->Execute ( $sql, $param );
-		if ($args ['debug_enable'] === true) {
+
+		// 是否强制参数转SQL
+		if (isset ($args ['sql_format']) && $args ['sql_format']) {
+			$sql = self::prepare ($dbh, $args, $class, $sql, $param, true);
+			$param = null;
+		}
+
+		if (is_array ($param)) {
+			$result = $dbh->Execute ( $sql, $param );
+		} else {
+			$result = $dbh->Execute ( $sql );
+		}
+
+		// 数据库调试开关
+		if (isset ($args ['debug_enable']) && $args ['debug_enable']) {
 			if ($result === false) {
 				$extra = array('errno'=>$dbh->ErrorNo(),'error'=>$dbh->ErrorMsg());
 			} else {
@@ -370,6 +424,7 @@ class adodb5 {
 			}
 			call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'], $extra );
 		}
+
 		return (int)$dbh->Affected_Rows();
 	}
 	
@@ -383,8 +438,21 @@ class adodb5 {
 	 * @return int
 	 */
 	public static function updates($dbh, $args, $class, $sql, $param) {
-		$result = $dbh->Execute ( $sql, $param );
-		if ($args ['debug_enable'] === true) {
+
+		// 是否强制参数转SQL
+		if (isset ($args ['sql_format']) && $args ['sql_format']) {
+			$sql = self::prepare ($dbh, $args, $class, $sql, $param, true);
+			$param = null;
+		}
+
+		if (is_array ($param)) {
+			$result = $dbh->Execute ( $sql, $param );
+		} else {
+			$result = $dbh->Execute ( $sql );
+		}
+
+		// 数据库调试开关
+		if (isset ($args ['debug_enable']) && $args ['debug_enable']) {
 			if ($result === false) {
 				$extra = array('errno'=>$dbh->ErrorNo(),'error'=>$dbh->ErrorMsg());
 			} else {
@@ -392,6 +460,7 @@ class adodb5 {
 			}
 			call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'], $extra );
 		}
+
 		return (int)$dbh->Affected_Rows();
 	}
 	
@@ -405,8 +474,21 @@ class adodb5 {
 	 * @return int
 	 */
 	public static function deletes($dbh, $args, $class, $sql, $param) {
-		$result = $dbh->Execute ( $sql, $param );
-		if ($args ['debug_enable'] === true) {
+
+		// 是否强制参数转SQL
+		if (isset ($args ['sql_format']) && $args ['sql_format']) {
+			$sql = self::prepare ($dbh, $args, $class, $sql, $param, true);
+			$param = null;
+		}
+
+		if (is_array ($param)) {
+			$result = $dbh->Execute ( $sql, $param );
+		} else {
+			$result = $dbh->Execute ( $sql );
+		}
+
+		// 数据库调试开关
+		if (isset ($args ['debug_enable']) && $args ['debug_enable']) {
 			if ($result === false) {
 				$extra = array('errno'=>$dbh->ErrorNo(),'error'=>$dbh->ErrorMsg());
 			} else {
@@ -414,6 +496,7 @@ class adodb5 {
 			}
 			call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'], $extra );
 		}
+
 		return (int)$dbh->Affected_Rows();
 	}
 	
@@ -427,8 +510,21 @@ class adodb5 {
 	 * @return int
 	 */
 	public static function replaces($dbh, $args, $class, $sql, $param) {
-		$result = $dbh->Execute ( $sql, $param );
-		if ($args ['debug_enable'] === true) {
+
+		// 是否强制参数转SQL
+		if (isset ($args ['sql_format']) && $args ['sql_format']) {
+			$sql = self::prepare ($dbh, $args, $class, $sql, $param, true);
+			$param = null;
+		}
+
+		if (is_array ($param)) {
+			$result = $dbh->Execute ( $sql, $param );
+		} else {
+			$result = $dbh->Execute ( $sql );
+		}
+
+		// 数据库调试开关
+		if (isset ($args ['debug_enable']) && $args ['debug_enable']) {
 			if ($result === false) {
 				$extra = array('errno'=>$dbh->ErrorNo(),'error'=>$dbh->ErrorMsg());
 			} else {
@@ -436,6 +532,7 @@ class adodb5 {
 			}
 			call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'], $extra );
 		}
+
 		return (int)$dbh->Affected_Rows();
 	}
 	
@@ -454,14 +551,26 @@ class adodb5 {
 		if ($primary_name !== null) {
 			$sql = 'SELECT * FROM ' . $tablename . ' WHERE ' . $primary_name . '=? LIMIT 1';
 			$paramvars = array ($primary_value );
-			$rs = $dbh->Execute ( $sql, $paramvars );
 		} else {
 			$sql = 'SELECT * FROM ' . $tablename . ' LIMIT 1';
 			$paramvars = null;
+		}
+
+		// 是否强制参数转SQL
+		if (isset ($args ['sql_format']) && $args ['sql_format']) {
+			$sql = self::prepare ($dbh, $args, get_class($that), $sql, $paramvars, true);
+			$paramvars = null;
+		}
+
+		if (is_array ($paramvars)) {
+			$rs = $dbh->Execute ( $sql, $paramvars );
+		} else {
 			$rs = $dbh->Execute ( $sql );
 		}
 		$result = ( bool ) $rs;
-		if ($args ['debug_enable'] === true) {
+
+		// 数据库调试开关
+		if (isset ($args ['debug_enable']) && $args ['debug_enable']) {
 			if ($result === false) {
 				$extra = array('errno'=>$dbh->ErrorNo(),'error'=>$dbh->ErrorMsg());
 			} else {
@@ -469,6 +578,7 @@ class adodb5 {
 			}
 			call_user_func ( array(get_class($that),'prepare'), $sql, $paramvars, null, true, $args ['debug_file'], $extra );
 		}
+
 		if (! $rs) {
 			return false;
 		}
@@ -497,8 +607,21 @@ class adodb5 {
 	public static function insert($dbh, $args, $that, $tablename, $primary_index, $params) {
 		extract($params);
 		$sql = 'INSERT INTO ' . $tablename . ' (' . $fieldname . ') VALUES (' . $valuename . ')';
-		$result = ( bool ) $dbh->Execute ( $sql, $paramvars );
-		if ($args ['debug_enable'] === true) {
+
+		// 是否强制参数转SQL
+		if (isset ($args ['sql_format']) && $args ['sql_format']) {
+			$sql = self::prepare ($dbh, $args, get_class($that), $sql, $paramvars, true);
+			$paramvars = null;
+		}
+
+		if (is_array ($paramvars)) {
+			$result = ( bool ) $dbh->Execute ( $sql, $paramvars );
+		} else {
+			$result = ( bool ) $dbh->Execute ( $sql );
+		}
+
+		// 数据库调试开关
+		if (isset ($args ['debug_enable']) && $args ['debug_enable']) {
 			if ($result === false) {
 				$extra = array('errno'=>$dbh->ErrorNo(),'error'=>$dbh->ErrorMsg());
 			} else {
@@ -506,6 +629,7 @@ class adodb5 {
 			}
 			call_user_func ( array(get_class($that),'prepare'), $sql, $paramvars, null, true, $args ['debug_file'], $extra );
 		}
+
 		if ($result && $primary_name !== null) {
 			$that->$primary_name = $dbh->Insert_ID ();
 		}
@@ -529,8 +653,21 @@ class adodb5 {
 		} else {
 			$sql = 'UPDATE ' . $tablename . ' SET ' . $valuename . ' LIMIT 1';
 		}
-		$result = ( bool ) $dbh->Execute ( $sql, $paramvars );
-		if ($args ['debug_enable'] === true) {
+
+		// 是否强制参数转SQL
+		if (isset ($args ['sql_format']) && $args ['sql_format']) {
+			$sql = self::prepare ($dbh, $args, get_class($that), $sql, $paramvars, true);
+			$paramvars = null;
+		}
+
+		if (is_array ($paramvars)) {
+			$result = ( bool ) $dbh->Execute ( $sql, $paramvars );
+		} else {
+			$result = ( bool ) $dbh->Execute ( $sql );
+		}
+
+		// 数据库调试开关
+		if (isset ($args ['debug_enable']) && $args ['debug_enable']) {
 			if ($result === false) {
 				$extra = array('errno'=>$dbh->ErrorNo(),'error'=>$dbh->ErrorMsg());
 			} else {
@@ -538,6 +675,7 @@ class adodb5 {
 			}
 			call_user_func ( array(get_class($that),'prepare'), $sql, $paramvars, null, true, $args ['debug_file'], $extra );
 		}
+
 		if($result && $dbh->Affected_Rows()==0){
 			return false;
 		}
@@ -559,13 +697,25 @@ class adodb5 {
 		if ($primary_name !== null) {
 			$sql = 'DELETE FROM ' . $tablename . ' WHERE ' . $primary_name . '=? LIMIT 1';
 			$paramvars = array ($primary_value );
-			$result =( bool ) $dbh->Execute ( $sql, $paramvars );
 		} else {
 			$sql = 'DELETE FROM ' . $tablename . ' LIMIT 1';
 			$paramvars = null;
+		}
+
+		// 是否强制参数转SQL
+		if (isset ($args ['sql_format']) && $args ['sql_format']) {
+			$sql = self::prepare ($dbh, $args, get_class($that), $sql, $paramvars, true);
+			$paramvars = null;
+		}
+
+		if (is_array ($paramvars)) {
+			$result = ( bool ) $dbh->Execute ( $sql, $paramvars );
+		} else {
 			$result = ( bool ) $dbh->Execute ( $sql );
 		}
-		if ($args ['debug_enable'] === true) {
+
+		// 数据库调试开关
+		if (isset ($args ['debug_enable']) && $args ['debug_enable']) {
 			if ($result === false) {
 				$extra = array('errno'=>$dbh->ErrorNo(),'error'=>$dbh->ErrorMsg());
 			} else {
@@ -573,6 +723,7 @@ class adodb5 {
 			}
 			call_user_func ( array(get_class($that),'prepare'), $sql, $paramvars, null, true, $args ['debug_file'], $extra );
 		}
+
 		if($result && $dbh->Affected_Rows()==0){
 			return false;
 		}
@@ -592,8 +743,21 @@ class adodb5 {
 	public static function replace($dbh, $args, $that, $tablename, $primary_index, $params) {
 		extract($params);
 		$sql = 'REPLACE INTO ' . $tablename . ' (' . $fieldname . ') VALUES (' . $valuename . ')';
-		$result = ( bool ) $dbh->Execute ( $sql, $paramvars );
-		if ($args ['debug_enable'] === true) {
+
+		// 是否强制参数转SQL
+		if (isset ($args ['sql_format']) && $args ['sql_format']) {
+			$sql = self::prepare ($dbh, $args, get_class($that), $sql, $paramvars, true);
+			$paramvars = null;
+		}
+
+		if (is_array ($paramvars)) {
+			$result = ( bool ) $dbh->Execute ( $sql, $paramvars );
+		} else {
+			$result = ( bool ) $dbh->Execute ( $sql );
+		}
+
+		// 数据库调试开关
+		if (isset ($args ['debug_enable']) && $args ['debug_enable']) {
 			if ($result === false) {
 				$extra = array('errno'=>$dbh->ErrorNo(),'error'=>$dbh->ErrorMsg());
 			} else {
@@ -601,7 +765,8 @@ class adodb5 {
 			}
 			call_user_func ( array(get_class($that),'prepare'), $sql, $paramvars, null, true, $args ['debug_file'], $extra );
 		}
-	if ($result && $primary_name !== null) {
+
+		if ($result && $primary_name !== null) {
 			$that->$primary_name = $dbh->Insert_ID ();
 		}
 		return $result;
