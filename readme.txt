@@ -11,7 +11,7 @@ CoreMVC遵从new BSD许可证，所以您可以在法律允许的范围以内任
 /**
  * CoreMVC核心模块
  * 
- * @version 1.3.0 alpha 6
+ * @version 1.3.0 alpha 7
  * @author Z <602000@gmail.com>
  * @link http://www.coremvc.cn/
  */
@@ -53,6 +53,8 @@ CoreMVC 1.3.0 相对于 CoreMVC 1.2.0版本的改进
 3. 修改了debug_backtrace和sys_get_temp_dir函数，兼容PHP 5.1.x版本。
 
 4. 增加了强制参数转SQL的参数设置。
+
+5. 修改了core::view，支持smarty类型自动注册的view函数，类似于include。
 
 
 CoreMVC 1.2.0 相对于 CoreMVC 1.1.0版本的改进
