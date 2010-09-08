@@ -32,11 +32,11 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			//'SaeMysql5' => array((require 'config_db_SaeMysql5.php'),'resource','resource'),//此项需要创建app_test数据库并可完全匿名访问，并需要修改hosts文件
 		);
 		$this->view_arr = array(
-			'include' => array(array('z'=>'b')),
+			'include' => array(array('z'=>'b'),array('z'=>'b')),
 			'string' =>  array(array('z'=>'b')),
-			'smarty2zip' =>  array(array('z'=>'b')),
-			//'smarty2' =>  array(array('z'=>'b')),
-			//'smarty3' =>  array(array('z'=>'b')),
+			'smarty2zip' =>  array(array('z'=>'b'),array('z'=>'b')),
+			//'smarty2' =>  array(array('z'=>'b'),array('z'=>'b')),
+			//'smarty3' =>  array(array('z'=>'b'),array('z'=>'b')),
 		);
 		$this->lib_arr = array(
 			//'Zend' => array('Zend_Acl'),

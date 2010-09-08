@@ -2,7 +2,7 @@
 /**
  * CoreMVC核心模块
  * 
- * @version 1.3.0 alpha 6
+ * @version 1.3.0 alpha 7
  * @author Z <602000@gmail.com>
  * @link http://www.coremvc.cn/
  */
@@ -246,6 +246,7 @@ class core {
 		$_view_vars2 = is_array ($_view_vars) ? $_view_vars : array ();
 		$_view_type2 = $_view_config ['template_type'] === '' ? 'include' : $_view_config ['template_type'];
 		$_view_show2 = $_view_show === null ? true : $_view_show;
+		$_view_self2 = __CLASS__;
 
 		// 视图模板处理
 		switch ($_view_type2) {

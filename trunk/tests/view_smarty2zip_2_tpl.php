@@ -1,0 +1,1 @@
+a{view file='@tests/view_smarty2zip_2_tpl2.php' y='b'}c

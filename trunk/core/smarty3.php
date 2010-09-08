@@ -58,6 +58,23 @@ if( $smarty === null ) {
 	} else {
 		$smarty->compile_dir = $compile_dir;
 	}
+
+	// 注册函数
+	if (! function_exists ('smarty_function_view')) {
+		function smarty_function_view($params, &$smarty) {
+			if (isset ($params ['file'])) {
+				$file = $params ['file'];
+				$vars = $params;
+				unset ($vars ['file']);
+				return call_user_func (array ($smarty->_view_self2, 'view'), $file, $vars, $smarty->_view_type2, false);
+			} else {
+				return '';
+			}
+		}
+	}
+	$smarty->_view_self2 = $_view_self2;
+	$smarty->_view_type2 = $_view_type2;
+	$smarty->register->templateFunction('view','smarty_function_view');
 }
 
 // 传入参数
