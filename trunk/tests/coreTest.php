@@ -756,15 +756,24 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			ob_start();
 			core::execute('SELECT 1');
 			$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): SELECT 1'.PHP_EOL,ob_get_clean());
+
 			ob_start();
 			core::execute('SELECT ?,?',array(1,'a'));
 			$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): SELECT ?,?'.PHP_EOL.'#0: int(1)'.PHP_EOL.'#1: string(1) a'.PHP_EOL,ob_get_clean());
+
+			core::connect(array('sql_format'=>true));
+			ob_start();
+			core::execute('SELECT ?,?',array(1,'a'));
+			$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): SELECT 1,\'a\''.PHP_EOL,ob_get_clean());
+			core::connect(array('sql_format'=>''));
+
 			core::connect(array('debug_file'=>$this->log_file));
 			@unlink($this->log_file);
 			core::execute('SELECT 1');
 			$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): SELECT 1'.PHP_EOL,file_get_contents($this->log_file));
 			@unlink($this->log_file);
 			core::connect(array('debug_file'=>''));
+
 			ob_start();
 			core::execute('SELECT aaa');
 			$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): SELECT aaa'.PHP_EOL.'1054: Unknown column \'aaa\' in \'field list\''.PHP_EOL,ob_get_clean());
@@ -1168,6 +1177,12 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): SELECT ?,?'.PHP_EOL.'#0: int(1)'.PHP_EOL.'#1: string(1) a'.PHP_EOL,ob_get_clean());
 			core::connect(array('debug_enable'=>''));
 
+			core::connect(array('debug_enable'=>true,'sql_format'=>true));
+			ob_start();
+			core::selects('SELECT ?,?',array(1,'a'),true);
+			$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): SELECT 1,\'a\''.PHP_EOL,ob_get_clean());
+			core::connect(array('debug_enable'=>'','sql_format'=>''));
+
 			core::execute("DROP TABLE pre1_test");
 			core::connect(false);
 		}
@@ -1220,6 +1235,13 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			core::inserts('INSERT pre1_test(id,name) VALUES(?,?)',array(1,'a'),true);
 			$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): INSERT pre1_test(id,name) VALUES(?,?)'.PHP_EOL.'#0: int(1)'.PHP_EOL.'#1: string(1) a'.PHP_EOL,ob_get_clean());
 			core::connect(array('debug_enable'=>''));
+			core::execute("TRUNCATE pre1_test");
+
+			core::connect(array('debug_enable'=>true,'sql_format'=>true));
+			ob_start();
+			core::inserts('INSERT pre1_test(id,name) VALUES(?,?)',array(1,'a'),true);
+			$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): INSERT pre1_test(id,name) VALUES(1,\'a\')'.PHP_EOL,ob_get_clean());
+			core::connect(array('debug_enable'=>'','sql_format'=>''));
 			core::execute("TRUNCATE pre1_test");
 
 			core::execute("DROP TABLE pre1_test");
@@ -1278,6 +1300,14 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			core::updates('UPDATE pre1_test SET id=?,name=?',array(1,'a'),true);
 			$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): UPDATE pre1_test SET id=?,name=?'.PHP_EOL.'#0: int(1)'.PHP_EOL.'#1: string(1) a'.PHP_EOL,ob_get_clean());
 			core::connect(array('debug_enable'=>''));
+			core::execute("TRUNCATE pre1_test");
+
+			core::execute("INSERT INTO pre1_test(id,name) VALUES (1,'core')");
+			core::connect(array('debug_enable'=>true,'sql_format'=>true));
+			ob_start();
+			core::updates('UPDATE pre1_test SET id=?,name=?',array(1,'a'),true);
+			$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): UPDATE pre1_test SET id=1,name=\'a\''.PHP_EOL,ob_get_clean());
+			core::connect(array('debug_enable'=>'','sql_format'=>''));
 			core::execute("TRUNCATE pre1_test");
 
 
@@ -1342,6 +1372,14 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			core::connect(array('debug_enable'=>''));
 			core::execute("TRUNCATE pre1_test");
 
+			core::execute("INSERT INTO pre1_test(id,name) VALUES (1,'core')");
+			core::connect(array('debug_enable'=>true,'sql_format'=>true));
+			ob_start();
+			core::deletes('DELETE FROM pre1_test WHERE id=? OR name=?',array(1,'a'),true);
+			$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): DELETE FROM pre1_test WHERE id=1 OR name=\'a\''.PHP_EOL,ob_get_clean());
+			core::connect(array('debug_enable'=>'','sql_format'=>''));
+			core::execute("TRUNCATE pre1_test");
+
 			core::execute("DROP TABLE pre1_test");
 			core::connect(false);
 		}
@@ -1400,6 +1438,14 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			core::replaces('REPLACE INTO pre1_test VALUES (?,?)',array(1,'a'),true);
 			$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): REPLACE INTO pre1_test VALUES (?,?)'.PHP_EOL.'#0: int(1)'.PHP_EOL.'#1: string(1) a'.PHP_EOL,ob_get_clean());
 			core::connect(array('debug_enable'=>''));
+			core::execute("TRUNCATE pre1_test");
+
+			core::execute("INSERT INTO pre1_test(id,name) VALUES (1,'core')");
+			core::connect(array('debug_enable'=>true,'sql_format'=>true));
+			ob_start();
+			core::replaces('REPLACE INTO pre1_test VALUES (?,?)',array(1,'a'),true);
+			$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): REPLACE INTO pre1_test VALUES (1,\'a\')'.PHP_EOL,ob_get_clean());
+			core::connect(array('debug_enable'=>'','sql_format'=>''));
 			core::execute("TRUNCATE pre1_test");
 
 			core::execute("DROP TABLE pre1_test");
@@ -1484,6 +1530,13 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): SELECT * FROM pre1_test WHERE id=? LIMIT 1'.PHP_EOL.'#0: int(1)'.PHP_EOL,ob_get_clean());
 			core::connect(array('debug_enable'=>''));
 
+			core::connect(array('debug_enable'=>true,'sql_format'=>true));
+			ob_start();
+			$obj->id = 1;
+			$obj->select('pre_test');
+			$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): SELECT * FROM pre1_test WHERE id=1 LIMIT 1'.PHP_EOL,ob_get_clean());
+			core::connect(array('debug_enable'=>'','sql_format'=>''));
+
 			core::execute("DROP TABLE pre1_test");
 			core::connect(false);
 		}
@@ -1529,6 +1582,14 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			$obj->insert('pre_test');
 			$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): INSERT INTO pre1_test (name) VALUES (?)'.PHP_EOL.'#0: string(1) a'.PHP_EOL,ob_get_clean());
 			core::connect(array('debug_enable'=>''));
+
+			core::connect(array('debug_enable'=>true,'sql_format'=>true));
+			ob_start();
+			$obj->id = null;
+			$obj->name = 'a';
+			$obj->insert('pre_test');
+			$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): INSERT INTO pre1_test (name) VALUES (\'a\')'.PHP_EOL,ob_get_clean());
+			core::connect(array('debug_enable'=>'','sql_format'=>''));
 
 			core::execute("DROP TABLE pre1_test");
 			core::connect(false);
@@ -1580,6 +1641,14 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): UPDATE pre1_test SET name=? WHERE id=? LIMIT 1'.PHP_EOL.'#0: string(1) a'.PHP_EOL.'#1: int(1)'.PHP_EOL,ob_get_clean());
 			core::connect(array('debug_enable'=>''));
 
+			core::connect(array('debug_enable'=>true,'sql_format'=>true));
+			ob_start();
+			$obj->id = 1;
+			$obj->name = 'a';
+			$obj->update('pre_test');
+			$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): UPDATE pre1_test SET name=\'a\' WHERE id=1 LIMIT 1'.PHP_EOL,ob_get_clean());
+			core::connect(array('debug_enable'=>'','sql_format'=>''));
+
 			core::execute("DROP TABLE pre1_test");
 			core::connect(false);
 		}
@@ -1628,6 +1697,15 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): DELETE FROM pre1_test WHERE id=? LIMIT 1'.PHP_EOL.'#0: int(1)'.PHP_EOL,ob_get_clean());
 			core::connect(array('debug_enable'=>''));
 
+			core::execute("INSERT INTO pre1_test(id,name) VALUES (1,'b')");
+			core::connect(array('debug_enable'=>true,'sql_format'=>true));
+			ob_start();
+			$obj->id = 1;
+			$obj->name = 'a';
+			$obj->delete('pre_test');
+			$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): DELETE FROM pre1_test WHERE id=1 LIMIT 1'.PHP_EOL,ob_get_clean());
+			core::connect(array('debug_enable'=>'','sql_format'=>''));
+
 			core::execute("DROP TABLE pre1_test");
 			core::connect(false);
 		}
@@ -1666,6 +1744,14 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			$obj->replace('pre_test');
 			$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): REPLACE INTO pre1_test (id,name) VALUES (?,?)'.PHP_EOL.'#0: int(1)'.PHP_EOL.'#1: string(1) a'.PHP_EOL,ob_get_clean());
 			core::connect(array('debug_enable'=>''));
+
+			core::connect(array('debug_enable'=>true,'sql_format'=>true));
+			ob_start();
+			$obj->id = 1;
+			$obj->name = 'a';
+			$obj->replace('pre_test');
+			$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): REPLACE INTO pre1_test (id,name) VALUES (1,\'a\')'.PHP_EOL,ob_get_clean());
+			core::connect(array('debug_enable'=>'','sql_format'=>''));
 
 			core::execute("DROP TABLE pre1_test");
 			core::connect(false);

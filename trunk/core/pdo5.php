@@ -56,6 +56,13 @@ class pdo5 {
 	 * @return sth
 	 */
 	public static function execute($dbh, $args, $class, $sql, $param = null, &$ref = null) {
+
+		// 是否强制参数转SQL
+		if (isset ($args ['sql_format']) && $args ['sql_format']) {
+			$sql = self::prepare ($dbh, $args, $class, $sql, $param, true);
+			$param = null;
+		}
+
 		if (is_array ( $param )) {
 			if (is_array ( $ref )) {
 				unset($ref['insert_id']);
@@ -81,7 +88,9 @@ class pdo5 {
 				$result = $sth = $dbh->query ( $sql );
 			}
 		}
-		if ($args ['debug_enable'] === true) {
+
+		// 数据库调试开关
+		if (isset ($args ['debug_enable']) && $args ['debug_enable']) {
 			if ($result === false) {
 				$err = $dbh->errorInfo();
 				$extra = array('errno'=>$err[1],'error'=>$err[2]);
@@ -90,7 +99,8 @@ class pdo5 {
 			}
 			call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'], $extra );
 		}
-		if(func_num_args()>4){
+
+		if(func_num_args()>5){
 			$ref = array();
 			$ref ['insert_id'] = $dbh->lastInsertId();
 			$ref ['affected_rows'] = is_object($sth)?$sth->rowCount():0;
@@ -181,23 +191,37 @@ class pdo5 {
 				$data_key[] = $value;
 			}
 		}
-		$sth = $dbh->prepare ( $sql, array (PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY  ) );
-		foreach($param as $key=>$value){
-			if(is_int($key)){
-				$key++;
-			}
-			if(is_null($value)){
-				$sth->bindValue($key, null, PDO::PARAM_NULL);
-			}elseif(is_bool($value)){
-				$sth->bindValue($key, $value?1:0, PDO::PARAM_INT);
-			}elseif(is_int($value) || is_float($value)){
-				$sth->bindValue($key, $value, PDO::PARAM_INT);
-			}else{
-				$sth->bindValue($key, (string)$value, PDO::PARAM_STR);
-			}
+
+		// 是否强制参数转SQL
+		if (isset ($args ['sql_format']) && $args ['sql_format']) {
+			$sql = self::prepare ($dbh, $args, $class, $sql, $param, true);
+			$param = null;
 		}
-		$result = $sth->execute ();
-		if ($args ['debug_enable'] === true) {
+
+		if (is_array ($param)) {
+			$sth = $dbh->prepare ( $sql, array (PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY  ) );
+			foreach($param as $key=>$value){
+				if(is_int($key)){
+					$key++;
+				}
+				if( $value === null ) {
+					$sth->bindValue($key, $value, PDO::PARAM_NULL);
+				} elseif ( is_bool ($value) ){
+					$sth->bindValue($key, $value, PDO::PARAM_BOOL);
+				} elseif ( is_int ($value) || is_float ($value) ) {
+					$sth->bindValue($key, $value, PDO::PARAM_INT);
+				} else {
+					$sth->bindValue($key, $value, PDO::PARAM_STR);
+				}
+			}
+			$result = $sth->execute ();
+		} else {
+			$sth = $dbh->prepare ( $sql, array (PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY ) );
+			$result = $sth->execute ();
+		}
+
+		// 数据库调试开关
+		if (isset ($args ['debug_enable']) && $args ['debug_enable']) {
 			if ($result === false) {
 				$err = $dbh->errorInfo();
 				$extra = array('errno'=>$err[1],'error'=>$err[2]);
@@ -206,6 +230,7 @@ class pdo5 {
 			}
 			call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'], $extra );
 		}
+
 		if ($result === false) {
 			return false;
 		}
@@ -314,23 +339,36 @@ class pdo5 {
 	 * @return int
 	 */
 	public static function inserts($dbh, $args, $class, $sql, $param) {
-		$sth = $dbh->prepare ( $sql );
-		foreach ( $param as $key=>$value ) {
-			if( is_int ($key) ) {
-				$key++;
-			}
-			if( $value === null ) {
-				$sth->bindValue($key, $value, PDO::PARAM_NULL);
-			} elseif ( is_bool ($value) ){
-				$sth->bindValue($key, $value, PDO::PARAM_BOOL);
-			} elseif ( is_int ($value) || is_float ($value) ) {
-				$sth->bindValue($key, $value, PDO::PARAM_INT);
-			} else {
-				$sth->bindValue($key, $value, PDO::PARAM_STR);
-			}
+
+		// 是否强制参数转SQL
+		if (isset ($args ['sql_format']) && $args ['sql_format']) {
+			$sql = self::prepare ($dbh, $args, $class, $sql, $param, true);
+			$param = null;
 		}
-		$result = $sth->execute ();
-		if ($args ['debug_enable'] === true) {
+
+		if (is_array ($param)) {
+			$sth = $dbh->prepare ( $sql );
+			foreach($param as $key=>$value){
+				if(is_int($key)){
+					$key++;
+				}
+				if( $value === null ) {
+					$sth->bindValue($key, $value, PDO::PARAM_NULL);
+				} elseif ( is_bool ($value) ){
+					$sth->bindValue($key, $value, PDO::PARAM_BOOL);
+				} elseif ( is_int ($value) || is_float ($value) ) {
+					$sth->bindValue($key, $value, PDO::PARAM_INT);
+				} else {
+					$sth->bindValue($key, $value, PDO::PARAM_STR);
+				}
+			}
+			$result = $sth->execute ();
+		} else {
+			$result = $sth = $dbh->query ( $sql );
+		}
+
+		// 数据库调试开关
+		if (isset ($args ['debug_enable']) && $args ['debug_enable']) {
 			if ($result === false) {
 				$err = $dbh->errorInfo();
 				$extra = array('errno'=>$err[1],'error'=>$err[2]);
@@ -339,6 +377,7 @@ class pdo5 {
 			}
 			call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'], $extra );
 		}
+
 		return is_object($sth)?$sth->rowCount ():0;
 	}
 	
@@ -352,23 +391,36 @@ class pdo5 {
 	 * @return int
 	 */
 	public static function updates($dbh, $args, $class, $sql, $param) {
-		$sth = $dbh->prepare ( $sql );
-		foreach ( $param as $key=>$value ) {
-			if( is_int ($key) ) {
-				$key++;
-			}
-			if( $value === null ) {
-				$sth->bindValue($key, $value, PDO::PARAM_NULL);
-			} elseif ( is_bool ($value) ){
-				$sth->bindValue($key, $value, PDO::PARAM_BOOL);
-			} elseif ( is_int ($value) || is_float ($value) ) {
-				$sth->bindValue($key, $value, PDO::PARAM_INT);
-			} else {
-				$sth->bindValue($key, $value, PDO::PARAM_STR);
-			}
+
+		// 是否强制参数转SQL
+		if (isset ($args ['sql_format']) && $args ['sql_format']) {
+			$sql = self::prepare ($dbh, $args, $class, $sql, $param, true);
+			$param = null;
 		}
-		$result = $sth->execute ();
-		if ($args ['debug_enable'] === true) {
+
+		if (is_array ($param)) {
+			$sth = $dbh->prepare ( $sql );
+			foreach($param as $key=>$value){
+				if(is_int($key)){
+					$key++;
+				}
+				if( $value === null ) {
+					$sth->bindValue($key, $value, PDO::PARAM_NULL);
+				} elseif ( is_bool ($value) ){
+					$sth->bindValue($key, $value, PDO::PARAM_BOOL);
+				} elseif ( is_int ($value) || is_float ($value) ) {
+					$sth->bindValue($key, $value, PDO::PARAM_INT);
+				} else {
+					$sth->bindValue($key, $value, PDO::PARAM_STR);
+				}
+			}
+			$result = $sth->execute ();
+		} else {
+			$result = $sth = $dbh->query ( $sql );
+		}
+
+		// 数据库调试开关
+		if (isset ($args ['debug_enable']) && $args ['debug_enable']) {
 			if ($result === false) {
 				$err = $dbh->errorInfo();
 				$extra = array('errno'=>$err[1],'error'=>$err[2]);
@@ -377,6 +429,7 @@ class pdo5 {
 			}
 			call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'], $extra );
 		}
+
 		return is_object($sth)?$sth->rowCount ():0;
 	}
 	
@@ -390,23 +443,36 @@ class pdo5 {
 	 * @return int
 	 */
 	public static function deletes($dbh, $args, $class, $sql, $param) {
-		$sth = $dbh->prepare ( $sql );
-		foreach ( $param as $key=>$value ) {
-			if( is_int ($key) ) {
-				$key++;
-			}
-			if( $value === null ) {
-				$sth->bindValue($key, $value, PDO::PARAM_NULL);
-			} elseif ( is_bool ($value) ){
-				$sth->bindValue($key, $value, PDO::PARAM_BOOL);
-			} elseif ( is_int ($value) || is_float ($value) ) {
-				$sth->bindValue($key, $value, PDO::PARAM_INT);
-			} else {
-				$sth->bindValue($key, $value, PDO::PARAM_STR);
-			}
+
+		// 是否强制参数转SQL
+		if (isset ($args ['sql_format']) && $args ['sql_format']) {
+			$sql = self::prepare ($dbh, $args, $class, $sql, $param, true);
+			$param = null;
 		}
-		$result = $sth->execute ();
-		if ($args ['debug_enable'] === true) {
+
+		if (is_array ($param)) {
+			$sth = $dbh->prepare ( $sql );
+			foreach($param as $key=>$value){
+				if(is_int($key)){
+					$key++;
+				}
+				if( $value === null ) {
+					$sth->bindValue($key, $value, PDO::PARAM_NULL);
+				} elseif ( is_bool ($value) ){
+					$sth->bindValue($key, $value, PDO::PARAM_BOOL);
+				} elseif ( is_int ($value) || is_float ($value) ) {
+					$sth->bindValue($key, $value, PDO::PARAM_INT);
+				} else {
+					$sth->bindValue($key, $value, PDO::PARAM_STR);
+				}
+			}
+			$result = $sth->execute ();
+		} else {
+			$result = $sth = $dbh->query ( $sql );
+		}
+
+		// 数据库调试开关
+		if (isset ($args ['debug_enable']) && $args ['debug_enable']) {
 			if ($result === false) {
 				$err = $dbh->errorInfo();
 				$extra = array('errno'=>$err[1],'error'=>$err[2]);
@@ -415,6 +481,7 @@ class pdo5 {
 			}
 			call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'], $extra );
 		}
+
 		return is_object($sth)?$sth->rowCount ():0;
 	}
 	
@@ -428,23 +495,36 @@ class pdo5 {
 	 * @return int
 	 */
 	public static function replaces($dbh, $args, $class, $sql, $param) {
-		$sth = $dbh->prepare ( $sql );
-		foreach ( $param as $key=>$value ) {
-			if( is_int ($key) ) {
-				$key++;
-			}
-			if( $value === null ) {
-				$sth->bindValue($key, $value, PDO::PARAM_NULL);
-			} elseif ( is_bool ($value) ){
-				$sth->bindValue($key, $value, PDO::PARAM_BOOL);
-			} elseif ( is_int ($value) || is_float ($value) ) {
-				$sth->bindValue($key, $value, PDO::PARAM_INT);
-			} else {
-				$sth->bindValue($key, $value, PDO::PARAM_STR);
-			}
+
+		// 是否强制参数转SQL
+		if (isset ($args ['sql_format']) && $args ['sql_format']) {
+			$sql = self::prepare ($dbh, $args, $class, $sql, $param, true);
+			$param = null;
 		}
-		$result = $sth->execute ();
-		if ($args ['debug_enable'] === true) {
+
+		if (is_array ($param)) {
+			$sth = $dbh->prepare ( $sql );
+			foreach($param as $key=>$value){
+				if(is_int($key)){
+					$key++;
+				}
+				if( $value === null ) {
+					$sth->bindValue($key, $value, PDO::PARAM_NULL);
+				} elseif ( is_bool ($value) ){
+					$sth->bindValue($key, $value, PDO::PARAM_BOOL);
+				} elseif ( is_int ($value) || is_float ($value) ) {
+					$sth->bindValue($key, $value, PDO::PARAM_INT);
+				} else {
+					$sth->bindValue($key, $value, PDO::PARAM_STR);
+				}
+			}
+			$result = $sth->execute ();
+		} else {
+			$result = $sth = $dbh->query ( $sql );
+		}
+
+		// 数据库调试开关
+		if (isset ($args ['debug_enable']) && $args ['debug_enable']) {
 			if ($result === false) {
 				$err = $dbh->errorInfo();
 				$extra = array('errno'=>$err[1],'error'=>$err[2]);
@@ -453,6 +533,7 @@ class pdo5 {
 			}
 			call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'], $extra );
 		}
+
 		return is_object($sth)?$sth->rowCount ():0;
 	}
 	
@@ -470,16 +551,28 @@ class pdo5 {
 		extract($params);
 		if ($primary_name !== null) {
 			$sql = 'SELECT * FROM ' . $tablename . ' WHERE ' . $primary_name . '=? LIMIT 1';
-			$sth = $dbh->prepare ( $sql, array (PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY ) );
 			$paramvars = array ($primary_value );
-			$result = $sth->execute ( $paramvars );
 		} else {
 			$sql = 'SELECT * FROM ' . $tablename . ' LIMIT 1';
 			$paramvars = null;
+		}
+
+		// 是否强制参数转SQL
+		if (isset ($args ['sql_format']) && $args ['sql_format']) {
+			$sql = self::prepare ($dbh, $args, get_class($that), $sql, $paramvars, true);
+			$paramvars = null;
+		}
+
+		if (is_array ($paramvars)) {
+			$sth = $dbh->prepare ( $sql, array (PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY ) );
+			$result = $sth->execute ( $paramvars );
+		} else {
 			$sth = $dbh->prepare ( $sql, array (PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY ) );
 			$result = $sth->execute ();
 		}
-		if ($args ['debug_enable'] === true) {
+
+		// 数据库调试开关
+		if (isset ($args ['debug_enable']) && $args ['debug_enable']) {
 			if ($result === false) {
 				$err = $dbh->errorInfo();
 				$extra = array('errno'=>$err[1],'error'=>$err[2]);
@@ -488,6 +581,7 @@ class pdo5 {
 			}
 			call_user_func ( array(get_class($that),'prepare'), $sql, $paramvars, null, true, $args ['debug_file'], $extra );
 		}
+
 		if ($sth->rowCount () == 0) {
 			$sth->closeCursor ();
 			return false;
@@ -513,9 +607,23 @@ class pdo5 {
 	public static function insert($dbh, $args, $that, $tablename, $primary_index, $params) {
 		extract($params);
 		$sql = 'INSERT INTO ' . $tablename . ' (' . $fieldname . ') VALUES (' . $valuename . ')';
-		$sth = $dbh->prepare ( $sql );
-		$result = ( bool ) $sth->execute ( $paramvars );
-		if ($args ['debug_enable'] === true) {
+
+		// 是否强制参数转SQL
+		if (isset ($args ['sql_format']) && $args ['sql_format']) {
+			$sql = self::prepare ($dbh, $args, get_class($that), $sql, $paramvars, true);
+			$paramvars = null;
+		}
+
+		if (is_array ($paramvars)) {
+			$sth = $dbh->prepare ( $sql );
+			$result = ( bool ) $sth->execute ( $paramvars );
+		} else {
+			$sth = $dbh->prepare ( $sql );
+			$result = ( bool ) $sth->execute ();
+		}
+
+		// 数据库调试开关
+		if (isset ($args ['debug_enable']) && $args ['debug_enable']) {
 			if ($result === false) {
 				$err = $dbh->errorInfo();
 				$extra = array('errno'=>$err[1],'error'=>$err[2]);
@@ -524,6 +632,7 @@ class pdo5 {
 			}
 			call_user_func ( array(get_class($that),'prepare'), $sql, $paramvars, null, true, $args ['debug_file'], $extra );
 		}
+
 		if ($result && $primary_name !== null) {
 			$that->$primary_name = $dbh->lastInsertId ();
 		}
@@ -547,9 +656,23 @@ class pdo5 {
 		} else {
 			$sql = 'UPDATE ' . $tablename . ' SET ' . $valuename . ' LIMIT 1';
 		}
-		$sth = $dbh->prepare ( $sql );
-		$result = ( bool ) $sth->execute ( $paramvars );
-		if ($args ['debug_enable'] === true) {
+
+		// 是否强制参数转SQL
+		if (isset ($args ['sql_format']) && $args ['sql_format']) {
+			$sql = self::prepare ($dbh, $args, get_class($that), $sql, $paramvars, true);
+			$paramvars = null;
+		}
+
+		if (is_array ($paramvars)) {
+			$sth = $dbh->prepare ( $sql );
+			$result = ( bool ) $sth->execute ( $paramvars );
+		} else {
+			$sth = $dbh->prepare ( $sql );
+			$result = ( bool ) $sth->execute ();
+		}
+
+		// 数据库调试开关
+		if (isset ($args ['debug_enable']) && $args ['debug_enable']) {
 			if ($result === false) {
 				$err = $dbh->errorInfo();
 				$extra = array('errno'=>$err[1],'error'=>$err[2]);
@@ -558,6 +681,7 @@ class pdo5 {
 			}
 			call_user_func ( array(get_class($that),'prepare'), $sql, $paramvars, null, true, $args ['debug_file'], $extra );
 		}
+
 		if($result && $sth->rowCount()===0){
 			return false;
 		}
@@ -579,15 +703,27 @@ class pdo5 {
 		if ($primary_name !== null) {
 			$sql = 'DELETE FROM ' . $tablename . ' WHERE ' . $primary_name . '=? LIMIT 1';
 			$paramvars = array ($primary_value );
-			$sth = $dbh->prepare ( $sql );
-			$result = ( bool ) $sth->execute ( $paramvars );
 		} else {
 			$sql = 'DELETE FROM ' . $tablename . ' LIMIT 1';
 			$paramvars = null;
+		}
+
+		// 是否强制参数转SQL
+		if (isset ($args ['sql_format']) && $args ['sql_format']) {
+			$sql = self::prepare ($dbh, $args, get_class($that), $sql, $paramvars, true);
+			$paramvars = null;
+		}
+
+		if (is_array ($paramvars)) {
+			$sth = $dbh->prepare ( $sql );
+			$result = ( bool ) $sth->execute ( $paramvars );
+		} else {
 			$sth = $dbh->prepare ( $sql );
 			$result = ( bool ) $sth->execute ();
 		}
-		if ($args ['debug_enable'] === true) {
+
+		// 数据库调试开关
+		if (isset ($args ['debug_enable']) && $args ['debug_enable']) {
 			if ($result === false) {
 				$err = $dbh->errorInfo();
 				$extra = array('errno'=>$err[1],'error'=>$err[2]);
@@ -596,6 +732,7 @@ class pdo5 {
 			}
 			call_user_func ( array(get_class($that),'prepare'), $sql, $paramvars, null, true, $args ['debug_file'], $extra );
 		}
+
 		if($result && $sth->rowCount()===0){
 			return false;
 		}
@@ -615,9 +752,23 @@ class pdo5 {
 	public static function replace($dbh, $args, $that, $tablename, $primary_index, $params) {
 		extract($params);
 		$sql = 'REPLACE INTO ' . $tablename . ' (' . $fieldname . ') VALUES (' . $valuename . ')';
-		$sth = $dbh->prepare ( $sql );
-		$result = ( bool ) $sth->execute ( $paramvars );
-		if ($args ['debug_enable'] === true) {
+
+		// 是否强制参数转SQL
+		if (isset ($args ['sql_format']) && $args ['sql_format']) {
+			$sql = self::prepare ($dbh, $args, get_class($that), $sql, $paramvars, true);
+			$paramvars = null;
+		}
+
+		if (is_array ($paramvars)) {
+			$sth = $dbh->prepare ( $sql );
+			$result = ( bool ) $sth->execute ( $paramvars );
+		} else {
+			$sth = $dbh->prepare ( $sql );
+			$result = ( bool ) $sth->execute ();
+		}
+
+		// 数据库调试开关
+		if (isset ($args ['debug_enable']) && $args ['debug_enable']) {
 			if ($result === false) {
 				$err = $dbh->errorInfo();
 				$extra = array('errno'=>$err[1],'error'=>$err[2]);
@@ -626,6 +777,7 @@ class pdo5 {
 			}
 			call_user_func ( array(get_class($that),'prepare'), $sql, $paramvars, null, true, $args ['debug_file'], $extra );
 		}
+
 		if ($result && $primary_name !== null) {
 			$that->$primary_name = $dbh->lastInsertId ();
 		}
