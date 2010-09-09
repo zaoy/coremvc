@@ -2,7 +2,7 @@
 /**
  * CoreMVC核心模块
  * 
- * @version 1.3.0 alpha 7
+ * @version 1.3.0 alpha 8
  * @author Z <602000@gmail.com>
  * @link http://www.coremvc.cn/
  */
@@ -516,11 +516,15 @@ class core {
 					} else {
 						$dbh = mysql_connect ( $server, $username, $password, ( bool ) $new_link, ( int ) $client_flags );
 					}
-					if ($dbname !== '') {
-						mysql_select_db ( $dbname, $dbh );
+					if ($dbname) {
+						mysql_select_db ($dbname, $dbh);
 					}
-					if ($charset !== '') {
-						mysql_set_charset ( $charset, $dbh );
+					if ($charset) {
+						if (function_exists ('mysql_set_charset')) {
+							mysql_set_charset ( $charset, $dbh );
+						} else {
+							mysql_query ('SET NAMES ' . $charset, $dbh);
+						}
 					}
 					break;
 			}
