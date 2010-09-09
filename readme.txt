@@ -2,7 +2,7 @@
 
 CoreMVC是一款灵巧的PHP开源框架。
 
-2010年9月8日
+2010年9月9日
 
 〖版权说明〗
 
@@ -11,7 +11,7 @@ CoreMVC遵从new BSD许可证，所以您可以在法律允许的范围以内任
 /**
  * CoreMVC核心模块
  * 
- * @version 1.3.0 alpha 7
+ * @version 1.3.0 alpha 8
  * @author Z <602000@gmail.com>
  * @link http://www.coremvc.cn/
  */
