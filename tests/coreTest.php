@@ -631,6 +631,7 @@ class coreTest extends PHPUnit_Framework_TestCase {
 				$result = ob_get_clean();
 				//仅显示
 				ob_start();
+				core::view(array('i'=>$i+1));
 				core::view($tpl,$view_arr[$i],$provider);
 				$this->assertSame($result, ob_get_clean());
 				//仅返回

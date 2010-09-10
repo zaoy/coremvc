@@ -2,7 +2,7 @@
 /**
  * CoreMVC核心模块
  * 
- * @version 1.3.0 alpha 9
+ * @version 1.3.0 alpha 10
  * @author Z <602000@gmail.com>
  * @link http://www.coremvc.cn/
  */
@@ -18,6 +18,7 @@ class core {
 	 */
 	private static $config = '';
 	private static $connect = '';
+	private static $view = '';
 
 	/**
 	 * 初始化函数（可继承）
@@ -39,22 +40,14 @@ class core {
 
 		// 导入配置文件
 		if (is_string ($current_config) && $current_config !== ''){
-			if ($self_flag){
-				$current_config = self::_init_file ($current_config);
-			} else {
-				$current_config = self::_init_file ($current_config, isset (self::$config ['config_path']) ? self::$config ['config_path'] : null);
-			}
+			$current_config = self::_init_file ($current_config);
 		}
 		if (! is_array ($current_config)) {
 			$current_config = array ();
 		}
 
 		// 导入环境变量
-		if ($self_flag){
-			$import_config = self::_init_env ('config', isset ($current_config ['config_path']) ? $current_config ['config_path'] : null);
-		} else {
-			$import_config = self::_init_env ('config', isset (self::$config ['config_path']) ? self::$config ['config_path'] : null);
-		}
+		$import_config = self::_init_env ('config');
 		if ($import_config !== array ()) {
 			$current_config = array_merge ($current_config, $import_config);
 		}
@@ -74,11 +67,7 @@ class core {
 		} elseif (is_string ($config)) {
 			if (strtolower (strrchr ($config, '.')) === '.php') {
 				// 导入配置文件
-				if ($self_flag){
-					$import_config = self::_init_file ($config, isset ($current_config ['config_path']) ? $current_config ['config_path'] : null);
-				} else {
-					$import_config = self::_init_file ($config, isset (self::$config ['config_path']) ? self::$config ['config_path'] : null);
-				}
+				$import_config = self::_init_file ($config);
 				if ($import_config !== array ()) {
 					$current_config = array_merge ($current_config, $import_config);
 				}
@@ -182,6 +171,7 @@ class core {
 	/**
 	 * 路径函数
 	 *
+	 * @link http://www.coremvc.cn/api/core/path.php
 	 * @param string $filename
 	 * @param string $filetype
 	 * @return string
@@ -190,13 +180,13 @@ class core {
 
 		switch ($filetype) {
 			case 'extension' :
-				$filepath = self::_path_extension ($filename, self::init ('extension_path'));
+				$filepath = self::_path_extension ($filename);
 				break;
 			case 'config' :
-				$filepath = self::_path_config ($filename, self::init ('config_path'));
+				$filepath = self::_path_config ($filename);
 				break;
 			case 'template' :
-				$filepath = self::_path_template ($filename, self::init ('template_path'));
+				$filepath = self::_path_template ($filename);
 				break;
 			default :
 				$filepath = self::_path_file ($filename);
@@ -212,13 +202,22 @@ class core {
 	/**
 	 * 视图函数（可继承）
 	 *
-	 * @param string $_view_file
+	 * @link http://www.coremvc.cn/api/core/view.php
+	 * @param mixed $_view_file_global
 	 * @param array $_view_vars
 	 * @param string $_view_type
 	 * @param bool $_view_show
 	 * @return string
 	 */
-	public static function view($_view_file, $_view_vars = null, $_view_type = null, $_view_show = null) {
+	public static function view($_view_file_global = null, $_view_vars = null, $_view_type = null, $_view_show = null) {
+
+		// 视图全局参数
+		self::_view_variable ($_view_file_global);
+		if (is_string($_view_file_global)) {
+			$_view_file = $_view_file_global;
+		} else {
+			return self::$view;
+		}
 
 		// 视图参数处理
 		$_view_init = self::init (false);
@@ -231,11 +230,11 @@ class core {
 
 		// 视图数据处理
 		if ($_view_config ['template_search'] !== '' && $_view_config ['template_search'] !== $_view_config ['template_replace']) {
-			$_view_file2 = self::_path_template (str_replace ($_view_config ['template_search'], $_view_config ['template_replace'], $_view_file), isset ($_view_init['template_path']) ? $_view_init['template_path'] : null);
+			$_view_file2 = self::_path_template (str_replace ($_view_config ['template_search'], $_view_config ['template_replace'], $_view_file));
 		} else {
-			$_view_file2 = self::_path_template ($_view_file, isset ($_view_init['template_path']) ? $_view_init['template_path'] : null);
+			$_view_file2 = self::_path_template ($_view_file);
 		}
-		$_view_vars2 = is_array ($_view_vars) ? $_view_vars : array ();
+		$_view_vars2 = is_array ($_view_vars) ? array_merge (self::$view, $_view_vars) : self::$view;
 		$_view_type2 = $_view_config ['template_type'] === '' ? 'include' : $_view_config ['template_type'];
 		$_view_show2 = $_view_show === null ? true : $_view_show;
 		$_view_self2 = __CLASS__;
@@ -260,7 +259,7 @@ class core {
 				}
 			default :
 				extract ( $_view_vars2 );
-				$_view_extension = self::_path_extension ($_view_type2 . '.php', isset ($_view_init['extension_path']) ? $_view_init['extension_path'] : null);
+				$_view_extension = self::_path_extension ($_view_type2 . '.php');
 				if (is_file ( $_view_extension)) {
 					return require $_view_extension;
 				} else {
@@ -288,41 +287,14 @@ class core {
 			if (empty ($connect)){
 				$connect = array();
 			} else {
-				$first = strlen($connect)>0 ? $connect['0'] : '';
-				if ($first === '@'){
-					$connect_file = dirname (__FILE__) . DIRECTORY_SEPARATOR . substr ($connect, 1);
-				} else {
-					$connect_file = $connect;
-				}
-				$ext = strtolower (strrchr ($connect_file, '.'));
-				if ($ext === '.php') {
-					if (is_file ($connect_file)) {
-						$connect = @require $connect_file;
-					}
-				}
-				if (! is_array ($connect)){
-					$connect = array();
+				$connect = self::_init_file ($connect);
+				if (! is_array ($connect)) {
+					$connect = array ();
 				}
 			}
-			// 导入环境变量
-			if (isset ($_SERVER [__CLASS__ . '_connect']) && $_SERVER [__CLASS__ . '_connect']) {
-				// 导入配置文件
-				$env_config = $_SERVER [__CLASS__ . '_connect'];
-				$first = $env_config ['0'];
-				if ($first === '@'){
-					$env_file = dirname (__FILE__) . DIRECTORY_SEPARATOR . substr ($env_config, 1);
-				} else {
-					$env_file = $env_config;
-				}
-				$ext = strtolower (strrchr ($env_file, '.'));
-				if ($ext === '.php') {
-					if (is_file ($env_file)) {
-						$import_config = @require $env_file;
-						if (is_array ($import_config) ){
-							$connect = array_merge ($connect, $import_config);
-						}
-					}
-				}
+			$import_config = self::_init_env ('connect');
+			if ($import_config !== array ()) {
+				$connect = array_merge ($connect, $import_config);
 			}
 		} elseif ($args === true && isset ($connect ['current']) && isset ($connect ['connections']) 
 			&& isset ($connect ['configs'] [$connect ['current']]) && isset ($connect ['connections'] [$connect ['current']])) {
@@ -336,7 +308,7 @@ class core {
 				default :
 					$callback = array ( $ref ['connect_provider'], 'reconnect' );
 					if (! is_callable ($callback)) {
-						$provider_file = self::_path_extension ( $ref ['connect_provider'] . '.php', self::init('extension_path') );
+						$provider_file = self::_path_extension ($ref ['connect_provider'] . '.php');
 						if (is_file ($provider_file)) {
 							require_once $provider_file;
 						}
@@ -399,23 +371,11 @@ class core {
 		} elseif (is_string ($args)) {
 			// 导入参数配置
 			$ext = strtolower (strrchr ($args,'.'));
-			if ($ext === '.php' || $ext === '.ini') {
-				$config_file = self::_path_config ($args,  self::init('config_path'));
+			if (strtolower (strrchr ($args,'.')) === '.php') {
 				// 导入参数文件
-				if ($ext === '.php') {
-					if (is_file ($config_file)) {
-						$import_config = @require $config_file;
-						if (is_array ($import_config)) {
-							$cfg = array_merge ($cfg, $import_config);
-						}
-					}
-				} elseif ($ext === '.ini') {
-					if (is_file ($config_file)) {
-						$import_config = @parse_ini_file($config_file);
-						if (is_array ($import_config)) {
-							$cfg = array_merge ($cfg, $import_config);
-						}
-					}
+				$import_config = self::_init_file ($args);
+				if ($import_config !== array ()) {
+					$cfg = array_merge ($cfg, $import_config);
 				}
 				$ref = $cfg;
 				return $dbh;
@@ -425,7 +385,6 @@ class core {
 				return isset($cfg [$args]) ? $cfg [$args] : '';
 			}
 		}
-
 
 		// 设置当前连接
 		$config = self::init (false);
@@ -451,7 +410,7 @@ class core {
 				default :
 					$callback = array ($ref ['connect_provider'], 'disconnect');
 					if (! is_callable ($callback)) {
-						$provider_file = self::_path_extension ( $ref ['connect_provider'] . '.php',  self::init('extension_path') );
+						$provider_file = self::_path_extension ($ref ['connect_provider'] . '.php');
 						if (is_file ($provider_file)) {
 							require_once $provider_file;
 						}
@@ -483,7 +442,7 @@ class core {
 				default :
 					$callback = array ($ref ['connect_provider'], 'connect');
 					if (! is_callable ($callback)) {
-						$provider_file = self::_path_extension ( $ref ['connect_provider'] . '.php',  self::init('extension_path') );
+						$provider_file = self::_path_extension ($ref ['connect_provider'] . '.php');
 						if (is_file ($provider_file)) {
 							require_once $provider_file;
 						}
@@ -1170,7 +1129,7 @@ class core {
 					// 【扩展功能】准备SQL语句
 					$callback = array ($args ['connect_provider'], 'prepare');
 					if (! is_callable ($callback)) {
-						$provider_file = self::_path_extension ( $args ['connect_provider'] . '.php', self::init('extension_path') );
+						$provider_file = self::_path_extension ($args ['connect_provider'] . '.php');
 						if (is_file ($provider_file)) {
 							require_once $provider_file;
 						}
@@ -2476,13 +2435,12 @@ class core {
 	 * 载入配置文件
 	 *
 	 * @param string $filename
-	 * @param string $config_path
 	 * @return array
 	 */
-	private static function _init_file($filename, $config_path = null) {
+	private static function _init_file($filename) {
 
 		if (strtolower (strrchr ($filename, '.')) === '.php') {
-			$filepath = self::_path_config ($filename, $config_path);
+			$filepath = self::_path_config ($filename);
 			if (is_file ($filepath)) {
 				$return = require $filepath;
 			}
@@ -2499,10 +2457,9 @@ class core {
 	 * 载入配置文件
 	 *
 	 * @param string $varname
-	 * @param string $config_path
 	 * @return array
 	 */
-	private static function _init_env($varname, $config_path = null) {
+	private static function _init_env($varname) {
 
 		//导入配置文件
 		static $static_htaccess;
@@ -2526,7 +2483,7 @@ class core {
 				$config = &$static_config [$varname];
 				$config = $_SERVER [__CLASS__ . '_' . $varname];
 				if (is_string ($config) && $config !== ''){
-					$config = self::_init_file ($config, isset ($config_path) ? $config_path : null);
+					$config = self::_init_file ($config);
 				}
 				if (! is_array ($config)) {
 					$config = array ();
@@ -2563,7 +2520,7 @@ class core {
 			$extension_prepend = $config['extension_prepend'];
 			// 类库功能启用
 			if ($extension_enable) {
-				$extension_path = rtrim (self::_path_extension ('', isset ($array['extension_path']) ? $array['extension_path'] : null), '/\\');
+				$extension_path = rtrim (self::_path_extension (''), '/\\');
 				$include_path_array = explode (PATH_SEPARATOR, get_include_path ());
 				if ( is_bool ($extension_prepend)) {
 					if ( in_array ($extension_path, $include_path_array) ) {
@@ -2583,7 +2540,7 @@ class core {
 				if ($extension_enable !== true) {
 					$extension_array = explode (',', $extension_enable);
 					foreach ($extension_array as $extension) {
-						$extension_file = self::_path_extension ( trim($extension) . '.php', isset ($array['extension_path']) ? $array['extension_path'] : null );
+						$extension_file = self::_path_extension (trim($extension) . '.php');
 						if (is_file ( $extension_file )) {
 							require_once $extension_file;
 						}
@@ -3355,12 +3312,12 @@ class core {
 	 * 扩展转义路径
 	 *
 	 * @param string $filename
-	 * @param string $extension_path
 	 * @return string
 	 */
-	private static function _path_extension($filename, $extension_path = null) {
+	private static function _path_extension($filename) {
 
 		$filepath = self::_path_file ($filename);
+		$extension_path = isset (self::$config ['extension_path']) ? self::$config ['extension_path'] : null;
 		if ($filepath === null) {
 			if (empty ($extension_path)) {
 				$filepath = dirname (__FILE__) . DIRECTORY_SEPARATOR . __CLASS__ . DIRECTORY_SEPARATOR . $filename;
@@ -3378,12 +3335,12 @@ class core {
 	 * 模板转义路径
 	 *
 	 * @param string $filename
-	 * @param string $template_path
 	 * @return string
 	 */
-	private static function _path_template($filename, $template_path = null) {
+	private static function _path_template($filename) {
 
 		$filepath = self::_path_file ($filename);
+		$template_path = isset (self::$config ['template_path']) ? self::$config ['template_path'] : null;
 		if ($filepath === null) {
 			if (empty ($template_path)) {
 				$filepath = $filename;
@@ -3401,12 +3358,12 @@ class core {
 	 * 配置转义路径
 	 *
 	 * @param string $filename
-	 * @param string $config_path
 	 * @return string
 	 */
-	private static function _path_config($filename, $config_path = null) {
+	private static function _path_config($filename) {
 
 		$filepath = self::_path_file ($filename);
+		$config_path = isset (self::$config ['config_path']) ? self::$config ['config_path'] : null;
 		if ($filepath === null) {
 			if (empty ($config_path)) {
 				$filepath = $filename;
@@ -3437,6 +3394,34 @@ class core {
 			$filepath = null;
 		}
 		return $filepath;
+
+	}
+
+	/**
+	 * 视图全局变量
+	 *
+	 * @param array $global
+	 */
+	private static function _view_variable($global= null) {
+
+		$variable = &self::$view;
+		if (! is_array ($variable)){
+			if (empty ($variable)){
+				$variable = array();
+			} else {
+				$variable = self::_init_file ($variable);
+				if (! is_array ($variable)) {
+					$variable = array ();
+				}
+			}
+			$import_config = self::_init_env ('view');
+			if ($import_config !== array ()) {
+				$variable = array_merge ($variable, $import_config);
+			}
+		}
+		if (is_array ($global)) {
+			$variable = array_merge ($variable, $global);
+		}
 
 	}
 
