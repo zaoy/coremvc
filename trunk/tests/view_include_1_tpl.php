@@ -1,1 +1,1 @@
-a<?php echo $z; ?>c
+a<?php echo $z; ?><?php echo $i; ?>c
