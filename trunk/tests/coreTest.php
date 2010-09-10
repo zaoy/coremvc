@@ -92,7 +92,6 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		//读取配置文件
 		$this->assertSame(array(),core::init(true));
 		$this->assertSame(array('e'=>true),core::init('@tests/init_1.php'));
-		$this->assertSame(array('e'=>true,'f'=>'1','g'=>'','h'=>'i'),core::init('@tests/init_2.ini'));
 		//配置指定变量
 		$value = '';
 		$this->assertSame(array(),core::init(null,$value));
@@ -678,6 +677,7 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			'prefix_replace' => '',
 			'debug_enable' => '',
 			'debug_file' => '',
+			'sql_format' => '',
 		);
 		$config2 = $config;
 		$config2['connect_username'] = 'ODBC';

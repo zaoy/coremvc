@@ -2,7 +2,7 @@
 /**
  * CoreMVC核心模块
  * 
- * @version 1.3.0 alpha 8
+ * @version 1.3.0 alpha 9
  * @author Z <602000@gmail.com>
  * @link http://www.coremvc.cn/
  */
@@ -30,39 +30,32 @@ class core {
 	public static function init($config = null, &$variable = null) {
 
 		// 引用参数处理
-		if ($variable === null){
-			$self_flag = true;
+		$self_flag = $variable === null;
+		if ($self_flag){
 			$current_config = &self::$config;
 		} else {
-			$self_flag = false;
 			$current_config = &$variable;
 		}
 
 		// 导入配置文件
-		if (! is_array ($current_config)){
-			if (empty ($current_config) || ! is_string ($current_config)){
-				$current_config = array();
+		if (is_string ($current_config) && $current_config !== ''){
+			if ($self_flag){
+				$current_config = self::_init_file ($current_config);
 			} else {
-				if ($self_flag){
-					$import_config = self::_init_file ($current_config);
-				} else {
-					$import_config = self::_init_file ($current_config, isset (self::$config ['config_path']) ? self::$config ['config_path'] : null);
-				}
-				if ($import_config === null) {
-					$current_config = array();
-				} else {
-					$current_config = $import_config;
-				}
+				$current_config = self::_init_file ($current_config, isset (self::$config ['config_path']) ? self::$config ['config_path'] : null);
 			}
+		}
+		if (! is_array ($current_config)) {
+			$current_config = array ();
 		}
 
 		// 导入环境变量
 		if ($self_flag){
-			$import_config = self::_init_environment (isset ($current_config ['config_path']) ? $current_config ['config_path'] : null);
+			$import_config = self::_init_env ('config', isset ($current_config ['config_path']) ? $current_config ['config_path'] : null);
 		} else {
-			$import_config = self::_init_environment (isset (self::$config ['config_path']) ? self::$config ['config_path'] : null);
+			$import_config = self::_init_env ('config', isset (self::$config ['config_path']) ? self::$config ['config_path'] : null);
 		}
-		if ($import_config !== null) {
+		if ($import_config !== array ()) {
 			$current_config = array_merge ($current_config, $import_config);
 		}
 
@@ -79,15 +72,14 @@ class core {
 			// 导入参数数组
 			$current_config = array_merge ($current_config, $config);
 		} elseif (is_string ($config)) {
-			$fileext = self::_init_fileext($config);
-			if ($fileext) {
+			if (strtolower (strrchr ($config, '.')) === '.php') {
 				// 导入配置文件
 				if ($self_flag){
 					$import_config = self::_init_file ($config, isset ($current_config ['config_path']) ? $current_config ['config_path'] : null);
 				} else {
 					$import_config = self::_init_file ($config, isset (self::$config ['config_path']) ? self::$config ['config_path'] : null);
 				}
-				if ($import_config !== null) {
+				if ($import_config !== array ()) {
 					$current_config = array_merge ($current_config, $import_config);
 				}
 			} else {
@@ -119,12 +111,12 @@ class core {
 	public static function stub($autoload_enable = null, $autoload_path = null, $autoload_extensions = null, $autoload_prepend = null) {
 
 		// 初始化自动载入功能
-		self::_stub_autoload (array (
-			'autoload_enable' => $autoload_enable,
-			'autoload_path' => $autoload_path,
-			'autoload_extensions' => $autoload_extensions,
-			'autoload_prepend' => $autoload_prepend,
-		));
+		$array = array ();
+		isset ($autoload_enable) and $array ['autoload_enable'] = $autoload_enable;
+		isset ($autoload_path) and $array ['autoload_path'] = $autoload_path;
+		isset ($autoload_extensions) and $array ['autoload_extensions'] = $autoload_extensions;
+		isset ($autoload_prepend) and $array ['autoload_prepend'] = $autoload_prepend;
+		self::_stub_autoload ($array);
 
 		// 判断访问或者引用
 		foreach ( debug_backtrace () as $row ) {
@@ -439,7 +431,7 @@ class core {
 		$config = self::init (false);
 		$properties = array ('connect_provider','connect_dsn','connect_type','connect_server','connect_username','connect_password',
 			'connect_new_link','connect_client_flags','connect_dbname','connect_charset','connect_port','connect_socket',
-			'connect_driver_options','prefix_search','prefix_replace','debug_enable','debug_file');
+			'connect_driver_options','prefix_search','prefix_replace','debug_enable','debug_file','sql_format');
 		foreach ($properties as $property) {
 			if (! isset ($cfg [$property])) {
 				if (isset ($config [$property])) {
@@ -2481,24 +2473,6 @@ class core {
 	}
 
 	/**
-	 * 返回文件扩展名
-	 *
-	 * @param string $filename
-	 * @return bool
-	 */
-	private static function _init_fileext($filename) {
-
-		if ($filename) {
-			$fileext = strtolower (strrchr ($filename, '.'));
-			if ($fileext === '.php' || $fileext === '.ini') {
-				return $fileext;
-			}
-		}
-		return null;
-
-	}
-
-	/**
 	 * 载入配置文件
 	 *
 	 * @param string $filename
@@ -2507,72 +2481,60 @@ class core {
 	 */
 	private static function _init_file($filename, $config_path = null) {
 
-		$fileext = self::_init_fileext($filename);
-		if ($fileext) {
+		if (strtolower (strrchr ($filename, '.')) === '.php') {
 			$filepath = self::_path_config ($filename, $config_path);
 			if (is_file ($filepath)) {
-				if ($fileext === '.php') {
-					$import_config = require $filepath;
-				} elseif ($fileext === '.ini') {
-					$import_config = parse_ini_file ($filepath);
-				}
+				$return = require $filepath;
 			}
 		}
-		if (empty ($import_config) || ! is_array($import_config)) {
-			$import_config = null;
+		if (! isset ($return) || ! is_array($return)) {
+			$return = array ();
 		}
 
-		return $import_config;
+		return $return;
 
 	}
 
 	/**
-	 * 载入环境变量配置
+	 * 载入配置文件
 	 *
+	 * @param string $varname
 	 * @param string $config_path
 	 * @return array
 	 */
-	private static function _init_environment($config_path = null) {
+	private static function _init_env($varname, $config_path = null) {
 
-		static $static_config;
-		if ($static_config === null) {
-			$static_config = array ();
-			$env_flag = __CLASS__ . '_config';
-			if (isset ($_SERVER [$env_flag])) {
-				//导入环境变量
-				$env_config = $_SERVER [$env_flag];
-				if ($env_config) {
-					$env_prefix = $env_flag . '_';
-					$env_length = strlen($env_prefix);
-					foreach ($_SERVER as $key=>$value) {
-						if (strncmp ($key, $env_prefix, $env_length) === 0) {
-							$static_config [substr ($key, $env_length)] = $value;
-						}
-					}
-					$import_config = self::_init_file ($env_config, isset ($static_config ['config_path']) ? $static_config ['config_path'] : $config_path);
-					if (is_array ($import_config) ){
-						$static_config = array_merge ($static_config, $import_config);
-					}
-				}
-			} elseif (is_file ('.htaccess')) {
-				//导入配置文件
+		//导入配置文件
+		static $static_htaccess;
+		if ($static_htaccess === null) {
+			$static_htaccess = array ();
+			if (! isset($_SERVER[__CLASS__.'_config']) && ! isset($_SERVER[__CLASS__.'_connect']) && ! isset($_SERVER[__CLASS__.'_view']) && is_file ('.htaccess')) {
 				$content = file_get_contents ('.htaccess');
-				if (preg_match ('/^\s*SetEnv\s+core_config\s+(.*)\s*$/im', $content, $matches)) {
-					$env_config = rtrim ($matches[1]);
-					if ($env_config) {
-						if (preg_match_all ('/^\s*SetEnv\s+core_config_(.+?)\s+(.*)\s*$/im',$content,$matches)) {
-							$static_config = array_combine($matches[1],array_map("rtrim",$matches[2]));
-						}
-						$import_config = self::_init_file ($env_config, isset ($static_config ['config_path']) ? $static_config ['config_path'] : $config_path);
-						if (is_array ($import_config) ){
-							$static_config = array_merge ($static_config, $import_config);
-						}
-					}
+				if (preg_match_all ('/^\s*SetEnv\s+(.+?)\s+(.*?)\s*$/im',$content,$matches)) {
+					$static_htaccess = array_combine($matches[1],$matches[2]);
+					parse_str(http_build_query($static_htaccess),$array);
+					$_SERVER = array_merge ($_SERVER, $array);
 				}
 			}
 		}
 
-		return $static_config;
+		//导入环境变量
+		static $static_config = array ();
+		if (! isset($static_config [$varname])) {
+			$static_config [$varname] = array();
+			if (isset ($_SERVER [__CLASS__ . '_' . $varname])) {
+				$config = &$static_config [$varname];
+				$config = $_SERVER [__CLASS__ . '_' . $varname];
+				if (is_string ($config) && $config !== ''){
+					$config = self::_init_file ($config, isset ($config_path) ? $config_path : null);
+				}
+				if (! is_array ($config)) {
+					$config = array ();
+				}
+			}
+		}
+
+		return $static_config [$varname];
 
 	}
 
@@ -2736,13 +2698,8 @@ class core {
 	private static function _stub_autoload($array) {
 
 		static $static_config;
-		if ($static_config === null || $static_config !== $array){
-			$static_config = array (
-				'autoload_enable' => null,
-				'autoload_path' => null,
-				'autoload_extensions' => null,
-				'autoload_prepend' => null,
-			);
+		if ($static_config === null || $array !== array()) {
+			$static_config = $array;
 			self::init ($array);
 		}
 
