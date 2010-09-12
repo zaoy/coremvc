@@ -1184,6 +1184,11 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): SELECT 1,\'a\''.PHP_EOL,ob_get_clean());
 			core::connect(array('debug_enable'=>'','sql_format'=>''));
 
+			// 链式操作
+			core::init(array('extension_enable'=>'chain'));
+			$this->assertEquals('1',chain::getInstance('core')->sql('SELECT 1 AS id')->getColumn());
+			core::init(array('extension_enable'=>''));
+
 			core::execute("DROP TABLE pre1_test");
 			core::connect(false);
 		}
@@ -1244,6 +1249,14 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): INSERT pre1_test(id,name) VALUES(1,\'a\')'.PHP_EOL,ob_get_clean());
 			core::connect(array('debug_enable'=>'','sql_format'=>''));
 			core::execute("TRUNCATE pre1_test");
+
+			// 链式操作
+			core::init(array('extension_enable'=>'chain'));
+			$this->assertSame(1,chain::getInstance('core')->table('pre_test')->set(array('id'=>1,'name'=>'core'))->insert());
+			$this->assertSame(2,chain::getInstance('core')->table('pre_test')->column('name')->value(array(array('name'=>'test'),array('name'=>'test')))->insert());
+			$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,'pre_test'));
+			core::execute("TRUNCATE pre1_test");
+			core::init(array('extension_enable'=>''));
 
 			core::execute("DROP TABLE pre1_test");
 			core::connect(false);
@@ -1311,6 +1324,14 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			core::connect(array('debug_enable'=>'','sql_format'=>''));
 			core::execute("TRUNCATE pre1_test");
 
+			// 链式操作
+			core::init(array('extension_enable'=>'chain'));
+			core::execute("INSERT INTO pre1_test(id,name) VALUES (1,'core'),(2,'test'),(3,'test')");
+			$this->assertSame(1,chain::getInstance('core')->table('pre_test')->set(array('name'=>'core1'))->where(array('id'=>1))->update());
+			$this->assertSame(2,chain::getInstance('core')->sql('UPDATE pre_test SET name=? WHERE id IN (?,?)')->param(array('test1',2,3))->update());
+			$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,'pre_test'));
+			core::execute("TRUNCATE pre1_test");
+			core::init(array('extension_enable'=>''));
 
 			core::execute("DROP TABLE pre1_test");
 			core::connect(false);
@@ -1381,6 +1402,16 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			core::connect(array('debug_enable'=>'','sql_format'=>''));
 			core::execute("TRUNCATE pre1_test");
 
+			// 链式操作
+			core::init(array('extension_enable'=>'chain'));
+			core::execute("INSERT INTO pre1_test(id,name) VALUES (1,'core'),(2,'test'),(3,'test')");
+			$this->assertSame(1,chain::getInstance('core')->table('pre_test')->where('id=1')->delete());
+			$this->assertEquals(array($obj2,$obj3),core::selects(null,'pre_test'));
+			$this->assertSame(2,chain::getInstance('core')->table('pre_test')->where(array('id'=>array(2,3)))->delete());
+			$this->assertEquals(array(),core::selects(null,'pre_test'));
+			core::execute("TRUNCATE pre1_test");
+			core::init(array('extension_enable'=>''));
+
 			core::execute("DROP TABLE pre1_test");
 			core::connect(false);
 		}
@@ -1448,6 +1479,16 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): REPLACE INTO pre1_test VALUES (1,\'a\')'.PHP_EOL,ob_get_clean());
 			core::connect(array('debug_enable'=>'','sql_format'=>''));
 			core::execute("TRUNCATE pre1_test");
+
+			// 链式操作
+			core::init(array('extension_enable'=>'chain'));
+			$this->assertSame(1,chain::getInstance('core')->table('pre_test')->set(array('id'=>1,'name'=>'core'))->replace());
+			$this->assertSame(2,chain::getInstance('core')->table('pre_test')->set(array('id'=>1,'name'=>'core'))->replace());
+			$this->assertSame(2,chain::getInstance('core')->table('pre_test')->column('name')->value(array(array('\'test\''),array('\'test\'')))->replace());
+			$this->assertSame(4,chain::getInstance('core')->sql('REPLACE INTO pre_test (id,name) VALUES (2,?),(3,?)')->param(array('test','test'))->replace());
+			$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,'pre_test'));
+			core::execute("TRUNCATE pre1_test");
+			core::init(array('extension_enable'=>''));
 
 			core::execute("DROP TABLE pre1_test");
 			core::connect(false);

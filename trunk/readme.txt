@@ -2,7 +2,7 @@
 
 CoreMVC是一款灵巧的PHP开源框架。
 
-2010年9月10日
+2010年9月12日
 
 〖版权说明〗
 
@@ -11,7 +11,7 @@ CoreMVC遵从new BSD许可证，所以您可以在法律允许的范围以内任
 /**
  * CoreMVC核心模块
  * 
- * @version 1.3.0 alpha 10
+ * @version 1.3.0 alpha 11
  * @author Z <602000@gmail.com>
  * @link http://www.coremvc.cn/
  */
@@ -59,6 +59,8 @@ CoreMVC 1.3.0 相对于 CoreMVC 1.2.0版本的改进
 6. 修改了.htaccess文件设置环境变量的方法，现在可以直接使用数组了。
 
 7. 增加了core::view的视图全局变量的功能，并可以在配置文件里设置。
+
+8. 增加了扩展类库：数据库链式操作。
 
 
 CoreMVC 1.2.0 相对于 CoreMVC 1.1.0版本的改进
@@ -194,6 +196,8 @@ core/					扩展目录，CoreMVC扩展目录，可删除。
 　│
 　├─　smarty3/			视图扩展，Smarty 3.x类库。
 　│
+　├─　chain.php			类库扩展，数据库链式操作。
+　│
 　├─　Zend.php			类库扩展，Zend类自动载入程序。
 　│
 　├─　Zend/				类库扩展，Zend类库。
@@ -227,6 +231,7 @@ smarty2zip
 smarty3		需自行下载相关类库(libs目录下)到扩展目录的smarty3目录
 
 类库扩展（其他扩展还在测试）
+chain
 Zend		需自行下载相关类库(library目录下)到扩展目录
 PHPExcel	需自行下载相关类库(Classes目录下)到扩展目录
 PHPMailler	需自行下载相关类库(3个类文件)到扩展目录的PHPMailer目录
