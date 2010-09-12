@@ -2,7 +2,7 @@
 /**
  * CoreMVC核心模块
  * 
- * @version 1.3.0 alpha 10
+ * @version 1.3.0 alpha 11
  * @author Z <602000@gmail.com>
  * @link http://www.coremvc.cn/
  */
@@ -2033,6 +2033,12 @@ class core {
 	 */
 	public function struct($row = null) {
 
+		// 验证方法名
+		if(! isset($this) || ! ($this instanceof self)) {
+			trigger_error('Cannot find the correct object, try ' . __FUNCTION__ . 's method.', E_USER_ERROR);
+			return;
+		}
+
 		// 【基础功能】返回实例数组
 		if ($row === null || $row === '') {
 			return get_object_vars ( $this );
@@ -2093,6 +2099,12 @@ class core {
 	 * @return bool
 	 */
 	public function select($tablename = '', $primary_index = 0) {
+
+		// 验证方法名
+		if(! isset($this) || ! ($this instanceof self)) {
+			trigger_error('Cannot find the correct object, try ' . __FUNCTION__ . 's method.', E_USER_ERROR);
+			return;
+		}
 
 		// 【基础功能】选择实例数据
 		$dbh = self::connect ( true, $args, array ('select', $tablename, $primary_index) );
@@ -2169,6 +2181,12 @@ class core {
 	 */
 	public function insert($tablename = '', $primary_index = 0) {
 
+		// 验证方法名
+		if(! isset($this) || ! ($this instanceof self)) {
+			trigger_error('Cannot find the correct object, try ' . __FUNCTION__ . 's method.', E_USER_ERROR);
+			return;
+		}
+
 		// 【基础功能】插入实例数据
 		$dbh = self::connect ( true, $args, array ('insert', $tablename, $primary_index) );
 		// 表名
@@ -2236,6 +2254,12 @@ class core {
 	 * @return bool
 	 */
 	public function update($tablename = '', $primary_index = 0) {
+
+		// 验证方法名
+		if(! isset($this) || ! ($this instanceof self)) {
+			trigger_error('Cannot find the correct object, try ' . __FUNCTION__ . 's method.', E_USER_ERROR);
+			return;
+		}
 
 		// 【基础功能】修改实例数据
 		$dbh = self::connect ( true, $args, array ('update', $tablename, $primary_index) );
@@ -2311,6 +2335,12 @@ class core {
 	 */
 	public function delete($tablename = '', $primary_index = 0) {
 
+		// 验证方法名
+		if(! isset($this) || ! ($this instanceof self)) {
+			trigger_error('Cannot find the correct object, try ' . __FUNCTION__ . 's method.', E_USER_ERROR);
+			return;
+		}
+
 		// 【基础功能】删除实例数据
 		$dbh = self::connect ( true, $args, array ('delete', $tablename, $primary_index) );
 		// 表名
@@ -2374,6 +2404,12 @@ class core {
 	 * @return bool
 	 */
 	public function replace($tablename = '', $primary_index = 0) {
+
+		// 验证方法名
+		if(! isset($this) || ! ($this instanceof self)) {
+			trigger_error('Cannot find the correct object, try ' . __FUNCTION__ . 's method.', E_USER_ERROR);
+			return;
+		}
 
 		// 【基础功能】更新实例数据
 		$dbh = self::connect ( true, $args, array ('replace', $tablename, $primary_index) );
@@ -2522,7 +2558,7 @@ class core {
 			if ($extension_enable) {
 				$extension_path = rtrim (self::_path_extension (''), '/\\');
 				$include_path_array = explode (PATH_SEPARATOR, get_include_path ());
-				if ( is_bool ($extension_prepend)) {
+				if ($extension_prepend !== '') {
 					if ( in_array ($extension_path, $include_path_array) ) {
 						$include_path_array = array_values(array_diff($include_path_array, array($extension_path)));
 					}
@@ -2537,7 +2573,7 @@ class core {
 					set_include_path ( implode (PATH_SEPARATOR, $include_path_array));
 				}
 				// 自动载入类库
-				if ($extension_enable !== true) {
+				if (is_string($extension_enable) && $extension_enable !== '1') {
 					$extension_array = explode (',', $extension_enable);
 					foreach ($extension_array as $extension) {
 						$extension_file = self::_path_extension (trim($extension) . '.php');
