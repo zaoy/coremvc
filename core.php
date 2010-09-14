@@ -2,7 +2,7 @@
 /**
  * CoreMVC核心模块
  * 
- * @version 1.3.0 alpha 11
+ * @version 1.3.0 alpha 12
  * @author Z <602000@gmail.com>
  * @link http://www.coremvc.cn/
  */
@@ -41,6 +41,8 @@ class core {
 		// 导入配置文件
 		if (is_string ($current_config) && $current_config !== ''){
 			$current_config = self::_init_file ($current_config);
+		} elseif ($self_flag && $current_config === '') {
+			$current_config = self::_init_file ('@' . __CLASS__ . '/config.php');
 		}
 		if (! is_array ($current_config)) {
 			$current_config = array ();
