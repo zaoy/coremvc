@@ -414,6 +414,37 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		$this->assertSame('message2',core::main('final,object,action','','main_2_5','message2'));
 
 
+		// 1.3数组测试
+		$this->assertSame(array('main_2_3','test_2_3'),core::main('module,action','','main_2_3','test_2_3'));
+		$this->assertEquals(array(new main_2_3,'test_2_3_a'),core::main('module,action','','main_2_3','test_2_3_a'));
+		$this->assertSame(array('main_2_3',false),core::main('module,action','','main_2_3','test_2_3_x'));
+		$this->assertSame(array('main_2_3',''),core::main('module,action','','main_2_3','*|test_2_3_x'));
+		$this->assertSame(array('main_2_3',''),core::main('module,action','','main_2_3','*|(function)::test_2_3_x'));
+		$this->assertSame(array('','substr'),core::main('module,action','','main_2_3','*|(function)::substr'));
+		$this->assertSame(array('','substr'),core::main('module,action','','main_2_3','(function)::substr'));
+		$this->assertSame(array('main_2_3',false),core::main('module,action','','main_2_3','(function)::substr_x'));
+
+		$this->assertSame(array('main_2_5','arr',array('a','b')),core::main('module,action,parameter','','main_2_5','arr','a,b'));
+		$this->assertSame(array('main_2_5','arr',array(',','()')),core::main('module,action,parameter','','main_2_5','arr','(comma),(open_paren)(close_paren)'));
+		$this->assertSame(array('main_2_5','arr',array('main_2_5-arr')),core::main('module,action,parameter','','main_2_5','arr','(module)-(action)'));
+		$this->assertEquals(array('main_2_5','arr',array(null,'main_2_5-arr')),core::main('module,action,parameter','','main_2_5','arr',',(module)-(action)'));
+
+		$this->assertSame(array('main_2_3',array(array('main_2_3','test_2_3'),array('main_2_5','index'))),core::main('module,action','','main_2_3',array('main_2_3::test_2_3','main_2_5::index')));
+		$this->assertSame(array('main_2_3',array()),core::main('module,action','','main_2_3',array('main_2_3::test_2_3_x','main_2_5::index')));
+		$this->assertSame(array('main_2_3',array(array('main_2_3','test_2_3'),array('main_2_5','index'))),core::main('module,action','','main_2_3',array('*|main_2_3::test_2_3','main_2_5::index')));
+		$this->assertSame(array('main_2_3',array('',array('main_2_5','index'))),core::main('module,action','','main_2_3',array('*|main_2_3::test_2_3_x','main_2_5::index')));
+		$this->assertSame(array('main_2_3',array('substr',array('main_2_5','index'))),core::main('module,action','','main_2_3',array('(function)::substr','main_2_5::index')));
+		$this->assertSame(array('main_2_3',array(array('main_2_5','arr')),array(array())),core::main('module,action,parameter','','main_2_3',array('main_2_5::arr'),'1,2'));
+		$this->assertSame(array('main_2_3',array(array('main_2_5','arr')),array(array('1','2'))),core::main('module,action,parameter','','main_2_3',array('main_2_5::arr'),array('1,2')));
+		$this->assertSame(array('main_2_3',array(array('main_2_5','arr')),array(array())),core::main('module,action,parameter','','main_2_3',array('main_2_5::arr'),array(1=>'1,2')));
+		$this->assertSame(array('main_2_3',array('substr',array('main_2_5','arr')),array(array('abc','1','1'),array('1','2'))),core::main('module,action,parameter','','main_2_3',array('(function)::substr','main_2_5::arr'),array('abc,1,1','1,2')));
+
+		$this->assertSame('b',core::main('return','','main_2_3','(function)::substr','abc,1,1'));
+		$this->assertSame(array('b',array('1','2')),core::main('return','','main_2_3',array('(function)::substr','main_2_5::arr'),array('abc,1,1','1,2')));
+		$this->assertSame(array(null,array('1','2')),core::main('return','','main_2_3',array('*|(function)::aaa','main_2_5::arr'),array('abc,1,1','1,2')));
+		$this->assertSame(array(),core::main('return','','main_2_3',array('(function)::aaa','main_2_5::arr'),array('abc,1,1','1,2')));
+
+
 
 		//恢复原来值
 		core::init(array(
