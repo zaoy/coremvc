@@ -2,7 +2,7 @@
 /**
  * CoreMVC核心模块
  * 
- * @version 1.3.0 alpha 13
+ * @version 1.3.0 alpha 14
  * @author Z <602000@gmail.com>
  * @link http://www.coremvc.cn/
  */
