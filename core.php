@@ -2,7 +2,7 @@
 /**
  * CoreMVC核心模块
  * 
- * @version 1.3.0 alpha 12
+ * @version 1.3.0 alpha 13
  * @author Z <602000@gmail.com>
  * @link http://www.coremvc.cn/
  */
@@ -2775,28 +2775,48 @@ class core {
 			$action = '[get:1]|index'; //默认值：[get:1]|index
 		} else {
 			$action = $array ['framework_action'];
-			if (strpos ($action, '(self)') !== false) {
-				$action = str_replace ('(self)', __CLASS__, $action);
+		}
+		$action_multi = is_array ($action);
+		if ($action_multi) {
+			$action_array = &$action;
+			$action_string = implode (' ', $action);
+		} else {
+			$action_array = array(&$action);
+			$action_string = $action;
+		}
+		foreach ($action_array as &$action_value) {
+			if (strpos ($action_value, '(self)') !== false) {
+				$action_value = str_replace ('(self)', __CLASS__, $action_value);
 			}
-			if (strpos ($action, '(static)') !== false) {
-				$action = str_replace ('(static)', $classname_static, $action);
+			if (strpos ($action_value, '(static)') !== false) {
+				$action_value = str_replace ('(static)', $classname_static, $action_value);
 			}
 		}
 		if (empty($array ['framework_parameter'])) {
 			$parameter = '';
 		} else {
 			$parameter = $array ['framework_parameter'];
-			if (strpos ($parameter, '(self)') !== false) {
-				$parameter = str_replace ('(self)', __CLASS__, $parameter);
+		}
+		$parameter_multi = is_array ($parameter);
+		if ($parameter_multi) {
+			$parameter_array = &$parameter;
+			$parameter_string = implode (' ', $parameter);
+		} else {
+			$parameter_array = array(&$parameter);
+			$parameter_string = $parameter;
+		}
+		foreach ($parameter_array as &$parameter_value) {
+			if (strpos ($parameter_value, '(self)') !== false) {
+				$parameter_value = str_replace ('(self)', __CLASS__, $parameter_value);
 			}
-			if (strpos ($parameter, '(static)') !== false) {
-				$parameter = str_replace ('(static)', $classname_static, $parameter);
+			if (strpos ($parameter_value, '(static)') !== false) {
+				$parameter_value = str_replace ('(static)', $classname_static, $parameter_value);
 			}
 		}
 
 		// 2. 生成替换数组
 		$value_array = array();
-		$string = $require . ' ' . $module . ' ' . $action . ' ' . $parameter;
+		$string = $require . ' ' . $module . ' ' . $action_string . ' ' . $parameter_string;
 		if (stripos ( $string, '[get:' ) !== false) {
 			$get_array = array_values($_GET) + $_GET;
 			array_unshift ( $get_array, null);
@@ -2947,56 +2967,108 @@ class core {
 		}
 
 		// 6. 处理动作部份
-		$action_now = '';
-		$result_array = self::_main_framework_resolve ($action, $value_array, 'action',$module_now);
-		foreach ($result_array as $value){
-			list ($module_new, $action_new) = $value;
-			if ($module_new !== $module_now) {
-				if (preg_match ( '/(^|\\\\)[0-9]/', $module_new ) === 1) {
-					continue;
-				}
-				try {
-					if (! class_exists ($module_new)){
+		if ($action_multi) {
+			$action_now = array ();
+		} else {
+			$action_now = false;
+		}
+		foreach ($action_array as $action_key=>&$action_value) {
+			$action_now2 = false;
+			$action_extra = strncmp ($action_value, '*|', 2) === 0;
+			if ($action_extra) {
+				$action_value2 = substr ($action_value, 2);
+				$action_now2 = '';
+			} else {
+				$action_value2 = $action_value;
+			}
+			$result_array = self::_main_framework_resolve ($action_value2, $value_array, 'action',$module_now);
+			foreach ($result_array as $value){
+				list ($module_new, $action_new) = $value;
+				if ($module_new === '(function)') {
+					if (! function_exists ($action_new)) {
 						continue;
 					}
-				} catch ( Exception $e ) {
-					continue;
+					$module_now2 = '';
+					$action_now2 = $action_new;
+					break;
+				} else {
+					if ($module_new !== $module_now) {
+						if (preg_match ( '/(^|\\\\)[0-9]/', $module_new ) === 1) {
+							continue;
+						}
+						try {
+							if (! class_exists ($module_new)){
+								continue;
+							}
+						} catch ( Exception $e ) {
+							continue;
+						}
+						$class = new ReflectionClass ( $module_new );
+						if ($class->isAbstract () || $class->isInterface ()) {
+							continue;
+						}
+						if (! $action_extra && $class->isInternal ()) {
+							continue;
+						}
+					}
+					if (! method_exists ( $module_new, $action_new )) {
+						continue;
+					}
+					$method = new ReflectionMethod ( $module_new, $action_new );
+					if (! $method->isPublic () || $method->isConstructor () || $method->isDestructor () ) {
+						continue;
+					}
+					if (! $action_extra && in_array('static', $return_array) && ! in_array('object', $return_array)) {
+						if (! $method->isStatic ()) {
+							continue;
+						}
+					} elseif (! $action_extra && in_array('object', $return_array) && ! in_array('static', $return_array)) {
+						if ($method->isStatic ()) {
+							continue;
+						}
+					}
+					if (! $action_extra && in_array ('final', $return_array)) {
+						if (! $method->isFinal () ) {
+							continue;
+						}
+					}
+					$module_now2 = $method->isStatic () ? $module_new : new $module_new;
+					$action_now2 = $action_new;
+					break;
 				}
-				$class = new ReflectionClass ( $module_new );
-				if ( $class->isInternal () || $class->isAbstract () || $class->isInterface () ) {
-					continue;
+			}
+			if ($action_now2 === false) {
+				if (! $action_extra) {
+					if ($action_multi) {
+						$action_now = array();
+					} else {
+						$action_now = false;
+					}
+					break;
+				}
+			} elseif ($action_now2 === '') {
+				if ($action_multi) {
+					$action_now [$action_key] = '';
+				} else {
+					$action_now = '';
+				}
+			} else {
+				if ($action_multi) {
+					if ($module_now2 === '') {
+						$action_now [$action_key] = $action_now2;
+					} else {
+						$action_now [$action_key] = array ($module_now2, $action_now2);
+					}
+				} else {
+					$module_now = $module_now2;
+					$action_now = $action_now2;
+					if (isset ($return4_result ['module'])) {
+						$return4_result ['module'] = $module_now;
+					}
 				}
 			}
-			if (! method_exists ( $module_new, $action_new )) {
-				continue;
-			}
-			$method = new ReflectionMethod ( $module_new, $action_new );
-			if (! $method->isPublic () || $method->isConstructor () || $method->isDestructor () ) {
-				continue;
-			}
-			if ( in_array('static', $return_array) && ! in_array('object', $return_array) ) {
-				if (! $method->isStatic ()) {
-					continue;
-				}
-			} elseif ( in_array('object', $return_array) && ! in_array('static', $return_array) ) {
-				if ($method->isStatic ()) {
-					continue;
-				}
-			}
-			if ( in_array( 'final', $return_array ) ) {
-				if (! $method->isFinal () ) {
-					continue;
-				}
-			}
-			$isstatic = $method->isStatic ();
-			$module_now = $module_new;
-			$action_now = $action_new;
-			if (isset ($return4_result ['module'])) {
-				$return4_result ['module'] = $module_now;
-			}
-			break;
 		}
-		if ($action_now === '') {
+		if ($action_now === false || $action === array()) {
 			if ($return4_final === '') {
 				if (! in_array ('manual',$return_array)) {
 					self::_main_hide ($array);
@@ -3019,28 +3091,69 @@ class core {
 		}
 
 		// 7. 处理参数部份
-		$parameter_array = array();
-		if ($parameter) {
-			$result_array = self::_main_framework_resolve ($parameter, $value_array, 'parameter',array($module_now,$action_now));
-			foreach ($result_array as $value){
-				$parameter_array = array_slice ($value, 2);
-				break;
+		$parameter_now = array ();
+		if ($action_multi) {
+			foreach ($action_now as $action_key=>&$action_value) {
+				$parameter_now [$action_key] = array ();
+				if ($parameter && is_array($parameter) && isset ($parameter [$action_key]) && $action_value !== '') {
+					if (! is_array ($action_value)) {
+						$module_now3 = '';
+						$action_now3 = $action_value;
+					} elseif (is_object ($action_value [0])) {
+						$module_now3 = get_class ($action_value [0]);
+						$action_now3 = $action_value [1];
+					} else {
+						$module_now3 = $action_value [0];
+						$action_now3 = $action_value [1];
+					}
+					$result_array = self::_main_framework_resolve ($parameter [$action_key], $value_array, 'parameter',array($module_now3,$action_now3));
+					foreach ($result_array as $value){
+						$parameter_now [$action_key] = array_slice ($value, 2);
+						break;
+					}
+				}
+			}
+		} else {
+			if ($parameter && $action_now !== '') {
+				$module_now3 = is_object($module_now) ? get_class ($module_now) : $module_now;
+				$action_now3 = $action_now;
+				$result_array = self::_main_framework_resolve ($parameter, $value_array, 'parameter',array($module_now3,$action_now3));
+				foreach ($result_array as $value){
+					$parameter_now = array_slice ($value, 2);
+					break;
+				}
 			}
 		}
 		if (isset ($return4_result ['parameter'])) {
-			$return4_result ['parameter'] = $parameter_array;
+			$return4_result ['parameter'] = $parameter_now;
 		}
 		if ($return4_array === array('parameter')) {
-			return $parameter_array;
+			return $parameter_now;
 		} elseif ($return4_final === 'parameter') {
 			return array_values($return4_result);
 		}
 
 		// 8. 执行
-		if ( ! $isstatic ) {
-			$module_now = new $module_now;
+		if ($action_multi) {
+			$return = array ();
+			foreach ($action_now as $action_key=>&$action_value) {
+				if ($action_value === '') {
+					$return [$action_key] = null;
+				} elseif ($action_value [0] === '') {
+					$return [$action_key] = call_user_func_array ($action_value [1], $parameter_now [$action_key]);
+				} else {
+					$return [$action_key] = call_user_func_array ($action_value, $parameter_now [$action_key]);
+				}
+			}
+		} else {
+			if ($action_now === '') {
+				$return = null;
+			} elseif ($module_now === '') {
+				$return = call_user_func_array ($action_now, $parameter_now);
+			} else {
+				$return = call_user_func_array (array ($module_now, $action_now ), $parameter_now);
+			}
 		}
-		$return = call_user_func_array ( array ($module_now, $action_now ) , $parameter_array );
 		if ( in_array( 'return', $return_array ) ) {
 			return $return;
 		} else {
@@ -3108,6 +3221,18 @@ class core {
 				$arr = explode(',', $str);
 				$str = $prefix;
 				foreach ($arr as $value) {
+					if (strpos ($value, '(comma)') !== false) {
+						$value = str_replace ('(comma)', ',', $value);
+					}
+					if (strpos ($value, '(module)') !== false) {
+						$value = str_replace ('(module)', $prefix[0], $value);
+					}
+					if (strpos ($value, '(action)') !== false) {
+						$value = str_replace ('(action)', $prefix[1], $value);
+					}
+					if (strpos ($value, '(open_paren)') !== false || strpos ($value, '(close_paren)') !== false) {
+						$value = str_replace (array ('(open_paren)', '(close_paren)'), array ('(', ')'), $value);
+					}
 					$str [] = self::_main_framework_replace ($value, $value_array, false);
 				}
 			} else {
