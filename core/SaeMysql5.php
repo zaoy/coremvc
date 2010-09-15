@@ -1,5 +1,11 @@
 <?php
 /**
+ * Sae的Mysql主读分离
+ * 
+ * 这是CoreMVC扩展文件。
+ */
+
+/**
  * 定义(define)
  */
 class SaeMysql5 {
