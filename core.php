@@ -2,7 +2,7 @@
 /**
  * CoreMVC核心模块
  * 
- * @version 1.3.0 alpha 14
+ * @version 1.3.0
  * @author Z <602000@gmail.com>
  * @link http://www.coremvc.cn/
  */
@@ -139,9 +139,22 @@ class core {
 
 		// 一次跳转功能
 		$config = self::init (false);
-		if (isset ($config['framework_function']) && is_callable ($config['framework_function'])) {
-			self::init (array ('framework_function'=>''));
-			return call_user_func ($framework_function, $framework_enable, $framework_require, $framework_module, $framework_action, $framework_parameter);
+		if (! empty ($config ['framework_function'])) {
+			$function = $config ['framework_function'];
+			if (! is_array ($function)) {
+				$function = (array) $function;
+			}
+			foreach ($function as $function_key=>$function_value) {
+				unset ($function[$function_key]);
+				break;
+			}
+			if ($function === array ()) {
+				$function = '';
+			}
+			self::init (array ('framework_function'=>$function));
+			if (is_callable ($function_value)) {
+				return call_user_func ($function_value, $framework_enable, $framework_require, $framework_module, $framework_action, $framework_parameter);
+			}
 		}
 
 		// 入口参数处理

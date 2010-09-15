@@ -444,15 +444,30 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		$this->assertSame(array(null,array('1','2')),core::main('return','','main_2_3',array('*|(function)::aaa','main_2_5::arr'),array('abc,1,1','1,2')));
 		$this->assertSame(array(),core::main('return','','main_2_3',array('(function)::aaa','main_2_5::arr'),array('abc,1,1','1,2')));
 
+		//跳转功能
+		require_once core::path('@tests/main_2_8.php');
+		core::init(array('framework_function'=>'main_2_8::main','hide_info'=>'aaa'));
+		ob_start();
+		$result = core::main();
+		$this->assertSame('mainaaa'.PHP_EOL, ob_get_clean());
+		$this->assertSame('', core::init('framework_function'));
+		core::init(array('framework_function'=>'','hide_info'=>''));
+
+		core::init(array('framework_function'=>array('main_2_8::main1','main_2_8::main2'),'hide_info'=>'aaa'));
+		ob_start();
+		$result = core::main();
+		$this->assertSame('main1main2aaa'.PHP_EOL, ob_get_clean());
+		$this->assertSame('', core::init('framework_function'));
+		core::init(array('framework_function'=>'','hide_info'=>''));
 
 
 		//恢复原来值
 		core::init(array(
+			'framework_function'=>'',
 			'framework_enable'=>'',
 			'framework_require'=>'',
 			'framework_module'=>'',
 			'framework_action'=>'',
-			'framework_hidden'=>'',
 			'framework_parameter'=>'',
 		));
 		
