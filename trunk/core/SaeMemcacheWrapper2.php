@@ -1,8 +1,9 @@
 <?php
 /**
- * Sae的Smarty缓存协议
+ * saemc2协议(使用如saemc2://key可操作memcache)
  * 
- * 这是CoreMVC扩展文件。
+ * @author Z <602000@gmail.com>
+ * @version 1.0
  */
 
 /**
@@ -13,19 +14,21 @@ class SaeMemcacheWrapper2 {
 	/**
 	 * Stream变量
 	 */
-	public static $memcache;
+	private static $memcache;
+	private $path;
 	private $handle;
-	private $data_cache_id;
-	private $stat_cache_id;
 	
 	/**
 	 * Stream函数组
 	 * @param string $path
 	 * @return string
 	 */
-	private function init_cache_id($path) {
-		$this->data_cache_id = str_replace('saemc2://smarty_data', 'smarty_data', $path);
-		$this->stat_cache_id = str_replace('saemc2://smarty_data', 'smarty_stat', $path);
+	private function memcache_init() {
+		if (self::$memcache !== null) {
+			return self::$memcache;
+		}
+		self::$memcache = memcache_init ();
+		return self::$memcache;
 	}
 	
 	/**
@@ -47,8 +50,6 @@ class SaeMemcacheWrapper2 {
 	 * stream_close
 	 */
 	public function stream_close() {
-		$this->data_cache_id = null;
-		$this->stat_cache_id = null;
 		fclose ( $this->handle );
 	}
 	
@@ -86,12 +87,17 @@ class SaeMemcacheWrapper2 {
 	 * @return bool
 	 */
 	public function stream_open($path, $mode, $options, &$opend_path) {
-		$this->init_cache_id($path);
-		$file = str_replace('saemc2://smarty_data/', SAE_TMP_PATH . '/smarty_data_', $path);
-		$data_variable = memcache_get(self::$memcache, $this->data_cache_id);
-		if ($data_variable !== false) {
-			file_put_contents ($file, $data_variable);
+		$mc = self::memcache_init();
+		if ($mc === false) {
+			return false;
 		}
+		$this->path = $path;
+		$data = memcache_get($mc, $path);
+		if ($data === false) {
+			$data = '';
+		}
+		$file = str_replace('saemc2:/', SAE_TMP_PATH, $path);
+		file_put_contents ($file, $data);
 		$this->handle = fopen ($file, $mode);
 		return true;
 	}
@@ -148,8 +154,11 @@ class SaeMemcacheWrapper2 {
 	 * @return int
 	 */
 	public function stream_write($data) {
-		memcache_set(self::$memcache, $this->stat_cache_id, time());
-		memcache_set(self::$memcache, $this->data_cache_id, $data);
+		$mc = self::memcache_init();
+		if ($mc === false) {
+			return false;
+		}
+		memcache_set($mc, $this->path, $data);
 		return fwrite ( $this->handle, $data );
 	}
 	
@@ -160,27 +169,36 @@ class SaeMemcacheWrapper2 {
 	 * @return array
 	 */
 	public function url_stat($path, $flag) {
-		$data_cache_id = str_replace('saemc2://smarty_data', 'smarty_data', $path);
-		$stat_cache_id = str_replace('saemc2://smarty_data', 'smarty_stat', $path);
-		$data_variable = memcache_get(self::$memcache, $data_cache_id);
-		$stat_variable = memcache_get(self::$memcache, $stat_cache_id);
+		$mc = self::memcache_init();
+		if ($mc === false) {
+			return false;
+		}
+		$data = memcache_get($mc, $path);
+		if ($data === false) {
+			$mode = 16895;
+			$size = 0;
+			$mtime = 0;
+		} else {
+			$mode = 16895;
+			$size = strlen ($data);
+			$mtime = time ();
+		}
 		$keys = array(
-			'dev'     => 0,
-			'ino'     => 0,
-			'mode'    => 16895,
-			//'mode'    => 33216,
-			'nlink'   => 0,
-			'uid'     => 0,
-			'gid'     => 0, 
-			'rdev'    => 0,
-			'size'    => $data_variable ? strlen($data_variable) : 0,
-			'atime'   => 0,
-			'mtime'   => $stat_variable ? $stat_variable : 0,
-			'ctime'   => 0,
-			'blksize' => 0,
-			'blocks'  => 0
+			'dev'		=> 0,
+			'ino'		=> 0,
+			'mode'		=> $mode,
+			'nlink'		=> 0,
+			'uid'		=> 0,
+			'gid'		=> 0, 
+			'rdev'		=> 0,
+			'size'		=> $size,
+			'atime'		=> 0,
+			'mtime'		=> $mtime,
+			'ctime'		=> 0,
+			'blksize'	=> 0,
+			'blocks'	=> 0
 		);
-		return array_merge(array_values($keys), $keys);
+		return array_merge (array_values($keys), $keys);
 	}
 	
 	/**
@@ -190,14 +208,16 @@ class SaeMemcacheWrapper2 {
 	 * @return bool
 	 */
 	public function rename ($path_from, $path_to) {
-		$from_cache_id = str_replace('saemc2://smarty_data', 'smarty_data', $path_from);
-		$data_variable = memcache_get(self::$memcache, $from_cache_id);
-		if ($data_variable !== false) {
-			$to_cache_id = str_replace('saemc2://smarty_data', 'smarty_data', $path_to);
-			memcache_set(self::$memcache, $to_cache_id, $data_variable);
-			return true;
+		$mc = self::memcache_init();
+		if ($mc === false) {
+			return false;
 		}
-		return false;
+		$data = memcache_get($mc, $path_from);
+		if ($data === false) {
+			return false;
+		}
+		memcache_set($mc, $path_to, $data);
+		return true;
 	}
 
 	/**
@@ -206,8 +226,11 @@ class SaeMemcacheWrapper2 {
 	 * @return bool
 	 */
 	public function unlink ($path) {
-		$data_cache_id = str_replace('saemc2://smarty_data', 'smarty_data', $path);
-		memcache_delete(self::$memcache, $data_cache_id);
+		$mc = self::memcache_init();
+		if ($mc === false) {
+			return false;
+		}
+		memcache_delete($mc, $path);
 		return true;
 	}
 
@@ -217,7 +240,5 @@ class SaeMemcacheWrapper2 {
 /**
  * 执行(execute)
  */
-if (! in_array ( 'saemc2', stream_get_wrappers () )) {
-	stream_wrapper_register ( 'saemc2', 'SaeMemcacheWrapper2' );
-}
+stream_wrapper_register ( 'saemc2', 'SaeMemcacheWrapper2' );
 ?>
