@@ -1,0 +1,1 @@
+a<?php self::view('@tests/view_include_2_tpl2.php',array('y'=>$z)); ?>c
