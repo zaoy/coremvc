@@ -2,7 +2,7 @@
 /**
  * CoreMVC核心模块
  * 
- * @version 1.3.0
+ * @version 1.3.2 alphpa 1
  * @author Z <602000@gmail.com>
  * @link http://www.coremvc.cn/
  */
@@ -2865,9 +2865,15 @@ class core {
 		}
 		if (stripos ( $string, '[file:' ) !== false) {
 			$file_array = array ();
-			// 测试时要小心此处查找的是上上个调用者
-			list(,$row) = debug_backtrace ();
-			strtok ( $row ['file'], '/\\' );
+			$debug_backtrace = debug_backtrace ();
+			$row = next ($debug_backtrace);
+			$filepath = $row['file'];
+			while (list (, $row) = each ($debug_backtrace)) {
+				if ($row ['function'] === 'main' && $row ['class'] === __CLASS__ && $row ['type'] === '::') {
+					$filepath = $row ['file'];
+				}
+			}
+			strtok ( $filepath, '/\\' );
 			while ( ($tok = strtok ( '/\\' )) !== false ) {
 				array_unshift ( $file_array, $tok );
 			}
