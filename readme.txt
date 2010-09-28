@@ -11,7 +11,7 @@ CoreMVC遵从new BSD许可证，所以您可以在法律允许的范围以内任
 /**
  * CoreMVC核心模块
  * 
- * @version 1.3.2 alpha 2
+ * @version 1.3.2
  * @author Z <602000@gmail.com>
  * @link http://www.coremvc.cn/
  */
