@@ -2,7 +2,7 @@
 /**
  * CoreMVC核心模块
  * 
- * @version 1.3.2 alphpa 1
+ * @version 1.3.2 alphpa 2
  * @author Z <602000@gmail.com>
  * @link http://www.coremvc.cn/
  */
@@ -153,6 +153,7 @@ class core {
 			}
 			self::init (array ('framework_function'=>$function));
 			if (is_callable ($function_value)) {
+				self::_main_framework_first (true);
 				return call_user_func ($function_value, $framework_enable, $framework_require, $framework_module, $framework_action, $framework_parameter);
 			}
 		}
@@ -2757,11 +2758,7 @@ class core {
 	private static function _main_framework($array, $return_array) {
 
 		// 1. 设置默认值、替换内置宏
-		if (function_exists ('get_called_class')) {
-			$classname_static =  get_called_class ();
-		} else {
-			$classname_static = '[file:1]';
-		}
+		list ($classname_static, $debug_backtrace_file) = self::_main_framework_first ();
 		if (empty($array ['framework_require'])) {
 			$require = '';
 		} else {
@@ -2865,15 +2862,11 @@ class core {
 		}
 		if (stripos ( $string, '[file:' ) !== false) {
 			$file_array = array ();
-			$debug_backtrace = debug_backtrace ();
-			$row = next ($debug_backtrace);
-			$filepath = $row['file'];
-			while (list (, $row) = each ($debug_backtrace)) {
-				if ($row ['function'] === 'main' && $row ['class'] === __CLASS__ && $row ['type'] === '::') {
-					$filepath = $row ['file'];
-				}
+			if ($debug_backtrace_file === null) {
+				list (, $row) = debug_backtrace ();
+				$debug_backtrace_file = $row ['file'];
 			}
-			strtok ( $filepath, '/\\' );
+			strtok ( $debug_backtrace_file, '/\\' );
 			while ( ($tok = strtok ( '/\\' )) !== false ) {
 				array_unshift ( $file_array, $tok );
 			}
@@ -3179,6 +3172,29 @@ class core {
 			return true;
 		}
 
+	}
+
+	/**
+	 * 框架第一现场
+	 *
+	 * @param bool $bool
+	 * @return array
+	 */
+	private static function _main_framework_first ($bool = null) {
+		static $class = null;
+		static $file = null;
+		if ($class === null) {
+			if (function_exists ('get_called_class')) {
+				$class =  get_called_class ();
+			} else {
+				$class = '[file:1]';
+			}
+		}
+		if ($bool && $file === null) {
+			list (, $row) = debug_backtrace ();
+			$file = $row ['file'];
+		}
+		return array($class, $file);
 	}
 
 	/**
