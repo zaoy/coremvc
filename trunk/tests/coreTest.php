@@ -89,6 +89,9 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		$this->assertSame('b',core::init('a'));
 		$this->assertSame('d',core::init('c'));
 		$this->assertSame(array('a'=>'b','c'=>'d'),core::init(false));
+		$this->assertSame(array('b'),core::init(array('a')));
+		$this->assertSame(array('b','d'),core::init(array('a','c')));
+		$this->assertSame(array('b','d',''),core::init(array('a','c','e')));
 		//读取配置文件
 		$this->assertSame(array(),core::init(true));
 		$this->assertSame(array('e'=>true),core::init('@tests/init_1.php'));

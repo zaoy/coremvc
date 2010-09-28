@@ -2,7 +2,7 @@
 /**
  * CoreMVC核心模块
  * 
- * @version 1.3.2 alphpa 2
+ * @version 1.3.2
  * @author Z <602000@gmail.com>
  * @link http://www.coremvc.cn/
  */
@@ -64,8 +64,19 @@ class core {
 				return $current_config;
 			}
 		} elseif (is_array ($config)) {
-			// 导入参数数组
-			$current_config = array_merge ($current_config, $config);
+			$count = count ($config);
+			if ($count > 0 &&  isset ($config [$count-1])) {
+				// 返回多个属性
+				$return_config = array ();
+				for($i=0;$i<$count;$i++) {
+					$value = $config [$i];
+					$return_config [$i] = isset ($current_config [$value]) ? $current_config [$value] : '';
+				}
+				return $return_config;
+			} elseif ($count > 0) {
+				// 导入参数数组
+				$current_config = array_merge ($current_config, $config);
+			}
 		} elseif (is_string ($config)) {
 			if (strtolower (strrchr ($config, '.')) === '.php') {
 				// 导入配置文件
