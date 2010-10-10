@@ -1,31 +1,31 @@
-  * [index CoreMVC¼ò½é]
-  * ºËĞÄÄ£¿é·½·¨
-    * ¿ØÖÆ·½·¨
-      * [init core::init - ÅäÖÃº¯Êı]
-      * [stub core::stub - ´æ¸ùº¯Êı]
-      * [main core::main - Èë¿Úº¯Êı]
-      * [path core::path - Â·¾¶º¯Êı]
-    * ÊÓÍ¼·½·¨
-      * [view core::view - ÊÓÍ¼º¯Êı]
-    * Ä£ĞÍ·½·¨
-      * --- µÚÒ»×é£¨¾²Ì¬µ÷ÓÃ£©---
-      * [connect core::connect - Êı¾İ¿âÁ¬½Ó]
-      * [execute core::execute - Ö´ĞĞSQlÓï¾ä]
-      * [prepare core::prepare - ×¼±¸SQLÓï¾ä]
-      * [sequence core::sequence - Éú³É×ÔÔöĞòÁĞ]
-      * --- µÚ¶ş×é£¨¾²Ì¬µ÷ÓÃ£©---
-      * [structs core::structs - ¾²Ì¬¹¹Ôìº¯Êı]
-      * [selects core::selects - ¾²Ì¬Ñ¡Ôñº¯Êı]
-      * [inserts core::inserts - ¾²Ì¬²åÈëº¯Êı]
-      * [updates core::updates - ¾²Ì¬ĞŞ¸Äº¯Êı]
-      * [deletes core::deletes - ¾²Ì¬É¾³ıº¯Êı]
-      * [replaces core::replaces - ¾²Ì¬¸üĞÂº¯Êı]
-      * --- µÚÈı×é£¨ÊµÀıµ÷ÓÃ£©---
-      * [struct core->struct - ÊµÀı¹¹Ôìº¯Êı]
-      * [select core->select - ÊµÀıÑ¡Ôñº¯Êı]
-      * [insert core->insert - ÊµÀı²åÈëº¯Êı]
-      * [update core->update - ÊµÀıĞŞ¸Äº¯Êı]
-      * [delete core->delete - ÊµÀıÉ¾³ıº¯Êı]
-      * [replace core->replace - ÊµÀı¸üĞÂº¯Êı]
-  * ºËĞÄÄ£¿éÅäÖÃ
-      * [autoload_enable autoload_enable - ×Ô¶¯ÔØÈë¿ª¹Ø]
+  * [index CoreMVCç®€ä»‹]
+  * æ ¸å¿ƒæ¨¡å—æ–¹æ³•
+    * æ§åˆ¶æ–¹æ³•
+      * [init core::init - é…ç½®å‡½æ•°]
+      * [stub core::stub - å­˜æ ¹å‡½æ•°]
+      * [main core::main - å…¥å£å‡½æ•°]
+      * [path core::path - è·¯å¾„å‡½æ•°]
+    * è§†å›¾æ–¹æ³•
+      * [view core::view - è§†å›¾å‡½æ•°]
+    * æ¨¡å‹æ–¹æ³•
+      * --- ç¬¬ä¸€ç»„ï¼ˆé™æ€è°ƒç”¨ï¼‰---
+      * [connect core::connect - æ•°æ®åº“è¿æ¥]
+      * [execute core::execute - æ‰§è¡ŒSQlè¯­å¥]
+      * [prepare core::prepare - å‡†å¤‡SQLè¯­å¥]
+      * [sequence core::sequence - ç”Ÿæˆè‡ªå¢åºåˆ—]
+      * --- ç¬¬äºŒç»„ï¼ˆé™æ€è°ƒç”¨ï¼‰---
+      * [structs core::structs - é™æ€æ„é€ å‡½æ•°]
+      * [selects core::selects - é™æ€é€‰æ‹©å‡½æ•°]
+      * [inserts core::inserts - é™æ€æ’å…¥å‡½æ•°]
+      * [updates core::updates - é™æ€ä¿®æ”¹å‡½æ•°]
+      * [deletes core::deletes - é™æ€åˆ é™¤å‡½æ•°]
+      * [replaces core::replaces - é™æ€æ›´æ–°å‡½æ•°]
+      * --- ç¬¬ä¸‰ç»„ï¼ˆå®ä¾‹è°ƒç”¨ï¼‰---
+      * [struct core->struct - å®ä¾‹æ„é€ å‡½æ•°]
+      * [select core->select - å®ä¾‹é€‰æ‹©å‡½æ•°]
+      * [insert core->insert - å®ä¾‹æ’å…¥å‡½æ•°]
+      * [update core->update - å®ä¾‹ä¿®æ”¹å‡½æ•°]
+      * [delete core->delete - å®ä¾‹åˆ é™¤å‡½æ•°]
+      * [replace core->replace - å®ä¾‹æ›´æ–°å‡½æ•°]
+  * æ ¸å¿ƒæ¨¡å—é…ç½®
+      * [autoload_enable autoload_enable - è‡ªåŠ¨è½½å…¥å¼€å…³]
