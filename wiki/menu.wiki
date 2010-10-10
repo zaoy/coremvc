@@ -1,4 +1,5 @@
-  * [index CoreMVC简介]
+  * [CoreMVC CoreMVC介绍]
+  * [core 核心模块介绍]
   * 核心模块方法
     * 控制方法
       * [init core::init - 配置函数]
