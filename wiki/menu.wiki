@@ -1,0 +1,31 @@
+  * [index CoreMVC简介]
+  * 核心模块方法
+    * 控制方法
+      * [init core::init - 配置函数]
+      * [stub core::stub - 存根函数]
+      * [main core::main - 入口函数]
+      * [path core::path - 路径函数]
+    * 视图方法
+      * [view core::view - 视图函数]
+    * 模型方法
+      * --- 第一组（静态调用）---
+      * [connect core::connect - 数据库连接]
+      * [execute core::execute - 执行SQl语句]
+      * [prepare core::prepare - 准备SQL语句]
+      * [sequence core::sequence - 生成自增序列]
+      * --- 第二组（静态调用）---
+      * [structs core::structs - 静态构造函数]
+      * [selects core::selects - 静态选择函数]
+      * [inserts core::inserts - 静态插入函数]
+      * [updates core::updates - 静态修改函数]
+      * [deletes core::deletes - 静态删除函数]
+      * [replaces core::replaces - 静态更新函数]
+      * --- 第三组（实例调用）---
+      * [struct core->struct - 实例构造函数]
+      * [select core->select - 实例选择函数]
+      * [insert core->insert - 实例插入函数]
+      * [update core->update - 实例修改函数]
+      * [delete core->delete - 实例删除函数]
+      * [replace core->replace - 实例更新函数]
+  * 核心模块配置
+      * [autoload_enable autoload_enable - 自动载入开关]
