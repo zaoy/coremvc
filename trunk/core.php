@@ -2,7 +2,7 @@
 /**
  * CoreMVC核心模块
  * 
- * @version 1.3.2
+ * @version 1.4.0 alpha 1
  * @author Z <602000@gmail.com>
  * @link http://www.coremvc.cn/
  */
@@ -598,16 +598,25 @@ class core {
 					} else {
 						$extra = null;
 					}
-					self::prepare( $sql, $param, null, true, $args ['debug_file'] ,$extra );
 				}
 
 				if ($ref_flag) {
-					$ref = array ();
-					$ref ['insert_id'] = ( string ) mysql_insert_id ( $dbh );
-					$ref ['affected_rows'] = max ( mysql_affected_rows ( $dbh ), 0 );
-					$ref ['num_fields'] = is_resource ( $result ) ? mysql_num_fields ( $result ) : 0;
-					$ref ['num_rows'] = is_resource ( $result ) ? mysql_num_rows ( $result ) : 0;
+					if ($result === false) {
+						$ref = array('insert_id' => '','affected_rows' => 0,'num_fields' => 0,'num_rows' => 0);
+					} else {
+						$ref = array ();
+						$ref ['insert_id'] = ( string ) mysql_insert_id ( $dbh );
+						$ref ['affected_rows'] = max ( mysql_affected_rows ( $dbh ), 0 );
+						$ref ['num_fields'] = is_resource ( $result ) ? mysql_num_fields ( $result ) : 0;
+						$ref ['num_rows'] = is_resource ( $result ) ? mysql_num_rows ( $result ) : 0;
+					}
 				}
+
+				// 数据库调试开关
+				if (isset ($args ['debug_enable']) && $args ['debug_enable']) {
+					self::prepare( $sql, $param, null, true, $args ['debug_file'] ,$extra );
+				}
+
 				if (is_array ( $param )) {
 					if ($sql_unset !== '') {
 						mysql_query ( $sql_unset, $dbh );
@@ -1077,12 +1086,13 @@ class core {
 				case 'mysql_set' :
 				case 'mysql_other' :
 					$escape_sql = substr_replace ( $mysql, 'escape_', 6, 0 );
+					$separator = $mysql==='mysql_set' ? ',': ' ';
 					if (is_array ( $param )) {
 						if ($format) {
-							$return_sql = implode ( ',', self::prepare ( $escape_sql, $param, true ) );
+							$return_sql = implode ( $separator, self::prepare ( $escape_sql, $param, true ) );
 						} else {
 							list ( $return_sql, $return_param ) = self::prepare ( $escape_sql, $param );
-							$return_sql = implode ( ',', $return_sql );
+							$return_sql = implode ( $separator, $return_sql );
 						}
 					} else {
 						$return_sql = ( string ) $param;
@@ -1711,9 +1721,23 @@ class core {
 						}
 						break;
 					case 'both' :
-					case 'array' :
 						while ( $obj = mysql_fetch_array ( $result ) ) {
 							$data_arr [] = $obj;
+						}
+						break;
+					case 'array' :
+						while ( $obj = mysql_fetch_array ( $result ) ) {
+							if (is_array ( $classname )) {
+								$array = $classname;
+								foreach ( $obj as $key => $value ) {
+									if (array_key_exists ( $key, $classname )) {
+										$array [$key] = $value;
+									}
+								}
+								$data_arr [] = $obj_array;
+							} else {
+								$data_arr [] = $obj;
+							}
 						}
 						break;
 					case 'column' :
