@@ -802,7 +802,49 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			$this->assertSame($cls, is_resource($result = core::execute("SELECT ? UNION select ?",array(1,2),$ref))?'resource':get_class($result));
 			$this->assertSame(1, $ref['num_fields']);
 			$this->assertSame(2, $ref['num_rows']);
+			core::execute("DROP TABLE IF EXISTS pre1_test");
+			core::execute("CREATE TABLE pre1_test(id int auto_increment primary key,name varchar(20))");
+			core::execute("INSERT INTO pre1_test (name) VALUES ('a')",null,$ref);
+			$this->assertSame('1', $ref['insert_id']);
+			$this->assertSame(1, $ref['affected_rows']);
+			core::execute("DROP TABLE pre1_test");
+
 			core::connect(array('debug_enable'=>true));
+
+			ob_start();
+			$this->assertSame($cls, is_resource($result = core::execute("SELECT 1"))?'resource':get_class($result));
+			$this->assertSame($cls, is_resource($result = core::execute("SELECT ?",array('2')))?'resource':get_class($result));
+			$this->assertSame($cls, is_resource($result = core::execute("SELECT 1",null,$ref))?'resource':get_class($result));
+			$this->assertSame(1, $ref['num_rows']);
+			$this->assertSame($cls, is_resource($result = core::execute("SELECT ? UNION select ?",array(1,2),$ref))?'resource':get_class($result));
+			$this->assertSame(1, $ref['num_fields']);
+			$this->assertSame(2, $ref['num_rows']);
+			core::execute("DROP TABLE IF EXISTS pre1_test");
+			core::execute("CREATE TABLE pre1_test(id int auto_increment primary key,name varchar(20))");
+			core::execute("INSERT INTO pre1_test (name) VALUES ('a')",null,$ref);
+			$this->assertSame('1', $ref['insert_id']);
+			$this->assertSame(1, $ref['affected_rows']);
+			core::execute("DROP TABLE pre1_test");
+			ob_get_clean();
+
+			core::connect(array('debug_file'=>$this->log_file));
+			@unlink($this->log_file);
+			$this->assertSame($cls, is_resource($result = core::execute("SELECT 1"))?'resource':get_class($result));
+			$this->assertSame($cls, is_resource($result = core::execute("SELECT ?",array('2')))?'resource':get_class($result));
+			$this->assertSame($cls, is_resource($result = core::execute("SELECT 1",null,$ref))?'resource':get_class($result));
+			$this->assertSame(1, $ref['num_rows']);
+			$this->assertSame($cls, is_resource($result = core::execute("SELECT ? UNION select ?",array(1,2),$ref))?'resource':get_class($result));
+			$this->assertSame(1, $ref['num_fields']);
+			$this->assertSame(2, $ref['num_rows']);
+			core::execute("DROP TABLE IF EXISTS pre1_test");
+			core::execute("CREATE TABLE pre1_test(id int auto_increment primary key,name varchar(20))");
+			core::execute("INSERT INTO pre1_test (name) VALUES ('a')",null,$ref);
+			$this->assertSame('1', $ref['insert_id']);
+			$this->assertSame(1, $ref['affected_rows']);
+			core::execute("DROP TABLE pre1_test");
+			@unlink($this->log_file);
+			core::connect(array('debug_file'=>''));
+
 			ob_start();
 			core::execute('SELECT 1');
 			$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): SELECT 1'.PHP_EOL,ob_get_clean());
@@ -827,6 +869,10 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			ob_start();
 			core::execute('SELECT aaa');
 			$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): SELECT aaa'.PHP_EOL.'1054: Unknown column \'aaa\' in \'field list\''.PHP_EOL,ob_get_clean());
+			ob_start();
+			core::execute('SELECT aaa',null,$ref);
+			$this->assertSame(PHP_EOL.'('.$arr['connect_provider'].'): SELECT aaa'.PHP_EOL.'1054: Unknown column \'aaa\' in \'field list\''.PHP_EOL,ob_get_clean());
+			$this->assertSame(array('insert_id' => '','affected_rows' => 0,'num_fields' => 0,'num_rows' => 0),$ref);
 			core::connect(false);
 		}
 		
@@ -939,13 +985,13 @@ class coreTest extends PHPUnit_Framework_TestCase {
 		$this->assertSame(array('a',array()), core::prepare('mysql_other','a'));
 		$this->assertSame(array('',array()), core::prepare('mysql_other',array()));
 		$this->assertSame(array('a',array()), core::prepare('mysql_other',array('a')));
-		$this->assertSame(array('a,b',array()), core::prepare('mysql_other',array('a','b')));
+		$this->assertSame(array('a b',array()), core::prepare('mysql_other',array('a','b')));
 		$this->assertSame(array(
-			'a1,b1 ?,b2 ?,b3 ?,c1 ?,?,?,d1 ?,d2 ?,d3 ?,e1 ?,?,?',
+			'a1 b1 ? b2 ? b3 ? c1 ?,?,? d1 ? d2 ? d3 ? e1 ?,?,?',
 			array('b',100,null,'c',100,null,'d',100,null,'e',100,null)
 			),core::prepare('mysql_other',$input));
 		$this->assertSame(
-			'a1,b1 \'b\',b2 100,b3 NULL,c1 \'c\',100,NULL,d1 \'d\',d2 100,d3 NULL,e1 \'e\',100,NULL',
+			'a1 b1 \'b\' b2 100 b3 NULL c1 \'c\',100,NULL d1 \'d\' d2 100 d3 NULL e1 \'e\',100,NULL',
 			core::prepare('mysql_other',$input,true));
 
 		// 2. 【基础功能】【扩展功能】准备SQL语句。
@@ -1121,6 +1167,10 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			$arr1 = array('id'=>1,1,'name'=>'core','core');
 			$arr2 = array('id'=>2,2,'name'=>'test','test');
 			$arr3 = array('id'=>3,3,'name'=>'test','test');
+			$arr4 = array('id'=>null,null,null,'other'=>'xxx');
+			$arr41 = array('id'=>1,1,'core','other'=>'xxx');
+			$arr42 = array('id'=>2,2,'test','other'=>'xxx');
+			$arr43 = array('id'=>3,3,'test','other'=>'xxx');
 			$obj1 = new core;
 			$obj1->id = 1;
 			$obj1->name = 'core';
@@ -1157,6 +1207,8 @@ class coreTest extends PHPUnit_Framework_TestCase {
 			$this->assertEquals(array(array(1,'core'),array(2,'test'),array(3,'test')),
 				core::selects(null,'pre_test',null,null,array(null,'num'=>null)));
 			$this->assertEquals(array($arr1,$arr2,$arr3),core::selects(null,'pre_test',null,null,array(null,'both'=>null)));
+			$this->assertEquals(array($arr1,$arr2,$arr3),core::selects(null,'pre_test',null,null,array(null,'array'=>null)));
+			//$this->assertEquals(array($arr41,$arr42,$arr43),core::selects(null,'pre_test',null,null,array(null,'array'=>$arr4)));
 			$this->assertEquals(array('core','test','test'),core::selects(null,'pre_test',null,null,array(null,'column'=>1)));
 			$this->assertEquals(array('core','test','test'),core::selects(null,'pre_test',null,null,array(null,'column'=>'name')));
 			$this->assertEquals(array($obj1,$obj2,$obj3),core::selects(null,'pre_test',null,null,array(null,'class'=>null)));

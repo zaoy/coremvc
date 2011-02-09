@@ -1,5 +1,7 @@
 <?php
 /**
+ * adodb5zip for CoreMVC 1.4.0 alpha 1
+ *
  * 定义(define)
  */
 class adodb5zip {
@@ -76,6 +78,8 @@ class adodb5zip {
 	 */
 	public static function execute($dbh, $args, $class, $sql, $param = null, &$ref = null) {
 
+		$ref_flag = (func_num_args () > 5);
+
 		// 是否强制参数转SQL
 		if (isset ($args ['sql_format']) && $args ['sql_format']) {
 			$sql = self::prepare ($dbh, $args, $class, $sql, $param, true);
@@ -95,16 +99,25 @@ class adodb5zip {
 			} else {
 				$extra = null;
 			}
+		}
+
+		if ($ref_flag) {
+			if ($result === false) {
+				$ref = array('insert_id' => '','affected_rows' => 0,'num_fields' => 0,'num_rows' => 0);
+			} else {
+				$ref = array();
+				$ref ['insert_id'] = $dbh->Insert_ID();
+				$ref ['affected_rows'] = (int)$dbh->Affected_Rows();
+				$ref ['num_fields'] = is_object($result)?$result->FieldCount():0;
+				$ref ['num_rows'] = is_object($result)?$result->RecordCount():0;
+			}
+		}
+
+		// 数据库调试开关
+		if (isset ($args ['debug_enable']) && $args ['debug_enable']) {
 			call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'], $extra );
 		}
 
-		if(func_num_args()>5){
-			$ref = array();
-			$ref ['insert_id'] = $dbh->Insert_ID();
-			$ref ['affected_rows'] = (int)$dbh->Affected_Rows();
-			$ref ['num_fields'] = is_object($result)?$result->FieldCount():0;
-			$ref ['num_rows'] = is_object($result)?$result->RecordCount():0;
-		}
 		return $result;
 	}
 	
@@ -247,6 +260,21 @@ class adodb5zip {
 				$dbh->setFetchMode($mode);
 				break;
 			case 'both' :
+				$mode = $dbh->setFetchMode(ADODB_FETCH_BOTH);
+				$result = $data_arr = $dbh->GetALL($sql,$param);
+
+				// 数据库调试开关
+				if (isset ($args ['debug_enable']) && $args ['debug_enable']) {
+					if ($result === false) {
+						$extra = array('errno'=>$dbh->ErrorNo(),'error'=>$dbh->ErrorMsg());
+					} else {
+						$extra = null;
+					}
+					call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'], $extra );
+				}
+
+				$dbh->setFetchMode($mode);
+				break;
 			case 'array' :
 				$mode = $dbh->setFetchMode(ADODB_FETCH_BOTH);
 				$result = $data_arr = $dbh->GetALL($sql,$param);
@@ -261,6 +289,9 @@ class adodb5zip {
 					call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'], $extra );
 				}
 
+				if ( is_array ($data_arr) && is_array ($classname) ) {
+					$data_arr = call_user_func ( array($class,'struts'), $data_arr, $classname );
+				}
 				$dbh->setFetchMode($mode);
 				break;
 			case 'column' :

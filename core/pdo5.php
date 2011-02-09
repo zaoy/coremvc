@@ -1,5 +1,7 @@
 <?php
 /**
+ * pdo5 for CoreMVC 1.4.0 alpha 1
+ *
  * 定义(define)
  */
 class pdo5 {
@@ -57,6 +59,8 @@ class pdo5 {
 	 */
 	public static function execute($dbh, $args, $class, $sql, $param = null, &$ref = null) {
 
+		$ref_flag = (func_num_args () > 5);
+
 		// 是否强制参数转SQL
 		if (isset ($args ['sql_format']) && $args ['sql_format']) {
 			$sql = self::prepare ($dbh, $args, $class, $sql, $param, true);
@@ -97,16 +101,25 @@ class pdo5 {
 			} else {
 				$extra = null;
 			}
+		}
+
+		if ($ref_flag) {
+			if ($result === false) {
+				$ref = array('insert_id' => '','affected_rows' => 0,'num_fields' => 0,'num_rows' => 0);
+			} else {
+				$ref = array();
+				$ref ['insert_id'] = $dbh->lastInsertId();
+				$ref ['affected_rows'] = is_object($sth)?$sth->rowCount():0;
+				$ref ['num_fields'] = is_object($sth)?$sth->columnCount():0;
+				$ref ['num_rows'] = is_object($sth)?$sth->rowCount():0;
+			}
+		}
+
+		// 数据库调试开关
+		if (isset ($args ['debug_enable']) && $args ['debug_enable']) {
 			call_user_func ( array($class,'prepare'), $sql, $param, null, true, $args ['debug_file'], $extra );
 		}
 
-		if(func_num_args()>5){
-			$ref = array();
-			$ref ['insert_id'] = $dbh->lastInsertId();
-			$ref ['affected_rows'] = is_object($sth)?$sth->rowCount():0;
-			$ref ['num_fields'] = is_object($sth)?$sth->columnCount():0;
-			$ref ['num_rows'] = is_object($sth)?$sth->rowCount():0;
-		}
 		return $sth;
 	}
 	
@@ -269,8 +282,13 @@ class pdo5 {
 				$data_arr = $sth->fetchAll(PDO::FETCH_NUM);
 				break;
 			case 'both' :
+				$data_arr = $sth->fetchAll(PDO::FETCH_BOTH);
+				break;
 			case 'array' :
 				$data_arr = $sth->fetchAll(PDO::FETCH_BOTH);
+				if ( is_array ($data_arr) && is_array ($classname) ) {
+					$data_arr = call_user_func ( array($class,'struts'), $data_arr, $classname );
+				}
 				break;
 			case 'column' :
 				while ( $obj = $sth->fetch ( PDO::FETCH_BOTH ) ){
