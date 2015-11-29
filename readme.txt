@@ -11,7 +11,7 @@ CoreMVC遵从new BSD许可证，所以您可以在法律允许的范围以内任
 /**
  * CoreMVC核心模块
  * 
- * @version 1.4.0 alpha 1
+ * @version 1.4.0 alpha 2
  * @author Z <602000@gmail.com>
  * @link http://www.coremvc.cn/
  */
@@ -43,6 +43,11 @@ CoreMVC遵从new BSD许可证，所以您可以在法律允许的范围以内任
 
 
 ●　版本更新说明
+
+CoreMVC 1.4.0 alpha 2 相对于 CoreMVC 1.4.0 alpha 1 的改进
+--------------------------------------------
+1. framework_action参数增加了[arg:x]的选项，可用于命令行模式的参数。
+
 
 CoreMVC 1.4.0 alpha 1 相对于 CoreMVC 1.3.0版本的改进
 --------------------------------------------

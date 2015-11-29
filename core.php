@@ -2909,6 +2909,11 @@ class core {
 			array_unshift ( $file_array, strtok ( '.' ) );
 			$value_array ['file'] = $file_array;
 		}
+		if (stripos ( $string, '[arg:' ) !== false) {
+				$arg_array = $GLOBALS['argv'];
+				$arg_array [0] = null;
+				$value_array ['arg'] = $arg_array;
+		}
 
 		// 3. 生成返回数组
 		$return4_array = array_values (array_intersect ($return_array, array('require','module','action','parameter')));
@@ -3504,6 +3509,7 @@ class core {
 					case 'query':
 					case 'path':
 					case 'file':
+					case 'arg':
 						$valueword = isset ( $value_array [$key_lower] [$sub] ) ? $value_array [$key_lower] [$sub] : '';
 						break;
 					default:
